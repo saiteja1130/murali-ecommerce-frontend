@@ -1,0 +1,501 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import {
+  Lock,
+  Mail,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Sparkles,
+  KeyRound,
+  CheckCircle2,
+  RotateCcw,
+  ArrowLeft
+} from 'lucide-react';
+
+export const LoginPage = () => {
+  const navigate = useNavigate();
+  const { login, requestOtp, loginWithOtp } = useAuth();
+
+  // Login Mode: 'password' | 'otp'
+  const [loginMode, setLoginMode] = useState('password');
+
+  // Form State
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+
+  // OTP Login Stage
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
+  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [resendTimer, setResendTimer] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+
+  // Status & Feedback
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successNotice, setSuccessNotice] = useState('');
+
+  // Forgot Password Modal
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotSubmitted, setForgotSubmitted] = useState(false);
+
+  // Countdown timer for OTP
+  useEffect(() => {
+    let timer;
+    if (isOtpSent && resendTimer > 0) {
+      timer = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (resendTimer === 0) {
+      setCanResend(true);
+    }
+    return () => clearInterval(timer);
+  }, [isOtpSent, resendTimer]);
+
+  // Handle Mode Change
+  const handleSwitchMode = (mode) => {
+    setLoginMode(mode);
+    setErrorMessage('');
+    setSuccessNotice('');
+    setIsOtpSent(false);
+    setOtpCode(['', '', '', '', '', '']);
+  };
+
+  // 1. Password Login Submit
+  const handlePasswordLogin = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setSuccessNotice('');
+
+    if (!email.trim() || !password) {
+      setErrorMessage('Please enter both your email address and password.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await login(email, password);
+      navigate('/');
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message || error.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 2. Request OTP Code for Email
+  const handleSendOtp = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setSuccessNotice('');
+
+    if (!email.trim()) {
+      setErrorMessage('Please enter your email address to receive an OTP code.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await requestOtp(email);
+      setIsOtpSent(true);
+      setResendTimer(60);
+      setCanResend(false);
+      setSuccessNotice(`A 6-digit login OTP code has been sent to ${email}`);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message || error.message || 'Failed to request OTP');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle OTP digit changes
+  const handleOtpChange = (index, value) => {
+    if (!/^\d*$/.test(value)) return;
+
+    const newOtp = [...otpCode];
+    newOtp[index] = value.slice(-1);
+    setOtpCode(newOtp);
+
+    // Auto-focus next box
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`login-otp-${index + 1}`);
+      if (nextInput) nextInput.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
+      const prevInput = document.getElementById(`login-otp-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!canResend) return;
+    setCanResend(false);
+    setResendTimer(60);
+    try {
+      await requestOtp(email);
+      setSuccessNotice(`New 6-digit login OTP code dispatched to ${email}`);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message || error.message || 'Failed to resend OTP');
+    }
+  };
+
+  // 3. Verify OTP Login Submit
+  const handleVerifyOtpLogin = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+    const fullEnteredOtp = otpCode.join('');
+
+    if (fullEnteredOtp.length !== 6) {
+      setErrorMessage('Please enter the full 6-digit OTP code.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await loginWithOtp(email, fullEnteredOtp);
+      navigate('/');
+    } catch (error) {
+      setErrorMessage(error.response?.data?.message || error.message || 'Invalid OTP code');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Forgot Password Submit
+  const handleForgotSubmit = (e) => {
+    e.preventDefault();
+    if (!forgotEmail) return;
+    setForgotSubmitted(true);
+    setTimeout(() => {
+      setShowForgotModal(false);
+      setForgotSubmitted(false);
+      setForgotEmail('');
+      setSuccessNotice(`Password reset instructions sent to ${forgotEmail}`);
+    }, 1200);
+  };
+
+  return (
+    <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#F8F6F3]">
+      <div className="w-full max-w-md bg-white p-8 sm:p-10 rounded-[4px] border border-[#E8E3DE] shadow-xl animate-fade-in space-y-7 font-sans">
+        {/* Brand Header */}
+        <div className="text-center space-y-2">
+          <Link to="/" className="inline-block group focus:outline-none">
+            <span className="font-serif text-3xl font-bold tracking-[0.2em] text-[#1A1A1A] group-hover:text-[#C8A87C] transition-colors">
+              SUMILUX
+            </span>
+          </Link>
+          <div className="text-[10px] uppercase tracking-[0.25em] text-[#C8A87C] font-semibold">
+            PATRON ACCESS PORTAL
+          </div>
+          <h1 className="font-serif text-2xl font-bold text-[#1A1A1A] pt-1">
+            Sign In to Atelier
+          </h1>
+          <p className="text-xs text-[#6B6B6B]">
+            Manage your orders, saved addresses, and tailored archive pieces.
+          </p>
+        </div>
+
+        {/* Dual Mode Switcher Tabs */}
+        <div className="grid grid-cols-2 p-1 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => handleSwitchMode('password')}
+            className={`py-2 text-center rounded-xs transition-all cursor-pointer ${
+              loginMode === 'password'
+                ? 'bg-white text-[#1A1A1A] shadow-xs font-bold'
+                : 'text-[#6B6B6B] hover:text-[#1A1A1A]'
+            }`}
+          >
+            Password Login
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSwitchMode('otp')}
+            className={`py-2 text-center rounded-xs transition-all cursor-pointer ${
+              loginMode === 'otp'
+                ? 'bg-white text-[#1A1A1A] shadow-xs font-bold'
+                : 'text-[#6B6B6B] hover:text-[#1A1A1A]'
+            }`}
+          >
+            Email OTP Login
+          </button>
+        </div>
+
+        {/* Error Notification */}
+        {errorMessage && (
+          <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xs animate-shake">
+            {errorMessage}
+          </div>
+        )}
+
+        {/* Success Notice / Demo OTP Helper */}
+        {successNotice && (
+          <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xs space-y-1">
+            <div className="flex items-center gap-1.5 font-semibold">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>{successNotice}</span>
+            </div>
+            {generatedOtp && (
+              <div className="text-[11px] text-emerald-700 font-mono">
+                OTP Code: <strong>{generatedOtp}</strong>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 1. PASSWORD LOGIN FORM */}
+        {loginMode === 'password' && (
+          <form onSubmit={handlePasswordLogin} className="space-y-4 text-xs">
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] mb-1">
+                Email Address *
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  required
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="eleanor.vance@sumilux.com"
+                  className="w-full pl-10 pr-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C] text-[#1A1A1A]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A]">
+                  Password *
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(true)}
+                  className="text-[11px] text-[#A68758] hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  required
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-10 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C] text-[#1A1A1A]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#1A1A1A]"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
+              <label className="flex items-center gap-2 text-xs text-[#6B6B6B] cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded border-[#E8E3DE] text-[#C8A87C] focus:ring-[#C8A87C]"
+                />
+                <span>Remember this device</span>
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-3.5 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-bold uppercase tracking-widest rounded-xs transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50 mt-2"
+            >
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Authenticating...</span>
+                </div>
+              ) : (
+                <>
+                  <span>Sign In with Password</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+        )}
+
+        {/* 2. EMAIL OTP LOGIN FORM */}
+        {loginMode === 'otp' && (
+          <div className="space-y-4 text-xs">
+            {!isOtpSent ? (
+              <form onSubmit={handleSendOtp} className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] mb-1">
+                    Email Address *
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-neutral-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      required
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="eleanor.vance@sumilux.com"
+                      className="w-full pl-10 pr-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C] text-[#1A1A1A]"
+                    />
+                  </div>
+                  <span className="text-[10px] text-[#6B6B6B] mt-1 block">
+                    We will send a 6-digit one-time verification passcode to this address.
+                  </span>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-3.5 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-bold uppercase tracking-widest rounded-xs transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Sending OTP...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <span>Send Login OTP Code</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOtpLogin} className="space-y-5 animate-fade-in">
+                <div className="space-y-2">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] text-center">
+                    Enter 6-Digit Email Passcode
+                  </label>
+                  <div className="flex items-center justify-center gap-2 sm:gap-3">
+                    {otpCode.map((digit, index) => (
+                      <input
+                        key={index}
+                        id={`login-otp-${index}`}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleOtpChange(index, e.target.value)}
+                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                        className="w-10 h-12 sm:w-12 sm:h-14 text-center font-mono text-lg font-bold bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#1A1A1A] focus:ring-1 focus:ring-[#1A1A1A] text-[#1A1A1A]"
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-1 border-t border-[#E8E3DE]">
+                  <button
+                    type="button"
+                    onClick={() => setIsOtpSent(false)}
+                    className="text-[#6B6B6B] hover:text-[#1A1A1A] flex items-center gap-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Change Email</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={!canResend}
+                    onClick={handleResendOtp}
+                    className={`flex items-center gap-1 font-medium ${
+                      canResend
+                        ? 'text-[#C8A87C] hover:underline cursor-pointer'
+                        : 'text-[#9E9B97] cursor-not-allowed'
+                    }`}
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>{canResend ? 'Resend OTP' : `Resend in ${resendTimer}s`}</span>
+                  </button>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-3.5 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-bold uppercase tracking-widest rounded-xs transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Verifying Passcode...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <span>Verify OTP & Sign In</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
+        )}
+
+        {/* Footer Link to Signup */}
+        <div className="pt-4 border-t border-[#E8E3DE] text-center text-xs text-[#6B6B6B]">
+          New patron to SUMILUX?{' '}
+          <Link to="/signup" className="font-bold text-[#1A1A1A] hover:text-[#C8A87C] transition-colors underline ml-1">
+            Create Patron Account
+          </Link>
+        </div>
+      </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="bg-white max-w-sm w-full p-6 rounded-[4px] border border-[#E8E3DE] shadow-2xl space-y-4">
+            <h3 className="font-serif text-lg font-bold text-[#1A1A1A]">Reset Account Password</h3>
+            <p className="text-xs text-[#6B6B6B]">
+              Enter your registered email address to receive password reset instructions.
+            </p>
+            <form onSubmit={handleForgotSubmit} className="space-y-3">
+              <input
+                required
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                placeholder="eleanor.vance@sumilux.com"
+                className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs text-xs focus:outline-none focus:border-[#C8A87C]"
+              />
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(false)}
+                  className="px-4 py-2 text-xs text-[#6B6B6B] hover:text-[#1A1A1A]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-semibold rounded-xs transition-colors"
+                >
+                  Send Reset Link
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default LoginPage;

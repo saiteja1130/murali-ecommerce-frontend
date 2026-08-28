@@ -1,0 +1,6 @@
+{
+  "name": "Sumilux Fashion Store",
+  "description": "A minimalist, responsive luxury fashion e-commerce storefront inspired by the Sumilux aesthetic featuring multi-page routing with dedicated Product Details (with Similar Products), Cart, Wishlist, Login, and Signup pages.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
