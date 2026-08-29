@@ -82,7 +82,7 @@ export const LoginPage = () => {
       await login(email, password);
       navigate('/');
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || error.message || 'Login failed');
+      setErrorMessage(error.response?.data?.message || error.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +95,7 @@ export const LoginPage = () => {
     setSuccessNotice('');
 
     if (!email.trim()) {
-      setErrorMessage('Please enter your email address to receive an OTP code.');
+      setErrorMessage('Please enter your email address to receive an OTP.');
       return;
     }
 
@@ -107,7 +107,7 @@ export const LoginPage = () => {
       setCanResend(false);
       setSuccessNotice(`A 6-digit login OTP code has been sent to ${email}`);
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || error.message || 'Failed to request OTP');
+      setErrorMessage(error.response?.data?.message || error.message || 'Failed to send OTP. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -141,7 +141,7 @@ export const LoginPage = () => {
     setResendTimer(60);
     try {
       await requestOtp(email);
-      setSuccessNotice(`New 6-digit login OTP code dispatched to ${email}`);
+      setSuccessNotice(`A new 6-digit login OTP code was sent to ${email}`);
     } catch (error) {
       setErrorMessage(error.response?.data?.message || error.message || 'Failed to resend OTP');
     }
@@ -154,7 +154,7 @@ export const LoginPage = () => {
     const fullEnteredOtp = otpCode.join('');
 
     if (fullEnteredOtp.length !== 6) {
-      setErrorMessage('Please enter the full 6-digit OTP code.');
+      setErrorMessage('Please enter the complete 6-digit OTP code.');
       return;
     }
 
@@ -163,7 +163,7 @@ export const LoginPage = () => {
       await loginWithOtp(email, fullEnteredOtp);
       navigate('/');
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || error.message || 'Invalid OTP code');
+      setErrorMessage(error.response?.data?.message || error.message || 'Invalid or expired OTP code.');
     } finally {
       setIsLoading(false);
     }
@@ -183,35 +183,40 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#F8F6F3]">
-      <div className="w-full max-w-md bg-white p-8 sm:p-10 rounded-[4px] border border-[#E8E3DE] shadow-xl animate-fade-in space-y-7 font-sans">
+    <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-[#FAF8F5]">
+      <div className="w-full max-w-md bg-white p-8 sm:p-10 rounded-2xl border border-[#E8E4DC] shadow-xl animate-fade-in space-y-7 font-sans text-[#1D241C]">
         {/* Brand Header */}
         <div className="text-center space-y-2">
-          <Link to="/" className="inline-block group focus:outline-none">
-            <span className="font-serif text-3xl font-bold tracking-[0.2em] text-[#1A1A1A] group-hover:text-[#C8A87C] transition-colors">
-              SUMILUX
+          <Link to="/" className="inline-flex flex-col items-center group focus:outline-none">
+            <img
+              src="/assets/images/Logo.png"
+              alt="Murari's Glam & Glow"
+              className="h-16 w-auto object-contain mx-auto transition-transform duration-300 group-hover:scale-105"
+            />
+            <span className="font-serif text-2xl font-bold tracking-[0.14em] text-[#1D241C] group-hover:text-[#506040] transition-colors mt-2">
+              MURARI'S
             </span>
           </Link>
-          <div className="text-[10px] uppercase tracking-[0.25em] text-[#C8A87C] font-semibold">
-            PATRON ACCESS PORTAL
+          <div className="text-[10px] uppercase tracking-[0.25em] text-[#506040] font-semibold">
+            WELCOME BACK
           </div>
-          <h1 className="font-serif text-2xl font-bold text-[#1A1A1A] pt-1">
-            Sign In to Atelier
+          <h1 className="font-serif text-2xl font-bold text-[#1D241C] pt-1">
+            Log In to Your Account
           </h1>
-          <p className="text-xs text-[#6B6B6B]">
-            Manage your orders, saved addresses, and tailored archive pieces.
+          <p className="text-xs text-[#687163]">
+            Access your orders, saved addresses, and wishlist.
           </p>
         </div>
 
         {/* Dual Mode Switcher Tabs */}
-        <div className="grid grid-cols-2 p-1 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs text-xs font-semibold">
+        <div className="grid grid-cols-2 p-1 bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl text-xs font-semibold">
           <button
             type="button"
             onClick={() => handleSwitchMode('password')}
-            className={`py-2 text-center rounded-xs transition-all cursor-pointer ${
+            className={`py-2 text-center rounded-lg transition-all cursor-pointer ${
               loginMode === 'password'
-                ? 'bg-white text-[#1A1A1A] shadow-xs font-bold'
-                : 'text-[#6B6B6B] hover:text-[#1A1A1A]'
+                ? 'bg-white text-[#1D241C] shadow-xs font-bold'
+                : 'text-[#687163] hover:text-[#1D241C]'
             }`}
           >
             Password Login
@@ -219,10 +224,10 @@ export const LoginPage = () => {
           <button
             type="button"
             onClick={() => handleSwitchMode('otp')}
-            className={`py-2 text-center rounded-xs transition-all cursor-pointer ${
+            className={`py-2 text-center rounded-lg transition-all cursor-pointer ${
               loginMode === 'otp'
-                ? 'bg-white text-[#1A1A1A] shadow-xs font-bold'
-                : 'text-[#6B6B6B] hover:text-[#1A1A1A]'
+                ? 'bg-white text-[#1D241C] shadow-xs font-bold'
+                : 'text-[#687163] hover:text-[#1D241C]'
             }`}
           >
             Email OTP Login
@@ -231,14 +236,14 @@ export const LoginPage = () => {
 
         {/* Error Notification */}
         {errorMessage && (
-          <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xs animate-shake">
+          <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl animate-shake">
             {errorMessage}
           </div>
         )}
 
-        {/* Success Notice / Demo OTP Helper */}
+        {/* Success Notice */}
         {successNotice && (
-          <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xs space-y-1">
+          <div className="p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl space-y-1">
             <div className="flex items-center gap-1.5 font-semibold">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
               <span>{successNotice}</span>
@@ -255,7 +260,7 @@ export const LoginPage = () => {
         {loginMode === 'password' && (
           <form onSubmit={handlePasswordLogin} className="space-y-4 text-xs">
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] mb-1">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1D241C] mb-1">
                 Email Address *
               </label>
               <div className="relative">
@@ -265,21 +270,21 @@ export const LoginPage = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="eleanor.vance@sumilux.com"
-                  className="w-full pl-10 pr-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C] text-[#1A1A1A]"
+                  placeholder="e.g. rahul@example.com"
+                  className="w-full pl-10 pr-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58] text-[#1D241C]"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A]">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1D241C]">
                   Password *
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowForgotModal(true)}
-                  className="text-[11px] text-[#A68758] hover:underline"
+                  className="text-[11px] text-[#506040] hover:underline cursor-pointer font-semibold"
                 >
                   Forgot Password?
                 </button>
@@ -291,13 +296,13 @@ export const LoginPage = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C] text-[#1A1A1A]"
+                  placeholder="Enter your password"
+                  className="w-full pl-10 pr-10 py-2.5 bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58] text-[#1D241C]"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#1A1A1A]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-[#1D241C] cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -305,30 +310,30 @@ export const LoginPage = () => {
             </div>
 
             <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2 text-xs text-[#6B6B6B] cursor-pointer">
+              <label className="flex items-center gap-2 text-xs text-[#687163] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-[#E8E3DE] text-[#C8A87C] focus:ring-[#C8A87C]"
+                  className="rounded border-[#E8E4DC] text-[#506040] focus:ring-[#506040]"
                 />
-                <span>Remember this device</span>
+                <span>Remember me on this device</span>
               </label>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-bold uppercase tracking-widest rounded-xs transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50 mt-2"
+              className="w-full py-3.5 bg-[#1D241C] hover:bg-[#C69E58] text-white hover:text-[#1D241C] text-xs font-bold uppercase tracking-widest rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50 mt-2"
             >
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Authenticating...</span>
+                  <span>Logging in...</span>
                 </div>
               ) : (
                 <>
-                  <span>Sign In with Password</span>
+                  <span>Log In</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -342,7 +347,7 @@ export const LoginPage = () => {
             {!isOtpSent ? (
               <form onSubmit={handleSendOtp} className="space-y-4">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1D241C] mb-1">
                     Email Address *
                   </label>
                   <div className="relative">
@@ -352,19 +357,19 @@ export const LoginPage = () => {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="eleanor.vance@sumilux.com"
-                      className="w-full pl-10 pr-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C] text-[#1A1A1A]"
+                      placeholder="e.g. rahul@example.com"
+                      className="w-full pl-10 pr-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58] text-[#1D241C]"
                     />
                   </div>
-                  <span className="text-[10px] text-[#6B6B6B] mt-1 block">
-                    We will send a 6-digit one-time verification passcode to this address.
+                  <span className="text-[10px] text-[#687163] mt-1 block">
+                    We will send a 6-digit one-time passcode to your email.
                   </span>
                 </div>
 
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3.5 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-bold uppercase tracking-widest rounded-xs transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+                  className="w-full py-3.5 bg-[#1D241C] hover:bg-[#C69E58] text-white hover:text-[#1D241C] text-xs font-bold uppercase tracking-widest rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
                 >
                   {isLoading ? (
                     <div className="flex items-center gap-2">
@@ -373,7 +378,7 @@ export const LoginPage = () => {
                     </div>
                   ) : (
                     <>
-                      <span>Send Login OTP Code</span>
+                      <span>Send Login OTP</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
@@ -382,8 +387,8 @@ export const LoginPage = () => {
             ) : (
               <form onSubmit={handleVerifyOtpLogin} className="space-y-5 animate-fade-in">
                 <div className="space-y-2">
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] text-center">
-                    Enter 6-Digit Email Passcode
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#1D241C] text-center">
+                    Enter the 6-Digit Code
                   </label>
                   <div className="flex items-center justify-center gap-2 sm:gap-3">
                     {otpCode.map((digit, index) => (
@@ -396,17 +401,17 @@ export const LoginPage = () => {
                         value={digit}
                         onChange={(e) => handleOtpChange(index, e.target.value)}
                         onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                        className="w-10 h-12 sm:w-12 sm:h-14 text-center font-mono text-lg font-bold bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#1A1A1A] focus:ring-1 focus:ring-[#1A1A1A] text-[#1A1A1A]"
+                        className="w-10 h-12 sm:w-12 sm:h-14 text-center font-mono text-lg font-bold bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#506040] focus:ring-2 focus:ring-[#506040]/30 text-[#1D241C]"
                       />
                     ))}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs pt-1 border-t border-[#E8E3DE]">
+                <div className="flex items-center justify-between text-xs pt-1 border-t border-[#E8E4DC]">
                   <button
                     type="button"
                     onClick={() => setIsOtpSent(false)}
-                    className="text-[#6B6B6B] hover:text-[#1A1A1A] flex items-center gap-1 cursor-pointer"
+                    className="text-[#687163] hover:text-[#1D241C] flex items-center gap-1 cursor-pointer"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Change Email</span>
@@ -416,9 +421,9 @@ export const LoginPage = () => {
                     type="button"
                     disabled={!canResend}
                     onClick={handleResendOtp}
-                    className={`flex items-center gap-1 font-medium ${
+                    className={`flex items-center gap-1 font-semibold ${
                       canResend
-                        ? 'text-[#C8A87C] hover:underline cursor-pointer'
+                        ? 'text-[#506040] hover:underline cursor-pointer'
                         : 'text-[#9E9B97] cursor-not-allowed'
                     }`}
                   >
@@ -430,16 +435,16 @@ export const LoginPage = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-3.5 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-bold uppercase tracking-widest rounded-xs transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+                  className="w-full py-3.5 bg-[#1D241C] hover:bg-[#C69E58] text-white hover:text-[#1D241C] text-xs font-bold uppercase tracking-widest rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
                 >
                   {isLoading ? (
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Verifying Passcode...</span>
+                      <span>Verifying...</span>
                     </div>
                   ) : (
                     <>
-                      <span>Verify OTP & Sign In</span>
+                      <span>Verify & Log In</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
@@ -450,21 +455,21 @@ export const LoginPage = () => {
         )}
 
         {/* Footer Link to Signup */}
-        <div className="pt-4 border-t border-[#E8E3DE] text-center text-xs text-[#6B6B6B]">
-          New patron to SUMILUX?{' '}
-          <Link to="/signup" className="font-bold text-[#1A1A1A] hover:text-[#C8A87C] transition-colors underline ml-1">
-            Create Patron Account
+        <div className="pt-4 border-t border-[#E8E4DC] text-center text-xs text-[#687163]">
+          Don't have an account yet?{' '}
+          <Link to="/signup" className="font-bold text-[#1D241C] hover:text-[#506040] transition-colors underline ml-1">
+            Create an Account
           </Link>
         </div>
       </div>
 
       {/* Forgot Password Modal */}
       {showForgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
-          <div className="bg-white max-w-sm w-full p-6 rounded-[4px] border border-[#E8E3DE] shadow-2xl space-y-4">
-            <h3 className="font-serif text-lg font-bold text-[#1A1A1A]">Reset Account Password</h3>
-            <p className="text-xs text-[#6B6B6B]">
-              Enter your registered email address to receive password reset instructions.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in text-[#1D241C]">
+          <div className="bg-white max-w-sm w-full p-6 sm:p-8 rounded-2xl border border-[#E8E4DC] shadow-2xl space-y-4">
+            <h3 className="font-serif text-lg font-bold text-[#1D241C]">Reset Password</h3>
+            <p className="text-xs text-[#687163]">
+              Enter your registered email address and we'll send you instructions to reset your password.
             </p>
             <form onSubmit={handleForgotSubmit} className="space-y-3">
               <input
@@ -472,20 +477,20 @@ export const LoginPage = () => {
                 type="email"
                 value={forgotEmail}
                 onChange={(e) => setForgotEmail(e.target.value)}
-                placeholder="eleanor.vance@sumilux.com"
-                className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs text-xs focus:outline-none focus:border-[#C8A87C]"
+                placeholder="e.g. rahul@example.com"
+                className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl text-xs focus:outline-none focus:border-[#C69E58]"
               />
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowForgotModal(false)}
-                  className="px-4 py-2 text-xs text-[#6B6B6B] hover:text-[#1A1A1A]"
+                  className="px-4 py-2 text-xs font-semibold text-[#687163] hover:text-[#1D241C] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-semibold rounded-xs transition-colors"
+                  className="px-5 py-2 bg-[#1D241C] hover:bg-[#C69E58] text-white hover:text-[#1D241C] text-xs font-semibold rounded-xl transition-colors cursor-pointer"
                 >
                   Send Reset Link
                 </button>

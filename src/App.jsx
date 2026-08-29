@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import React, { useEffect } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { RootProvider, useAuth, useStore } from './context/RootContext';
 
 // Navigation & Layout Components
@@ -27,14 +27,13 @@ import { AccountPage } from './pages/AccountPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 
-// Policy, Utility & Support Pages
+// Policy & Utility Pages
 import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { ShippingPolicyPage } from './pages/ShippingPolicyPage';
 import { ReturnsPolicyPage } from './pages/ReturnsPolicyPage';
 import { TermsPage } from './pages/TermsPage';
 import { FaqPage } from './pages/FaqPage';
-import { SupportPage } from './pages/SupportPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
@@ -175,6 +174,7 @@ const AppContent = () => {
         activeCategory={activeCategory}
         onSelectCategory={setActiveCategory}
         onOpenSearch={openSearch}
+        categories={categories}
         cartCount={cartItemCount}
         cartTotal={cartSubtotal}
         wishlistCount={wishlist.length}
@@ -197,6 +197,7 @@ const AppContent = () => {
                 onAddToCart={addToCart}
                 onToggleWishlist={toggleWishlist}
                 wishlistIds={wishlist}
+                categories={categories}
                 searchQuery={searchQuery}
                 onClearSearch={() => setSearchQuery('')}
                 onClickProduct={(p) => navigate(`/product/${p.id}`)}
@@ -210,6 +211,7 @@ const AppContent = () => {
             element={
               <ProductsPage
                 allProducts={products}
+                categories={categories}
                 onAddToCart={addToCart}
                 onToggleWishlist={toggleWishlist}
                 wishlistIds={wishlist}
@@ -222,6 +224,7 @@ const AppContent = () => {
             element={
               <ProductsPage
                 allProducts={products}
+                categories={categories}
                 onAddToCart={addToCart}
                 onToggleWishlist={toggleWishlist}
                 wishlistIds={wishlist}
@@ -234,6 +237,7 @@ const AppContent = () => {
             element={
               <ProductsPage
                 allProducts={products}
+                categories={categories}
                 onAddToCart={addToCart}
                 onToggleWishlist={toggleWishlist}
                 wishlistIds={wishlist}
@@ -441,8 +445,8 @@ const AppContent = () => {
           <Route path="/terms-of-service" element={<TermsPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/faq" element={<FaqPage />} />
-          <Route path="/support" element={<SupportPage currentUser={currentUser} />} />
-          <Route path="/help" element={<SupportPage currentUser={currentUser} />} />
+          <Route path="/support" element={<Navigate to="/contact" replace />} />
+          <Route path="/help" element={<Navigate to="/contact" replace />} />
 
           {/* Auth Routes */}
           <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />

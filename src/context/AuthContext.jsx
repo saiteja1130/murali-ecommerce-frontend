@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { PRODUCTS } from '../data/mockData';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from './api';
 
 const AuthContext = createContext(undefined);
@@ -13,176 +12,85 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => {
     return localStorage.getItem('sumilux_token') || null;
   });
+
+  // User Saved Addresses State
   const [userAddresses, setUserAddresses] = useState(() => {
     const saved = localStorage.getItem('sumilux_addresses');
-    if (saved) return JSON.parse(saved);
-
-    return [
-      {
-        id: 'addr-1',
-        name: 'Eleanor Vance (Primary Residence)',
-        street: '742 Montgomery Street',
-        apartment: 'Suite 1400',
-        city: 'San Francisco',
-        state: 'CA',
-        postalCode: '94111',
-        country: 'United States',
-        phone: '+1 (415) 890-2144',
-        isDefault: true
-      },
-      {
-        id: 'addr-2',
-        name: 'Eleanor Vance (London Mayfair Salon)',
-        street: '14 New Bond Street',
-        apartment: 'Private Residence 3A',
-        city: 'London',
-        state: 'Greater London',
-        postalCode: 'W1S 3PF',
-        country: 'United Kingdom',
-        phone: '+44 20 7946 0912',
-        isDefault: false
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return [];
       }
-    ];
+    }
+    return [];
   });
 
-  // 3. User Order History State
+  // User Order History State (initialized to empty without dummy fallbacks)
   const [userOrders, setUserOrders] = useState(() => {
     const saved = localStorage.getItem('sumilux_orders');
-    if (saved) return JSON.parse(saved);
-
-    return [
-      {
-        id: 'ord-88219',
-        orderNumber: 'SMLX-98214',
-        date: 'Aug 24, 2026',
-        status: 'shipped',
-        trackingNumber: 'DHL-984210953',
-        estimatedDelivery: 'Tomorrow, by 18:00',
-        paymentMethod: 'AMEX (•••• 8821)',
-        shippingAddress: {
-          name: 'Eleanor Vance',
-          street: '742 Montgomery Street, Suite 1400',
-          city: 'San Francisco',
-          state: 'CA',
-          postalCode: '94111',
-          country: 'United States'
-        },
-        items: [
-          {
-            id: 'prod-w-1',
-            name: PRODUCTS[0]?.name || 'Tailored Double-Breasted Wool Blazer',
-            size: 'M',
-            color: 'Camel Gold',
-            price: PRODUCTS[0]?.price || 380.0,
-            quantity: 1,
-            image: PRODUCTS[0]?.image || 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=800&auto=format&fit=crop'
-          },
-          {
-            id: 'prod-a-1',
-            name: 'Artisanal Italian Leather Tote',
-            size: 'One Size',
-            color: 'Espresso Cognac',
-            price: 460.0,
-            quantity: 1,
-            image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?q=80&w=800&auto=format&fit=crop'
-          }
-        ],
-        total: 714.0
-      },
-      {
-        id: 'ord-77402',
-        orderNumber: 'SMLX-84102',
-        date: 'Jul 18, 2026',
-        status: 'delivered',
-        trackingNumber: 'DHL-772109440',
-        paymentMethod: 'Apple Pay (•••• 4242)',
-        shippingAddress: {
-          name: 'Eleanor Vance',
-          street: '742 Montgomery Street, Suite 1400',
-          city: 'San Francisco',
-          state: 'CA',
-          postalCode: '94111',
-          country: 'United States'
-        },
-        items: [
-          {
-            id: 'prod-w-2',
-            name: 'Fluid Mulberry Silk Midi Slip Dress',
-            size: 'S',
-            color: 'Pearl Ivory',
-            price: 290.0,
-            quantity: 1,
-            image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=800&auto=format&fit=crop'
-          }
-        ],
-        total: 246.5
-      },
-      {
-        id: 'ord-61920',
-        orderNumber: 'SMLX-61920',
-        date: 'Jun 04, 2026',
-        status: 'delivered',
-        trackingNumber: 'DHL-550192831',
-        paymentMethod: 'AMEX (•••• 8821)',
-        shippingAddress: {
-          name: 'Eleanor Vance',
-          street: '14 New Bond Street',
-          city: 'London',
-          state: 'Greater London',
-          postalCode: 'W1S 3PF',
-          country: 'United Kingdom'
-        },
-        items: [
-          {
-            id: 'prod-m-1',
-            name: 'Architectural Cashmere Overcoat',
-            size: 'L',
-            color: 'Charcoal Black',
-            price: 520.0,
-            quantity: 1,
-            image: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=800&auto=format&fit=crop'
-          }
-        ],
-        total: 442.0
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return [];
       }
-    ];
+    }
+    return [];
   });
 
-  // 4. User Payment History State
+  // User Payment History State
   const [userPayments, setUserPayments] = useState(() => {
     const saved = localStorage.getItem('sumilux_payments');
-    if (saved) return JSON.parse(saved);
-
-    return [
-      {
-        id: 'pay-98214',
-        transactionId: 'TXN-98214-AMEX',
-        date: 'Aug 24, 2026',
-        method: 'AMEX (•••• 8821)',
-        orderNumber: 'SMLX-98214',
-        amount: 714.0,
-        status: 'Settled'
-      },
-      {
-        id: 'pay-84102',
-        transactionId: 'TXN-84102-APAY',
-        date: 'Jul 18, 2026',
-        method: 'Apple Pay (•••• 4242)',
-        orderNumber: 'SMLX-84102',
-        amount: 246.5,
-        status: 'Settled'
-      },
-      {
-        id: 'pay-61920',
-        transactionId: 'TXN-61920-AMEX',
-        date: 'Jun 04, 2026',
-        method: 'AMEX (•••• 8821)',
-        orderNumber: 'SMLX-61920',
-        amount: 442.0,
-        status: 'Settled'
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        return [];
       }
-    ];
+    }
+    return [];
   });
+
+  // Fetch addresses from backend
+  const fetchAddresses = useCallback(async () => {
+    const storedToken = localStorage.getItem('sumilux_token');
+    if (!storedToken) {
+      return;
+    }
+    try {
+      const response = await api.get('/api/users/addresses');
+      if (response.data?.status) {
+        const list = (response.data.data || []).map((a) => ({
+          id: a._id || a.id,
+          _id: a._id || a.id,
+          name: a.fullName,
+          fullName: a.fullName,
+          phone: a.phone,
+          street: a.street,
+          apartment: a.apartment || '',
+          city: a.city,
+          state: a.state,
+          postalCode: a.postalCode,
+          country: a.country || 'India',
+          addressType: a.addressType || 'home',
+          isDefault: !!a.isDefault,
+        }));
+        setUserAddresses(list);
+      }
+    } catch (err) {
+      console.error('Failed to fetch addresses from backend:', err.message);
+    }
+  }, []);
+
+  // Fetch addresses whenever user logs in or token is available
+  useEffect(() => {
+    if (token) {
+      fetchAddresses();
+    } else {
+      setUserAddresses([]);
+    }
+  }, [token, fetchAddresses]);
 
   // Local Storage Synchronization
   useEffect(() => {
@@ -218,6 +126,7 @@ export const AuthProvider = ({ children }) => {
     const handleAuthExpired = () => {
       setCurrentUser(null);
       setToken(null);
+      setUserAddresses([]);
     };
     window.addEventListener('auth-expired', handleAuthExpired);
     return () => window.removeEventListener('auth-expired', handleAuthExpired);
@@ -267,47 +176,193 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setCurrentUser(null);
     setToken(null);
+    setUserAddresses([]);
     localStorage.removeItem('sumilux_user');
     localStorage.removeItem('sumilux_token');
+    localStorage.removeItem('sumilux_addresses');
   };
 
   const updateProfile = (updatedData) => {
     setCurrentUser((prev) => ({ ...prev, ...updatedData }));
   };
 
-  // Address Actions
-  const addAddress = (newAddr) => {
-    if (newAddr.isDefault) {
-      setUserAddresses((prev) => [
-        ...prev.map((a) => ({ ...a, isDefault: false })),
-        newAddr
-      ]);
-    } else {
-      setUserAddresses((prev) => [...prev, newAddr]);
+  // Address Actions with Backend Synchronization
+  const addAddress = async (newAddr) => {
+    try {
+      const payload = {
+        fullName: newAddr.fullName || newAddr.name,
+        phone: newAddr.phone || currentUser?.phone || '',
+        street: newAddr.street,
+        apartment: newAddr.apartment || '',
+        city: newAddr.city,
+        state: newAddr.state,
+        postalCode: newAddr.postalCode,
+        country: newAddr.country || 'India',
+        addressType: newAddr.addressType || 'home',
+        isDefault: newAddr.isDefault !== undefined ? newAddr.isDefault : userAddresses.length === 0,
+      };
+
+      if (token) {
+        const response = await api.post('/api/users/addresses', payload);
+        if (response.data?.status) {
+          const list = (response.data.data || []).map((a) => ({
+            id: a._id || a.id,
+            _id: a._id || a.id,
+            name: a.fullName,
+            fullName: a.fullName,
+            phone: a.phone,
+            street: a.street,
+            apartment: a.apartment || '',
+            city: a.city,
+            state: a.state,
+            postalCode: a.postalCode,
+            country: a.country || 'India',
+            addressType: a.addressType || 'home',
+            isDefault: !!a.isDefault,
+          }));
+          setUserAddresses(list);
+          return list;
+        }
+      } else {
+        // Guest / offline fallback
+        const localAddr = {
+          ...payload,
+          id: `addr-${Date.now()}`,
+          name: payload.fullName,
+        };
+        setUserAddresses((prev) => {
+          if (localAddr.isDefault) {
+            return [...prev.map((a) => ({ ...a, isDefault: false })), localAddr];
+          }
+          return [...prev, localAddr];
+        });
+        return localAddr;
+      }
+    } catch (err) {
+      console.error('Failed to add address:', err.message);
+      throw err;
     }
   };
 
-  const updateAddress = (updatedAddr) => {
-    setUserAddresses((prev) =>
-      prev.map((a) => {
-        if (a.id === updatedAddr.id) return updatedAddr;
-        if (updatedAddr.isDefault) return { ...a, isDefault: false };
-        return a;
-      })
-    );
+  const updateAddress = async (updatedAddr) => {
+    const targetId = updatedAddr.id || updatedAddr._id;
+    try {
+      const payload = {
+        fullName: updatedAddr.fullName || updatedAddr.name,
+        phone: updatedAddr.phone || currentUser?.phone || '',
+        street: updatedAddr.street,
+        apartment: updatedAddr.apartment || '',
+        city: updatedAddr.city,
+        state: updatedAddr.state,
+        postalCode: updatedAddr.postalCode,
+        country: updatedAddr.country || 'India',
+        addressType: updatedAddr.addressType || 'home',
+        isDefault: updatedAddr.isDefault,
+      };
+
+      if (token) {
+        const response = await api.put(`/api/users/addresses/${targetId}`, payload);
+        if (response.data?.status) {
+          const list = (response.data.data || []).map((a) => ({
+            id: a._id || a.id,
+            _id: a._id || a.id,
+            name: a.fullName,
+            fullName: a.fullName,
+            phone: a.phone,
+            street: a.street,
+            apartment: a.apartment || '',
+            city: a.city,
+            state: a.state,
+            postalCode: a.postalCode,
+            country: a.country || 'India',
+            addressType: a.addressType || 'home',
+            isDefault: !!a.isDefault,
+          }));
+          setUserAddresses(list);
+          return list;
+        }
+      } else {
+        setUserAddresses((prev) =>
+          prev.map((a) => {
+            if (a.id === targetId) return { ...a, ...payload, name: payload.fullName };
+            if (payload.isDefault) return { ...a, isDefault: false };
+            return a;
+          })
+        );
+      }
+    } catch (err) {
+      console.error('Failed to update address:', err.message);
+      throw err;
+    }
   };
 
-  const deleteAddress = (id) => {
-    setUserAddresses((prev) => prev.filter((a) => a.id !== id));
+  const deleteAddress = async (id) => {
+    try {
+      if (token) {
+        const response = await api.delete(`/api/users/addresses/${id}`);
+        if (response.data?.status) {
+          const list = (response.data.data || []).map((a) => ({
+            id: a._id || a.id,
+            _id: a._id || a.id,
+            name: a.fullName,
+            fullName: a.fullName,
+            phone: a.phone,
+            street: a.street,
+            apartment: a.apartment || '',
+            city: a.city,
+            state: a.state,
+            postalCode: a.postalCode,
+            country: a.country || 'India',
+            addressType: a.addressType || 'home',
+            isDefault: !!a.isDefault,
+          }));
+          setUserAddresses(list);
+          return list;
+        }
+      } else {
+        setUserAddresses((prev) => prev.filter((a) => a.id !== id));
+      }
+    } catch (err) {
+      console.error('Failed to delete address:', err.message);
+      throw err;
+    }
   };
 
-  const setDefaultAddress = (id) => {
-    setUserAddresses((prev) =>
-      prev.map((a) => ({
-        ...a,
-        isDefault: a.id === id
-      }))
-    );
+  const setDefaultAddress = async (id) => {
+    try {
+      if (token) {
+        const response = await api.patch(`/api/users/addresses/${id}/default`);
+        if (response.data?.status) {
+          const list = (response.data.data || []).map((a) => ({
+            id: a._id || a.id,
+            _id: a._id || a.id,
+            name: a.fullName,
+            fullName: a.fullName,
+            phone: a.phone,
+            street: a.street,
+            apartment: a.apartment || '',
+            city: a.city,
+            state: a.state,
+            postalCode: a.postalCode,
+            country: a.country || 'India',
+            addressType: a.addressType || 'home',
+            isDefault: !!a.isDefault,
+          }));
+          setUserAddresses(list);
+          return list;
+        }
+      } else {
+        setUserAddresses((prev) =>
+          prev.map((a) => ({
+            ...a,
+            isDefault: a.id === id,
+          }))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to set default address:', err.message);
+      throw err;
+    }
   };
 
   // Order Placement Action
@@ -316,38 +371,39 @@ export const AuthProvider = ({ children }) => {
     const newOrder = {
       id: `ord-${Date.now()}`,
       orderNumber: generatedOrderNumber,
-      date: 'Today, ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      date: 'Today, ' + new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }),
       status: 'processing',
-      trackingNumber: `DHL-${Math.floor(100000000 + Math.random() * 900000000)}`,
-      paymentMethod: orderData.paymentMethod || 'Credit Card (•••• 8821)',
+      trackingNumber: `EXP-${Math.floor(100000000 + Math.random() * 900000000)}`,
+      paymentMethod: orderData.paymentMethod || 'Online Payment',
       shippingAddress: orderData.shippingAddress || userAddresses[0] || {
-        name: currentUser?.name || 'Eleanor Vance',
-        street: '742 Montgomery Street',
-        city: 'San Francisco',
-        state: 'CA',
-        postalCode: '94111',
-        country: 'United States'
+        name: currentUser?.name || 'Customer',
+        phone: currentUser?.phone || '',
+        street: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: 'India',
       },
       items: (orderData.items || []).map((item) => ({
-        id: item.product.id,
-        name: item.product.name,
+        id: item.product?.id || item.product?._id || item.id,
+        name: item.product?.name || item.name,
         size: item.selectedSize,
         color: item.selectedColor?.name || 'Standard',
-        price: item.product.price,
+        price: item.product?.price || item.price,
         quantity: item.quantity,
-        image: item.product.image
+        image: item.product?.image || item.product?.images?.[0] || item.image,
       })),
-      total: orderData.total || 0
+      total: orderData.total || 0,
     };
 
     const newPayment = {
       id: `pay-${Date.now()}`,
-      transactionId: `TXN-${Math.floor(10000 + Math.random() * 90000)}-AUTH`,
+      transactionId: `TXN-${Math.floor(10000 + Math.random() * 90000)}-INR`,
       date: 'Today',
-      method: orderData.paymentMethod || 'Credit Card (•••• 8821)',
+      method: orderData.paymentMethod || 'Online Payment',
       orderNumber: generatedOrderNumber,
       amount: orderData.total || 0,
-      status: 'Settled'
+      status: 'Settled',
     };
 
     setUserOrders((prev) => [newOrder, ...prev]);
@@ -371,13 +427,14 @@ export const AuthProvider = ({ children }) => {
         logout,
         updateProfile,
         addresses: userAddresses,
+        fetchAddresses,
         addAddress,
         updateAddress,
         deleteAddress,
         setDefaultAddress,
         orders: userOrders,
         payments: userPayments,
-        recordOrder
+        recordOrder,
       }}
     >
       {children}
