@@ -46,16 +46,18 @@ export const AccountPage = ({
 
   // Address Modal State
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [addressForm, setAddressForm] = useState({
-    name: currentUser?.name || 'Eleanor Vance',
+    fullName: currentUser?.name || '',
+    phone: currentUser?.phone || '',
     street: '',
     apartment: '',
     city: '',
     state: '',
     postalCode: '',
-    country: 'United States',
-    phone: '+1 (415) 890-2144',
+    country: 'India',
+    addressType: 'home',
     isDefault: false
   });
 
@@ -92,14 +94,15 @@ export const AccountPage = ({
   const handleOpenAddAddress = () => {
     setEditingAddress(null);
     setAddressForm({
-      name: currentUser?.name || 'Eleanor Vance',
+      fullName: currentUser?.name || '',
+      phone: currentUser?.phone || '',
       street: '',
       apartment: '',
       city: '',
       state: '',
       postalCode: '',
-      country: 'United States',
-      phone: '+1 (415) 890-2144',
+      country: 'India',
+      addressType: 'home',
       isDefault: addresses.length === 0
     });
     setIsAddressModalOpen(true);
@@ -107,18 +110,39 @@ export const AccountPage = ({
 
   const handleOpenEditAddress = (addr) => {
     setEditingAddress(addr);
-    setAddressForm({ ...addr });
+    setAddressForm({
+      fullName: addr.fullName || addr.name || '',
+      phone: addr.phone || currentUser?.phone || '',
+      street: addr.street || '',
+      apartment: addr.apartment || '',
+      city: addr.city || '',
+      state: addr.state || '',
+      postalCode: addr.postalCode || '',
+      country: addr.country || 'India',
+      addressType: addr.addressType || 'home',
+      isDefault: !!addr.isDefault
+    });
     setIsAddressModalOpen(true);
   };
 
-  const handleSaveAddress = (e) => {
+  const handleSaveAddress = async (e) => {
     e.preventDefault();
-    if (editingAddress) {
-      onUpdateAddress({ ...addressForm, id: editingAddress.id });
-    } else {
-      onAddAddress({ ...addressForm, id: `addr-${Date.now()}` });
+    setIsSavingAddress(true);
+    try {
+      if (editingAddress) {
+        await onUpdateAddress({
+          ...addressForm,
+          id: editingAddress.id || editingAddress._id
+        });
+      } else {
+        await onAddAddress({ ...addressForm });
+      }
+      setIsAddressModalOpen(false);
+    } catch (err) {
+      console.error('Error saving address:', err);
+    } finally {
+      setIsSavingAddress(false);
     }
-    setIsAddressModalOpen(false);
   };
 
   const handleReorder = (order) => {
@@ -184,16 +208,16 @@ export const AccountPage = ({
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A]">
-                  {currentUser?.name || 'Eleanor Vance'}
+                <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#1D241C]">
+                  {currentUser?.name || 'Customer'}
                 </h1>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono tracking-widest bg-[#FAF8F5] text-[#1A1A1A] font-bold border border-[#E8E3DE]">
-                  <Sparkles className="w-3 h-3 text-[#C8A87C]" />
-                  Patron Account
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono tracking-widest bg-[#506040]/15 text-[#506040] font-bold border border-[#506040]/30">
+                  <Sparkles className="w-3 h-3 text-[#506040]" />
+                  Verified Account
                 </span>
               </div>
-              <p className="text-xs text-[#6B6B6B] mt-1">
-                {currentUser?.email || 'eleanor.vance@sumilux.com'} • Member since {currentUser?.memberSince || '2026'}
+              <p className="text-xs text-[#687163] mt-1">
+                {currentUser?.email || ''} {currentUser?.phone ? `• ${currentUser.phone}` : ''}
               </p>
             </div>
           </div>
@@ -293,13 +317,13 @@ export const AccountPage = ({
               </div>
             </button>
 
-            <div className="pt-3 border-t border-[#E8E3DE] mt-3">
+            <div className="pt-3 border-t border-[#E8E4DC] mt-3">
               <Link
-                to="/support"
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-[#6B6B6B] hover:text-[#1A1A1A] hover:bg-[#F8F6F3] rounded-xs transition-colors"
+                to="/contact"
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-xs text-[#687163] hover:text-[#1D241C] hover:bg-[#FAF8F5] rounded-xl transition-colors font-medium"
               >
-                <Headphones className="w-4 h-4 text-[#C8A87C]" />
-                <span>Client Support & Concierge</span>
+                <Headphones className="w-4 h-4 text-[#506040]" />
+                <span>Contact Customer Support</span>
               </Link>
             </div>
           </div>
@@ -586,54 +610,63 @@ export const AccountPage = ({
 
                 {/* 2-Column Section: Shipping Address & Financial Breakdown */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Shipping & Delivery Dossier */}
+                  {/* Shipping & Delivery Info */}
                   <div className="bg-white rounded-[4px] border border-[#E8E3DE] p-6 shadow-2xs space-y-4">
-                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#A68758]">
-                      <MapPin className="w-4 h-4 text-[#C8A87C]" />
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#506040]">
+                      <MapPin className="w-4 h-4 text-[#506040]" />
                       <span>Shipping Destination</span>
                     </div>
 
-                    <div className="text-xs space-y-1 text-[#1A1A1A]">
-                      <div className="font-bold text-sm">{activeOrder.shippingAddress?.name || currentUser?.name || 'Eleanor Vance'}</div>
-                      <div className="text-[#6B6B6B]">{activeOrder.shippingAddress?.street || '742 Montgomery Street, Suite 1400'}</div>
-                      <div className="text-[#6B6B6B]">
-                        {activeOrder.shippingAddress?.city || 'San Francisco'}, {activeOrder.shippingAddress?.state || 'CA'} {activeOrder.shippingAddress?.postalCode || '94111'}
+                    <div className="text-xs space-y-1 text-[#1D241C]">
+                      <div className="font-bold text-sm">
+                        {activeOrder.shippingAddress?.fullName || activeOrder.shippingAddress?.name || currentUser?.name || 'Customer'}
                       </div>
-                      <div className="text-[#6B6B6B]">{activeOrder.shippingAddress?.country || 'United States'}</div>
-                      <div className="text-[#6B6B6B] pt-2">Phone: +1 (415) 890-2144</div>
+                      <div className="text-[#687163]">
+                        {activeOrder.shippingAddress?.street}
+                        {activeOrder.shippingAddress?.apartment ? `, ${activeOrder.shippingAddress.apartment}` : ''}
+                      </div>
+                      <div className="text-[#687163]">
+                        {activeOrder.shippingAddress?.city}{activeOrder.shippingAddress?.state ? `, ${activeOrder.shippingAddress.state}` : ''} {activeOrder.shippingAddress?.postalCode}
+                      </div>
+                      <div className="text-[#687163]">{activeOrder.shippingAddress?.country || 'India'}</div>
+                      {(activeOrder.shippingAddress?.phone || currentUser?.phone) && (
+                        <div className="text-[#1D241C] font-mono pt-1">
+                          Phone: {activeOrder.shippingAddress?.phone || currentUser?.phone}
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   {/* Financial Breakdown */}
                   <div className="bg-white rounded-[4px] border border-[#E8E3DE] p-6 shadow-2xs space-y-3">
-                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#A68758]">
-                      <CreditCard className="w-4 h-4 text-[#C8A87C]" />
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#506040]">
+                      <CreditCard className="w-4 h-4 text-[#506040]" />
                       <span>Payment Summary</span>
                     </div>
 
-                    <div className="space-y-2 text-xs divide-y divide-[#F2EFE9]">
-                      <div className="flex justify-between py-1 text-[#6B6B6B]">
+                    <div className="space-y-2 text-xs divide-y divide-[#E8E4DC]">
+                      <div className="flex justify-between py-1 text-[#687163]">
                         <span>Subtotal</span>
-                        <span className="font-mono text-[#1A1A1A]">
-                          ${((activeOrder.total || 0) * 1.15).toFixed(2)}
+                        <span className="font-mono text-[#1D241C]">
+                          ₹{Math.round((activeOrder.total || 0) * 1.15).toLocaleString('en-IN')}
                         </span>
                       </div>
-                      <div className="flex justify-between py-1 text-[#4A7A5E]">
-                        <span>Promotional Discount (SUMI15)</span>
-                        <span className="font-mono">-${((activeOrder.total || 0) * 0.15).toFixed(2)}</span>
+                      <div className="flex justify-between py-1 text-[#506040]">
+                        <span>Discount Applied</span>
+                        <span className="font-mono">-₹{Math.round((activeOrder.total || 0) * 0.15).toLocaleString('en-IN')}</span>
                       </div>
-                      <div className="flex justify-between py-1 text-[#6B6B6B]">
-                        <span>Complimentary Global Express</span>
-                        <span className="font-mono text-emerald-600 uppercase font-semibold">Free</span>
+                      <div className="flex justify-between py-1 text-[#687163]">
+                        <span>Standard Delivery</span>
+                        <span className="font-mono text-emerald-700 uppercase font-semibold">Free</span>
                       </div>
-                      <div className="flex justify-between py-1 text-[#6B6B6B]">
-                        <span>Estimated Taxes & Duties</span>
-                        <span className="font-mono text-[#1A1A1A]">₹0.00 (Inclusive)</span>
+                      <div className="flex justify-between py-1 text-[#687163]">
+                        <span>Estimated Taxes</span>
+                        <span className="font-mono text-[#1D241C]">₹0 (Inclusive)</span>
                       </div>
-                      <div className="flex justify-between pt-3 font-bold text-sm text-[#1A1A1A]">
+                      <div className="flex justify-between pt-3 font-bold text-sm text-[#1D241C]">
                         <span>Total Paid</span>
-                        <span className="font-mono text-base text-[#1A1A1A]">
-                          ${activeOrder.total?.toFixed(2)}
+                        <span className="font-mono text-base text-[#1D241C]">
+                          ₹{Number(activeOrder.total || 0).toLocaleString('en-IN')}
                         </span>
                       </div>
                     </div>
@@ -649,80 +682,105 @@ export const AccountPage = ({
               <div className="space-y-6">
                 <div className="flex items-center justify-between pb-3 border-b border-[#E8E3DE]">
                   <div>
-                    <h2 className="font-serif text-xl font-bold text-[#1A1A1A]">Saved Address Book</h2>
-                    <p className="text-xs text-[#6B6B6B] mt-0.5">
-                      Manage your primary shipping residence, holiday ateliers, and concierge drop-off locations.
+                    <h2 className="font-serif text-xl font-bold text-[#1D241C]">Saved Address Book</h2>
+                    <p className="text-xs text-[#687163] mt-0.5">
+                      Manage your delivery addresses and set your default shipping destination.
                     </p>
                   </div>
 
                   <button
                     onClick={handleOpenAddAddress}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-semibold uppercase tracking-wider rounded-xs transition-colors cursor-pointer shadow-sm"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-[#1D241C] hover:bg-[#C69E58] text-white hover:text-[#1D241C] text-xs font-semibold uppercase tracking-wider rounded-xl transition-colors cursor-pointer shadow-sm"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Add New Address</span>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {addresses.map((addr) => (
-                    <div
-                      key={addr.id}
-                      className={`bg-white rounded-[4px] border p-6 shadow-2xs relative flex flex-col justify-between ${
-                        addr.isDefault ? 'border-[#C8A87C] ring-1 ring-[#C8A87C]/30' : 'border-[#E8E3DE]'
-                      }`}
+                {addresses.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-[#E8E4DC] p-12 text-center text-[#687163] text-xs space-y-3">
+                    <MapPin className="w-8 h-8 text-[#C69E58] mx-auto opacity-70" />
+                    <p className="font-semibold text-sm text-[#1D241C]">No addresses saved yet</p>
+                    <p>Add a delivery address to ensure faster and smoother checkout on future orders.</p>
+                    <button
+                      onClick={handleOpenAddAddress}
+                      className="px-4 py-2 bg-[#1D241C] text-white text-xs font-semibold rounded-xl hover:bg-[#C69E58] hover:text-[#1D241C] transition-colors cursor-pointer"
                     >
-                      <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="font-bold text-sm text-[#1A1A1A]">{addr.name}</span>
-                          {addr.isDefault && (
-                            <span className="px-2 py-0.5 bg-[#C8A87C]/15 text-[#A68758] border border-[#C8A87C]/30 rounded text-[10px] font-bold uppercase tracking-wider font-mono">
-                              Default Shipping
-                            </span>
+                      Add Your First Address
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {addresses.map((addr) => (
+                      <div
+                        key={addr.id || addr._id}
+                        className={`bg-white rounded-2xl border p-6 shadow-2xs relative flex flex-col justify-between ${
+                          addr.isDefault
+                            ? 'border-[#506040] ring-1 ring-[#506040]/30'
+                            : 'border-[#E8E4DC]'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-sm text-[#1D241C]">
+                                {addr.fullName || addr.name}
+                              </span>
+                              <span className="px-2 py-0.5 bg-[#FAF8F5] border border-[#E8E4DC] text-[#687163] rounded text-[10px] font-bold uppercase tracking-wider font-mono">
+                                {addr.addressType || 'Home'}
+                              </span>
+                            </div>
+                            {addr.isDefault && (
+                              <span className="px-2 py-0.5 bg-[#506040]/15 text-[#506040] border border-[#506040]/30 rounded text-[10px] font-bold uppercase tracking-wider font-mono">
+                                Default Address
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="text-xs text-[#687163] space-y-1">
+                            <p className="text-[#1D241C] font-medium">{addr.street}</p>
+                            {addr.apartment && <p>{addr.apartment}</p>}
+                            <p>
+                              {addr.city}, {addr.state} {addr.postalCode}
+                            </p>
+                            <p>{addr.country || 'India'}</p>
+                            <p className="pt-2 font-mono text-[#1D241C]">
+                              Phone: <strong>{addr.phone || currentUser?.phone || 'Not specified'}</strong>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-6 pt-4 border-t border-[#E8E4DC] flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => handleOpenEditAddress(addr)}
+                              className="text-[#1D241C] hover:text-[#C69E58] flex items-center gap-1 font-semibold transition-colors cursor-pointer"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              onClick={() => onDeleteAddress(addr.id || addr._id)}
+                              className="text-red-700 hover:underline flex items-center gap-1 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+
+                          {!addr.isDefault && (
+                            <button
+                              onClick={() => onSetDefaultAddress(addr.id || addr._id)}
+                              className="text-xs text-[#506040] hover:text-[#1D241C] font-semibold underline cursor-pointer"
+                            >
+                              Set as Default
+                            </button>
                           )}
                         </div>
-
-                        <div className="text-xs text-[#6B6B6B] space-y-1">
-                          <p>{addr.street}</p>
-                          {addr.apartment && <p>{addr.apartment}</p>}
-                          <p>
-                            {addr.city}, {addr.state} {addr.postalCode}
-                          </p>
-                          <p>{addr.country}</p>
-                          <p className="pt-2 font-mono text-[#1A1A1A]">Phone: {addr.phone}</p>
-                        </div>
                       </div>
-
-                      <div className="mt-6 pt-4 border-t border-[#F2EFE9] flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => handleOpenEditAddress(addr)}
-                            className="text-[#1A1A1A] hover:text-[#C8A87C] flex items-center gap-1 font-semibold transition-colors cursor-pointer"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                            <span>Edit</span>
-                          </button>
-                          <button
-                            onClick={() => onDeleteAddress(addr.id)}
-                            className="text-[#A5432F] hover:underline flex items-center gap-1 transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>Delete</span>
-                          </button>
-                        </div>
-
-                        {!addr.isDefault && (
-                          <button
-                            onClick={() => onSetDefaultAddress(addr.id)}
-                            className="text-xs text-[#A68758] hover:text-[#1A1A1A] font-semibold underline cursor-pointer"
-                          >
-                            Set as Default
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -805,13 +863,13 @@ export const AccountPage = ({
                     <div className="p-5 bg-white border border-[#C8A87C] rounded-[4px] shadow-2xs relative flex flex-col justify-between">
                       <div>
                         <div className="flex items-center justify-between mb-4">
-                          <span className="font-mono text-sm font-bold text-[#1A1A1A]">AMEX Centurion</span>
-                          <span className="px-2 py-0.5 bg-[#C8A87C]/15 text-[#A68758] text-[10px] font-mono font-bold rounded">
+                          <span className="font-mono text-sm font-bold text-[#1D241C]">Saved Card</span>
+                          <span className="px-2 py-0.5 bg-[#506040]/15 text-[#506040] text-[10px] font-mono font-bold rounded">
                             Primary
                           </span>
                         </div>
-                        <p className="font-mono text-base tracking-widest text-[#1A1A1A]">•••• •••• •••• 8821</p>
-                        <p className="text-xs text-[#6B6B6B] mt-2">Expires 12/28 • Eleanor Vance</p>
+                        <p className="font-mono text-base tracking-widest text-[#1D241C]">•••• •••• •••• 8821</p>
+                        <p className="text-xs text-[#687163] mt-2">Expires 12/28 • {currentUser?.name || 'Customer'}</p>
                       </div>
                       <div className="mt-4 pt-3 border-t border-[#F2EFE9] flex items-center justify-between text-xs text-[#6B6B6B]">
                         <span className="flex items-center gap-1 text-emerald-700">
@@ -857,33 +915,36 @@ export const AccountPage = ({
                 <div className="bg-white rounded-[4px] border border-[#E8E3DE] p-6 sm:p-8 shadow-2xs space-y-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
+                      <label className="text-xs font-bold uppercase tracking-wider text-[#1D241C] block mb-1">
                         Full Name
                       </label>
                       <input
                         type="text"
-                        defaultValue={currentUser?.name || 'Eleanor Vance'}
-                        className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
+                        defaultValue={currentUser?.name || ''}
+                        placeholder="Your full name"
+                        className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58]"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
+                      <label className="text-xs font-bold uppercase tracking-wider text-[#1D241C] block mb-1">
                         Email Address
                       </label>
                       <input
                         type="email"
-                        defaultValue={currentUser?.email || 'eleanor.vance@sumilux.com'}
-                        className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
+                        defaultValue={currentUser?.email || ''}
+                        placeholder="you@example.com"
+                        className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58]"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                        Telephone
+                      <label className="text-xs font-bold uppercase tracking-wider text-[#1D241C] block mb-1">
+                        Mobile Number
                       </label>
                       <input
-                        type="text"
-                        defaultValue="+1 (415) 890-2144"
-                        className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
+                        type="tel"
+                        defaultValue={currentUser?.phone || ''}
+                        placeholder="10-digit mobile number"
+                        className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58] font-mono"
                       />
                     </div>
                     <div>
@@ -915,96 +976,147 @@ export const AccountPage = ({
 
       {/* Address Form Modal */}
       {isAddressModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-[4px] border border-[#E8E3DE] shadow-2xl max-w-lg w-full p-6 sm:p-8 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#E8E3DE]">
-              <h3 className="font-serif text-lg font-bold text-[#1A1A1A]">
-                {editingAddress ? 'Edit Delivery Address' : 'Add New Address'}
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in text-[#1D241C]">
+          <div className="bg-white rounded-2xl border border-[#E8E4DC] shadow-2xl max-w-lg w-full p-6 sm:p-8 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E8E4DC]">
+              <div>
+                <h3 className="font-serif text-xl font-bold text-[#1D241C]">
+                  {editingAddress ? 'Edit Delivery Address' : 'Add New Address'}
+                </h3>
+                <p className="text-[11px] text-[#687163] mt-0.5">
+                  Enter your recipient contact and delivery location details.
+                </p>
+              </div>
               <button
                 onClick={() => setIsAddressModalOpen(false)}
-                className="p-1 text-neutral-400 hover:text-black cursor-pointer"
+                className="p-1.5 text-neutral-400 hover:text-black cursor-pointer rounded-lg hover:bg-[#FAF8F5]"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSaveAddress} className="space-y-4 text-xs">
-              <div>
-                <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                  Recipient Full Name
-                </label>
-                <input
-                  required
-                  type="text"
-                  value={addressForm.name}
-                  onChange={(e) => setAddressForm({ ...addressForm, name: e.target.value })}
-                  className="w-full px-3.5 py-2 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#1D241C] block mb-1">
+                    Recipient Full Name *
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    placeholder="e.g. Rahul Sharma"
+                    value={addressForm.fullName}
+                    onChange={(e) => setAddressForm({ ...addressForm, fullName: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58] text-xs text-[#1D241C]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#1D241C] block mb-1">
+                    10-Digit Mobile Number *
+                  </label>
+                  <input
+                    required
+                    type="tel"
+                    placeholder="e.g. 9876543210"
+                    pattern="[0-9]{10}"
+                    title="Please enter a valid 10-digit mobile number"
+                    value={addressForm.phone}
+                    onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58] text-xs font-mono text-[#1D241C]"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                  Street Address
+                <label className="text-[11px] font-bold uppercase tracking-wider text-[#1D241C] block mb-1">
+                  Address Type
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['home', 'work', 'other'].map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setAddressForm({ ...addressForm, addressType: type })}
+                      className={`py-2 px-3 rounded-xl border text-xs font-semibold capitalize transition-colors cursor-pointer ${
+                        addressForm.addressType === type
+                          ? 'bg-[#1D241C] text-white border-[#1D241C]'
+                          : 'bg-[#FAF8F5] text-[#687163] border-[#E8E4DC] hover:text-[#1D241C]'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-[#1D241C] block mb-1">
+                  Flat, House No., Building, Street *
                 </label>
                 <input
                   required
                   type="text"
-                  placeholder="e.g. 742 Evergreen Terrace"
+                  placeholder="e.g. Flat 402, Royal Palms, Link Road"
                   value={addressForm.street}
                   onChange={(e) => setAddressForm({ ...addressForm, street: e.target.value })}
-                  className="w-full px-3.5 py-2 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58] text-xs text-[#1D241C]"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                  Apartment, Suite, Unit (Optional)
+                <label className="text-[11px] font-bold uppercase tracking-wider text-[#1D241C] block mb-1">
+                  Area, Colony, Sector, Landmark (Optional)
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Penthouse 4B"
+                  placeholder="e.g. Near City Center Mall"
                   value={addressForm.apartment}
                   onChange={(e) => setAddressForm({ ...addressForm, apartment: e.target.value })}
-                  className="w-full px-3.5 py-2 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58] text-xs text-[#1D241C]"
                 />
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                    City
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#1D241C] block mb-1">
+                    City *
                   </label>
                   <input
                     required
                     type="text"
+                    placeholder="e.g. Mumbai"
                     value={addressForm.city}
                     onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
-                    className="w-full px-3.5 py-2 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
+                    className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58] text-xs text-[#1D241C]"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                    State
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#1D241C] block mb-1">
+                    State *
                   </label>
                   <input
                     required
                     type="text"
+                    placeholder="e.g. Maharashtra"
                     value={addressForm.state}
                     onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
-                    className="w-full px-3.5 py-2 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
+                    className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58] text-xs text-[#1D241C]"
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                    Postal Code
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#1D241C] block mb-1">
+                    PIN Code *
                   </label>
                   <input
                     required
                     type="text"
+                    placeholder="e.g. 400050"
+                    pattern="[0-9]{6}"
+                    title="Please enter a 6-digit PIN code"
                     value={addressForm.postalCode}
                     onChange={(e) => setAddressForm({ ...addressForm, postalCode: e.target.value })}
-                    className="w-full px-3.5 py-2 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
+                    className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58] text-xs font-mono text-[#1D241C]"
                   />
                 </div>
               </div>
@@ -1015,26 +1127,27 @@ export const AccountPage = ({
                   id="defaultAddressCheckbox"
                   checked={addressForm.isDefault}
                   onChange={(e) => setAddressForm({ ...addressForm, isDefault: e.target.checked })}
-                  className="rounded text-[#C8A87C] focus:ring-[#C8A87C]"
+                  className="rounded text-[#506040] focus:ring-[#506040]"
                 />
-                <label htmlFor="defaultAddressCheckbox" className="text-xs text-[#1A1A1A] cursor-pointer">
+                <label htmlFor="defaultAddressCheckbox" className="text-xs text-[#1D241C] cursor-pointer font-medium">
                   Set as default shipping address
                 </label>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E8E3DE]">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E8E4DC]">
                 <button
                   type="button"
                   onClick={() => setIsAddressModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-[#6B6B6B] hover:text-[#1A1A1A] cursor-pointer"
+                  className="px-4 py-2 text-xs font-semibold text-[#687163] hover:text-[#1D241C] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-semibold uppercase tracking-wider rounded-xs transition-colors cursor-pointer"
+                  disabled={isSavingAddress}
+                  className="px-5 py-2 bg-[#1D241C] hover:bg-[#C69E58] text-white hover:text-[#1D241C] text-xs font-semibold uppercase tracking-wider rounded-xl transition-colors cursor-pointer disabled:opacity-50"
                 >
-                  Save Address
+                  {isSavingAddress ? 'Saving...' : 'Save Address'}
                 </button>
               </div>
             </form>

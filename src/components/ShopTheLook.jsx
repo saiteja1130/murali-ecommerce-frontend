@@ -17,20 +17,20 @@ export const ShopTheLook = ({ scene, products, onAddToCart, onClickProduct }) =>
   };
   return (<section id="lookbook-section" className="py-16 md:py-24 px-5 max-w-7xl mx-auto">
     <div className="flex flex-col items-center text-center mb-12">
-      <span className="text-xs font-semibold uppercase tracking-[0.25em] text-[#C8A87C] mb-2">
-        Editorial Curation
+      <span className="text-xs font-semibold uppercase tracking-[0.25em] text-[#C69E58] mb-2">
+        Style Inspiration
       </span>
-      <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-[#1A1A1A] tracking-tight mb-3">
+      <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-[#1D241C] tracking-tight mb-3">
         Shop The Look
       </h2>
-      <p className="text-sm text-[#6B6B6B] max-w-lg font-sans">
-        Click any pulsing hotspot marker on the model to inspect and purchase individual pieces from the styled outfit.
+      <p className="text-sm text-[#687163] max-w-lg font-sans">
+        Click on the plus icons in the photo to explore and shop items from this look.
       </p>
     </div>
 
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-[#FFFFFF] border border-[#E8E3DE] rounded-[4px] p-4 md:p-8 shadow-xs">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-[#FFFFFF] border border-[#E8E4DC] rounded-[4px] p-4 md:p-8 shadow-xs">
       {/* Interactive Image with Hotspots (Left 7 cols) */}
-      <div className="lg:col-span-7 relative overflow-hidden rounded-[4px] bg-[#F4EFEA] aspect-[4/5] sm:aspect-[16/11] lg:aspect-[4/5] select-none">
+      <div className="lg:col-span-7 relative overflow-hidden rounded-[4px] bg-[#FAF8F5] aspect-[4/5] sm:aspect-[16/11] lg:aspect-[4/5] select-none">
         <img src={scene.image} alt={scene.title} className="w-full h-full object-cover object-center" loading="lazy" />
 
         {/* Dark subtle overlay */}
@@ -43,12 +43,12 @@ export const ShopTheLook = ({ scene, products, onAddToCart, onClickProduct }) =>
           return (<div key={hs.id} className="absolute transform -translate-x-1/2 -translate-y-1/2 z-20" style={{ left: `${hs.x}%`, top: `${hs.y}%` }}>
             {/* Pulsing ring */}
             <div className="relative">
-              <button id={`hotspot-pin-${hs.id}`} onClick={() => setActiveHotspotId(isActive ? null : hs.id)} className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl focus:outline-none ${isActive
-                ? 'bg-[#C8A87C] text-[#1A1A1A] scale-110'
-                : 'bg-[#1A1A1A] text-white hover:bg-[#C8A87C] hover:text-[#1A1A1A]'}`} aria-label={`Hotspot for ${hs.label}`}>
-                {isActive ? (<X className="w-4 h-4" />) : (<Plus className="w-4 h-4 animate-spin-slow" />)}
+              <button id={`hotspot-pin-${hs.id}`} onClick={() => setActiveHotspotId(isActive ? null : hs.id)} className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl focus:outline-none cursor-pointer ${isActive
+                ? 'bg-[#C69E58] text-[#1D241C] scale-110'
+                : 'bg-[#1D241C] text-white hover:bg-[#C69E58] hover:text-[#1D241C]'}`} aria-label={`Hotspot for ${hs.label}`}>
+                {isActive ? (<X className="w-4 h-4" />) : (<Plus className="w-4 h-4" />)}
               </button>
-              <span className="absolute -inset-1 rounded-full bg-[#C8A87C]/30 animate-ping pointer-events-none" />
+              <span className="absolute -inset-1 rounded-full bg-[#C69E58]/30 animate-ping pointer-events-none" />
             </div>
           </div>);
         })}
@@ -56,13 +56,16 @@ export const ShopTheLook = ({ scene, products, onAddToCart, onClickProduct }) =>
 
       {/* Hotspot Product Preview Cards (Right 5 cols) */}
       <div className="lg:col-span-5 flex flex-col justify-center space-y-4">
-        <div className="border-b border-[#E8E3DE] pb-4">
-          <span className="text-xs uppercase tracking-widest text-[#6B6B6B] font-semibold">
-            Outfit Breakdown ({scene.hotspots.length} Items)
+        <div className="border-b border-[#E8E4DC] pb-4">
+          <span className="text-xs uppercase tracking-widest text-[#687163] font-semibold">
+            Featured Look
           </span>
-          <h3 className="font-serif text-2xl font-bold text-[#1A1A1A] mt-1">
-            Spring Tailored Capsule
+          <h3 className="font-serif text-2xl font-bold text-[#1D241C] mt-1">
+            {scene.title}
           </h3>
+          <p className="text-xs text-[#687163] mt-1 font-sans">
+            {scene.description}
+          </p>
         </div>
 
         <div className="space-y-3 pt-2">

@@ -1,33 +1,64 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { PRODUCTS, CATEGORIES } from '../data/mockData';
+import { normalizeProduct, normalizeCategory } from '../utils/productAdapter';
 import api from './api';
 
 const StoreContext = createContext(undefined);
 
 export const StoreProvider = ({ children }) => {
-  const [products] = useState(PRODUCTS);
+  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
-  // Fetch live categories
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await api.get('/api/categories');
-        setCategories(response.data.data.map(cat => ({
-          ...cat,
-          id: cat._id
-        })));
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
+  // Fetch live categories from Backend API
+  const fetchCategories = useCallback(async () => {
+    setIsLoadingCategories(true);
+    try {
+      const response = await api.get('/api/categories');
+      const apiCats = response.data?.data || [];
+      if (apiCats.length > 0) {
+        setCategories(apiCats.map(normalizeCategory).filter(Boolean));
+      } else {
+        setCategories([]);
       }
-    };
-    fetchCategories();
+    } catch (error) {
+      console.warn('Failed to load categories:', error.message);
+      setCategories([]);
+    } finally {
+      setIsLoadingCategories(false);
+    }
   }, []);
+
+  // Fetch live products from Backend API
+  const fetchProducts = useCallback(async () => {
+    setIsLoadingProducts(true);
+    try {
+      const response = await api.get('/api/products?limit=100');
+      const apiProducts = response.data?.data || [];
+      if (apiProducts.length > 0) {
+        const normalized = apiProducts.map(normalizeProduct).filter(Boolean);
+        setProducts(normalized);
+      } else {
+        setProducts([]);
+      }
+    } catch (error) {
+      console.warn('Failed to load products:', error.message);
+      setProducts([]);
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+    fetchProducts();
+  }, [fetchCategories, fetchProducts]);
+
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('INR');
 
-  // 2. Shopping Bag & Wishlist State
+  // Shopping Bag & Wishlist State (Clean initial state without mock dummy items)
   const [cart, setCart] = useState(() => {
     const saved = localStorage.getItem('sumilux_cart');
     if (saved) {
@@ -37,15 +68,7 @@ export const StoreProvider = ({ children }) => {
         return [];
       }
     }
-    return [
-      {
-        id: 'prod-w-1-S-Camel Gold',
-        product: PRODUCTS.find((p) => p.id === 'prod-w-1') || PRODUCTS[0],
-        quantity: 1,
-        selectedSize: 'S',
-        selectedColor: { name: 'Camel Gold', hex: '#C8A87C' }
-      }
-    ];
+    return [];
   });
 
   const [wishlist, setWishlist] = useState(() => {
@@ -57,13 +80,13 @@ export const StoreProvider = ({ children }) => {
         return [];
       }
     }
-    return ['prod-m-2', 'prod-a-1'];
+    return [];
   });
 
-  const [promoCode, setPromoCode] = useState('SUMI15');
-  const [discountRate, setDiscountRate] = useState(0.15); // 15% default discount active
+  const [promoCode, setPromoCode] = useState('');
+  const [discountRate, setDiscountRate] = useState(0);
 
-  // 3. UI Drawers, Modals & Toast State
+  // UI Drawers, Modals & Toast State
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -102,9 +125,9 @@ export const StoreProvider = ({ children }) => {
   // Cart Operations
   const addToCart = useCallback((product, selectedSize, selectedColor, quantity = 1) => {
     if (!product) return;
-    const size = selectedSize || product.sizes?.[0] || 'One Size';
-    const color = selectedColor || product.colors?.[0] || { name: 'Standard', hex: '#1A1A1A' };
-    const cartItemId = `${product.id}-${size}-${color.name}`;
+    const size = selectedSize || product.sizes?.[0] || 'Standard';
+    const color = selectedColor || product.colors?.[0] || { name: 'Standard', hex: '#1D241C' };
+    const cartItemId = `${product.id || product._id}-${size}-${color.name || color}`;
 
     setCart((prev) => {
       const existing = prev.find((item) => item.id === cartItemId);
@@ -120,8 +143,8 @@ export const StoreProvider = ({ children }) => {
     showToast({
       type: 'cart',
       title: 'Added to Bag',
-      message: `${quantity}× ${product.name} (${size} / ${color.name})`,
-      image: product.image
+      message: `${quantity}× ${product.name} (${size} / ${color.name || color})`,
+      image: product.image || product.images?.[0]
     });
   }, [showToast]);
 
@@ -142,7 +165,7 @@ export const StoreProvider = ({ children }) => {
         showToast({
           type: 'info',
           title: 'Removed from Bag',
-          message: item.product?.name || 'Garment removed'
+          message: item.product?.name || 'Product removed'
         });
       }
       return prev.filter((i) => i.id !== id);
@@ -161,23 +184,24 @@ export const StoreProvider = ({ children }) => {
   // Wishlist Operations
   const toggleWishlist = useCallback((product) => {
     if (!product) return;
+    const prodId = product.id || product._id;
     setWishlist((prev) => {
-      const isSaved = prev.includes(product.id);
+      const isSaved = prev.includes(prodId);
       if (isSaved) {
         showToast({
           type: 'info',
           title: 'Removed from Wishlist',
           message: product.name
         });
-        return prev.filter((id) => id !== product.id);
+        return prev.filter((id) => id !== prodId);
       } else {
         showToast({
           type: 'wishlist',
           title: 'Saved to Wishlist',
           message: product.name,
-          image: product.image
+          image: product.image || product.images?.[0]
         });
-        return [...prev, product.id];
+        return [...prev, prodId];
       }
     });
   }, [showToast]);
@@ -192,7 +216,7 @@ export const StoreProvider = ({ children }) => {
 
   const moveWishlistToCart = useCallback((product) => {
     addToCart(product);
-    removeFromWishlist(product.id);
+    removeFromWishlist(product.id || product._id);
   }, [addToCart, removeFromWishlist]);
 
   // Promo Code Operations
@@ -203,20 +227,32 @@ export const StoreProvider = ({ children }) => {
       showToast({
         type: 'success',
         title: 'Promo Applied',
-        message: '15% discount has been applied to your order subtotal.'
+        message: '15% discount has been applied to your order.'
       });
       return true;
     }
     return false;
   }, [showToast]);
 
-  // Financial Calculations
-  const cartSubtotal = useMemo(() => cart.reduce((acc, i) => acc + (i.product?.price || 0) * i.quantity, 0), [cart]);
+  // Financial Calculations (INR ₹ Standard)
+  const cartSubtotal = useMemo(
+    () => cart.reduce((acc, i) => acc + (Number(i.product?.price) || 0) * i.quantity, 0),
+    [cart]
+  );
   const cartItemCount = useMemo(() => cart.reduce((acc, i) => acc + i.quantity, 0), [cart]);
   const discountAmount = useMemo(() => cartSubtotal * discountRate, [cartSubtotal, discountRate]);
-  const shippingCost = useMemo(() => (cartSubtotal >= 100 || cart.length === 0 ? 0 : 15.0), [cartSubtotal, cart.length]);
-  const cartTotal = useMemo(() => cartSubtotal - discountAmount + shippingCost, [cartSubtotal, discountAmount, shippingCost]);
-  const wishlistProducts = useMemo(() => products.filter((p) => wishlist.includes(p.id)), [products, wishlist]);
+  const shippingCost = useMemo(
+    () => (cartSubtotal >= 5000 || cart.length === 0 ? 0 : 199.0),
+    [cartSubtotal, cart.length]
+  );
+  const cartTotal = useMemo(
+    () => cartSubtotal - discountAmount + shippingCost,
+    [cartSubtotal, discountAmount, shippingCost]
+  );
+  const wishlistProducts = useMemo(
+    () => products.filter((p) => wishlist.includes(p.id || p._id)),
+    [products, wishlist]
+  );
 
   return (
     <StoreContext.Provider
@@ -260,6 +296,10 @@ export const StoreProvider = ({ children }) => {
         setIsSearchOpen,
         openSearch,
         closeSearch,
+        isLoadingProducts,
+        isLoadingCategories,
+        refreshProducts: fetchProducts,
+        refreshCategories: fetchCategories,
         toasts,
         showToast,
         dismissToast

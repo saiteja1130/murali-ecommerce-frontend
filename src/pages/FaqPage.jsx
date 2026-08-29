@@ -185,22 +185,22 @@ export const FaqPage = () => {
         </div>
 
         {/* Bottom Contact Help Card */}
-        <div className="max-w-3xl mx-auto bg-white rounded-[4px] border border-[#E8E3DE] p-8 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+        <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-[#E8E4DC] p-8 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-[#FAF8F5] border border-[#E8E3DE] flex items-center justify-center text-[#C8A87C] shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-[#FAF8F5] border border-[#E8E4DC] flex items-center justify-center text-[#506040] shrink-0">
               <Headphones className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-serif text-lg font-bold text-[#1A1A1A]">Still have an unanswered question?</h3>
-              <p className="text-xs text-[#6B6B6B] mt-0.5">Our client styling team is online to assist you directly.</p>
+              <h3 className="font-serif text-lg font-bold text-[#1D241C]">Still have an unanswered question?</h3>
+              <p className="text-xs text-[#687163] mt-0.5">Our customer support team is available to assist you.</p>
             </div>
           </div>
 
           <Link
-            to="/support"
-            className="px-6 py-3 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-semibold uppercase tracking-wider rounded-xs transition-colors shrink-0"
+            to="/contact"
+            className="px-6 py-3 bg-[#1D241C] hover:bg-[#C69E58] text-white hover:text-[#1D241C] text-xs font-semibold uppercase tracking-wider rounded-xl transition-colors shrink-0 shadow-sm"
           >
-            Live Concierge Help →
+            Contact Our Team →
           </Link>
         </div>
       </div>

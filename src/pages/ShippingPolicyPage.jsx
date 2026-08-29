@@ -4,122 +4,101 @@ import { Truck, ShieldCheck, Globe, Clock, PackageCheck, ChevronRight, Sparkles 
 
 export const ShippingPolicyPage = () => {
   return (
-    <div className="min-h-screen bg-[#F8F6F3] py-8 lg:py-16 animate-fade-in font-sans">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+    <div className="min-h-screen bg-[#FAF8F5] py-8 lg:py-16 animate-fade-in font-sans text-[#1D241C]">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-[#6B6B6B]">
-          <Link to="/" className="hover:text-[#1A1A1A] transition-colors">Home</Link>
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-[#687163]">
+          <Link to="/" className="hover:text-[#1D241C] transition-colors">
+            Home
+          </Link>
           <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-          <span className="text-[#1A1A1A] font-semibold">Shipping & Delivery Policy</span>
+          <span className="text-[#1D241C] font-semibold">Shipping Policy</span>
         </nav>
 
         {/* Header Hero Card */}
-        <div className="bg-white rounded-[4px] border border-[#E8E3DE] p-8 sm:p-12 shadow-2xs space-y-4">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#C8A87C]/15 text-[#A68758] text-[10px] font-mono font-bold tracking-widest uppercase rounded-xs">
-            <Truck className="w-3.5 h-3.5 text-[#C8A87C]" />
-            Global White-Glove Logistics
+        <div className="bg-white rounded-2xl border border-[#E8E4DC] p-8 sm:p-12 shadow-2xs space-y-4">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#506040]/15 text-[#506040] text-[10px] font-mono font-bold tracking-widest uppercase rounded-lg border border-[#506040]/30">
+            <Truck className="w-3.5 h-3.5 text-[#506040]" />
+            Fast & Reliable Delivery
           </span>
-          <h1 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight text-[#1A1A1A]">
-            Shipping & Delivery Charter
+          <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-[#1D241C]">
+            Shipping & Delivery Policy
           </h1>
-          <p className="text-xs sm:text-sm text-[#6B6B6B] max-w-2xl leading-relaxed">
-            At SUMILUX, our dispatch and transit protocols are held to the same exacting standards as our garment tailoring. Every order is packaged in climate-neutral, FSC-certified linen presentation boxes.
+          <p className="text-xs sm:text-sm text-[#687163] max-w-2xl leading-relaxed">
+            We deliver safely across India and worldwide. Every item is packed with care in secure, protective packaging.
           </p>
         </div>
 
-        {/* Shipping Rates & Transit Tiers Table */}
-        <div className="bg-white rounded-[4px] border border-[#E8E3DE] p-6 sm:p-10 shadow-2xs space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-[#E8E3DE]">
+        {/* Shipping Rates & Delivery Time Table */}
+        <div className="bg-white rounded-2xl border border-[#E8E4DC] p-6 sm:p-10 shadow-2xs space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-[#E8E4DC]">
             <div>
-              <h2 className="font-serif text-xl font-bold text-[#1A1A1A]">Delivery Speeds & Service Tiers</h2>
-              <p className="text-xs text-[#6B6B6B] mt-0.5">Complimentary express shipping applies automatically on all orders over ₹5,000.</p>
+              <h2 className="font-serif text-xl font-bold text-[#1D241C]">Delivery Options & Rates</h2>
+              <p className="text-xs text-[#687163] mt-0.5">
+                Free shipping applies automatically on all orders above ₹5,000.
+              </p>
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-[#E8E3DE] bg-[#FAF8F5] text-[10px] uppercase tracking-wider text-[#6B6B6B]">
-                  <th className="py-3.5 px-4 font-semibold">Service Level</th>
-                  <th className="py-3.5 px-4 font-semibold">Transit Timeline</th>
-                  <th className="py-3.5 px-4 font-semibold">Carrier</th>
-                  <th className="py-3.5 px-4 font-semibold">Cost (Under ₹5,000)</th>
-                  <th className="py-3.5 px-4 font-semibold text-right">Cost (₹5,000+)</th>
+                <tr className="border-b border-[#E8E4DC] bg-[#FAF8F5] text-[10px] uppercase tracking-wider text-[#687163]">
+                  <th className="py-3.5 px-4 font-semibold">Delivery Type</th>
+                  <th className="py-3.5 px-4 font-semibold">Estimated Time</th>
+                  <th className="py-3.5 px-4 font-semibold">Orders Below ₹5,000</th>
+                  <th className="py-3.5 px-4 font-semibold text-right">Orders Above ₹5,000</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F2EFE9]">
+              <tbody className="divide-y divide-[#E8E4DC]">
                 <tr>
-                  <td className="py-4 px-4 font-semibold text-[#1A1A1A]">Complimentary Standard Express</td>
-                  <td className="py-4 px-4 text-[#6B6B6B]">2 – 4 Business Days</td>
-                  <td className="py-4 px-4 text-[#1A1A1A]">DHL / FedEx Express</td>
-                  <td className="py-4 px-4 font-mono">₹250.00</td>
+                  <td className="py-4 px-4 font-semibold text-[#1D241C]">Standard Delivery</td>
+                  <td className="py-4 px-4 text-[#687163]">3 – 5 Business Days</td>
+                  <td className="py-4 px-4 font-mono">₹150</td>
                   <td className="py-4 px-4 text-right font-mono font-bold text-emerald-700 uppercase">Free</td>
                 </tr>
                 <tr>
-                  <td className="py-4 px-4 font-semibold text-[#1A1A1A]">Next-Day Priority Atelier Delivery</td>
-                  <td className="py-4 px-4 text-[#6B6B6B]">1 Business Day (Order by 14:00)</td>
-                  <td className="py-4 px-4 text-[#1A1A1A]">DHL Air Priority</td>
-                  <td className="py-4 px-4 font-mono">₹450.00</td>
-                  <td className="py-4 px-4 text-right font-mono font-bold text-[#1A1A1A]">₹450.00</td>
+                  <td className="py-4 px-4 font-semibold text-[#1D241C]">Express Priority Delivery</td>
+                  <td className="py-4 px-4 text-[#687163]">1 – 2 Business Days</td>
+                  <td className="py-4 px-4 font-mono">₹350</td>
+                  <td className="py-4 px-4 text-right font-mono font-bold text-[#1D241C]">₹350</td>
                 </tr>
                 <tr>
-                  <td className="py-4 px-4 font-semibold text-[#1A1A1A]">International Worldwide Courier (DDP)</td>
-                  <td className="py-4 px-4 text-[#6B6B6B]">3 – 5 Business Days</td>
-                  <td className="py-4 px-4 text-[#1A1A1A]">DHL Express Global</td>
-                  <td className="py-4 px-4 font-mono">₹950.00</td>
+                  <td className="py-4 px-4 font-semibold text-[#1D241C]">International Delivery</td>
+                  <td className="py-4 px-4 text-[#687163]">5 – 8 Business Days</td>
+                  <td className="py-4 px-4 font-mono">₹950</td>
                   <td className="py-4 px-4 text-right font-mono font-bold text-emerald-700 uppercase">Free</td>
-                </tr>
-                <tr>
-                  <td className="py-4 px-4 font-semibold text-[#1A1A1A]">Private Courier Hand Delivery (Metro Areas)</td>
-                  <td className="py-4 px-4 text-[#6B6B6B]">Same-Day Evening Window</td>
-                  <td className="py-4 px-4 text-[#1A1A1A]">SUMILUX Chauffeur</td>
-                  <td className="py-4 px-4 font-mono">₹950.00</td>
-                  <td className="py-4 px-4 text-right font-mono font-bold text-[#1A1A1A]">₹950.00</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* 3 Core Shipping Guarantees */}
+        {/* FAQs and Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-[4px] border border-[#E8E3DE] shadow-2xs space-y-3">
-            <Globe className="w-8 h-8 text-[#C8A87C]" />
-            <h3 className="font-serif text-lg font-bold text-[#1A1A1A]">Delivered Duty Paid (DDP)</h3>
-            <p className="text-xs text-[#6B6B6B] leading-relaxed">
-              No surprise customs charges upon arrival. All international import taxes, duties, and brokerage clearance fees are calculated and covered by SUMILUX.
+          <div className="p-6 bg-white rounded-2xl border border-[#E8E4DC] shadow-2xs space-y-2">
+            <PackageCheck className="w-5 h-5 text-[#506040]" />
+            <h3 className="font-serif text-base font-bold text-[#1D241C]">Order Tracking</h3>
+            <p className="text-xs text-[#687163] leading-relaxed">
+              You will receive a tracking link via SMS and email as soon as your order is dispatched.
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-[4px] border border-[#E8E3DE] shadow-2xs space-y-3">
-            <PackageCheck className="w-8 h-8 text-[#C8A87C]" />
-            <h3 className="font-serif text-lg font-bold text-[#1A1A1A]">Signature Required & Insured</h3>
-            <p className="text-xs text-[#6B6B6B] leading-relaxed">
-              Every parcel is 100% insured for transit loss or damage. Orders exceeding ₹15000 require an adult signature upon delivery for vault-level security.
+          <div className="p-6 bg-white rounded-2xl border border-[#E8E4DC] shadow-2xs space-y-2">
+            <Clock className="w-5 h-5 text-[#506040]" />
+            <h3 className="font-serif text-base font-bold text-[#1D241C]">Dispatch Time</h3>
+            <p className="text-xs text-[#687163] leading-relaxed">
+              Orders placed before 2:00 PM are processed and packed on the same business day.
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-[4px] border border-[#E8E3DE] shadow-2xs space-y-3">
-            <Clock className="w-8 h-8 text-[#C8A87C]" />
-            <h3 className="font-serif text-lg font-bold text-[#1A1A1A]">Real-Time GPS Tracking</h3>
-            <p className="text-xs text-[#6B6B6B] leading-relaxed">
-              Upon dispatch, a live tracking link is transmitted to your email and patron account dashboard, providing live step-by-step waypoint telemetry.
+          <div className="p-6 bg-white rounded-2xl border border-[#E8E4DC] shadow-2xs space-y-2">
+            <ShieldCheck className="w-5 h-5 text-[#506040]" />
+            <h3 className="font-serif text-base font-bold text-[#1D241C]">Damage Protection</h3>
+            <p className="text-xs text-[#687163] leading-relaxed">
+              If an item is damaged during transit, contact us within 48 hours and we will replace it immediately.
             </p>
           </div>
-        </div>
-
-        {/* Questions Footer */}
-        <div className="bg-[#FAF8F5] p-6 rounded-[4px] border border-[#E8E3DE] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-          <div>
-            <div className="font-bold text-[#1A1A1A]">Have a bespoke delivery requirement?</div>
-            <div className="text-[#6B6B6B]">Our concierge team can coordinate private drop-offs and discreet vault delivery.</div>
-          </div>
-          <Link
-            to="/contact"
-            className="px-5 py-2.5 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] font-semibold uppercase tracking-wider rounded-xs transition-colors shrink-0"
-          >
-            Speak with Logistics
-          </Link>
         </div>
       </div>
     </div>

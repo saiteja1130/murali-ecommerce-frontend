@@ -8,6 +8,7 @@ export const Header = ({
   activeCategory,
   onSelectCategory,
   onOpenSearch,
+  categories = [],
   cartCount,
   cartTotal,
   wishlistCount,
@@ -32,13 +33,22 @@ export const Header = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navCategories = [
-    { label: 'All Products', slug: 'All', path: '/products' },
-    { label: 'Men', slug: 'Men', path: '/products/men' },
-    { label: 'Women', slug: 'Women', path: '/products/women' },
-    { label: 'Kids', slug: 'Kids', path: '/products/kids' },
-    { label: 'Accessories', slug: 'Accessories', path: '/products/accessories' }
-  ];
+  const navCategories = React.useMemo(() => {
+    const list = [{ label: 'All Products', slug: 'All', path: '/products' }];
+    if (Array.isArray(categories) && categories.length > 0) {
+      categories.forEach((cat) => {
+        const slug = cat.slug || cat.name;
+        if (!list.some((item) => item.slug.toLowerCase() === slug.toLowerCase())) {
+          list.push({
+            label: cat.name,
+            slug: slug,
+            path: `/products/${slug.toLowerCase()}`
+          });
+        }
+      });
+    }
+    return list;
+  }, [categories]);
 
   const currencies = [
     { code: 'USD', symbol: '$', label: 'INR (₹)' },
@@ -87,8 +97,8 @@ export const Header = ({
       <header
         id="main-site-header"
         className={`sticky top-0 z-40 w-full transition-all duration-300 ${isScrolled
-          ? 'bg-[#F8F6F3]/95 backdrop-blur-md shadow-xs border-b border-[#E8E3DE] py-3'
-          : 'bg-[#F8F6F3] border-b border-[#E8E3DE]/60 py-4.5'
+          ? 'bg-[#FAF8F5]/95 backdrop-blur-md shadow-xs border-b border-[#E8E4DC] py-2.5'
+          : 'bg-[#FAF8F5] border-b border-[#E8E4DC]/60 py-3.5'
           }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-4">
@@ -97,7 +107,7 @@ export const Header = ({
             <button
               id="mobile-menu-toggle-btn"
               onClick={() => setMobileMenuOpen(true)}
-              className="p-2 -ml-2 text-[#1A1A1A] hover:text-[#C8A87C] transition-colors focus:outline-none cursor-pointer"
+              className="p-2 -ml-2 text-[#1D241C] hover:text-[#C69E58] transition-colors focus:outline-none cursor-pointer"
               aria-label="Open mobile navigation menu"
             >
               <Menu className="w-6 h-6" />
@@ -105,7 +115,7 @@ export const Header = ({
             <button
               id="mobile-search-btn"
               onClick={onOpenSearch}
-              className="p-2 text-[#1A1A1A] hover:text-[#C8A87C] transition-colors cursor-pointer"
+              className="p-2 text-[#1D241C] hover:text-[#C69E58] transition-colors cursor-pointer"
               aria-label="Search store"
             >
               <Search className="w-5 h-5" />
@@ -113,14 +123,21 @@ export const Header = ({
           </div>
 
           {/* Brand Logo */}
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left shrink-0">
-            <Link to="/" onClick={handleBrandClick} className="group flex flex-col items-center lg:items-start">
-              <span className="font-serif text-2xl md:text-3xl font-bold tracking-[0.18em] text-[#1A1A1A] group-hover:text-[#C8A87C] transition-colors leading-none">
-                SUMILUX
-              </span>
-              <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.28em] text-[#6B6B6B] mt-1 font-medium leading-none">
-                EST. 2026 • LUXURY APPAREL
-              </span>
+          <div className="flex items-center shrink-0">
+            <Link to="/" onClick={handleBrandClick} className="group flex items-center gap-2.5 py-1">
+              <img
+                src="/assets/images/Logo.png"
+                alt="Murari's Glam & Glow"
+                className="h-10 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+              />
+              <div className="hidden sm:flex flex-col text-left">
+                <span className="font-serif text-lg md:text-xl font-bold tracking-[0.12em] text-[#1D241C] group-hover:text-[#506040] transition-colors leading-tight">
+                  MURARI'S
+                </span>
+                <span className="text-[9px] uppercase tracking-[0.25em] text-[#C69E58] font-semibold leading-none">
+                  GLAM & GLOW
+                </span>
+              </div>
             </Link>
           </div>
 
@@ -133,12 +150,12 @@ export const Header = ({
                   key={cat.slug}
                   id={`nav-item-${cat.slug.toLowerCase()}`}
                   onClick={() => handleCategoryClick(cat)}
-                  className={`text-xs xl:text-sm font-semibold tracking-wider uppercase transition-all py-1.5 whitespace-nowrap relative group cursor-pointer ${isActive ? 'text-[#1A1A1A] font-bold' : 'text-[#6B6B6B] hover:text-[#1A1A1A]'
+                  className={`text-xs xl:text-sm font-semibold tracking-wider uppercase transition-all py-1.5 whitespace-nowrap relative group cursor-pointer ${isActive ? 'text-[#506040] font-bold' : 'text-[#6B6864] hover:text-[#1D241C]'
                     }`}
                 >
                   <span>{cat.label}</span>
                   <span
-                    className={`absolute bottom-0 left-0 h-[2px] bg-[#C8A87C] transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'
+                    className={`absolute bottom-0 left-0 h-[2px] bg-[#C69E58] transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'
                       }`}
                   />
                 </button>
@@ -257,11 +274,11 @@ export const Header = ({
                         <button
                           onClick={() => {
                             setUserDropdownOpen(false);
-                            navigate('/support');
+                            navigate('/contact');
                           }}
-                          className="w-full text-left px-4 py-2 hover:bg-[#F8F6F3] text-[#6B6B6B] hover:text-[#1A1A1A] transition-colors cursor-pointer"
+                          className="w-full text-left px-4 py-2 hover:bg-[#FAF8F5] text-[#687163] hover:text-[#1D241C] transition-colors cursor-pointer text-xs"
                         >
-                          Customer Support & Concierge
+                          Help & Contact Us
                         </button>
                         <button
                           onClick={() => {
@@ -357,11 +374,23 @@ export const Header = ({
             className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in"
           />
 
-          <div className="relative w-4/5 max-w-sm bg-[#F8F6F3] h-full shadow-2xl z-10 flex flex-col justify-between p-6 overflow-y-auto">
+          <div className="relative w-4/5 max-w-sm bg-[#FAF8F5] h-full shadow-2xl z-10 flex flex-col justify-between p-6 overflow-y-auto">
             <div>
-              <div className="flex items-center justify-between pb-6 border-b border-[#E8E3DE]">
-                <div className="font-serif text-xl font-bold tracking-widest text-[#1A1A1A]">
-                  SUMILUX
+              <div className="flex items-center justify-between pb-5 border-b border-[#E8E4DC]">
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src="/assets/images/Logo.png"
+                    alt="Murari's Glam & Glow"
+                    className="h-9 w-auto object-contain"
+                  />
+                  <div>
+                    <div className="font-serif text-base font-bold tracking-wider text-[#1D241C]">
+                      MURARI'S
+                    </div>
+                    <div className="text-[8px] uppercase tracking-[0.2em] text-[#C69E58] font-medium">
+                      GLAM & GLOW
+                    </div>
+                  </div>
                 </div>
                 <button
                   id="close-mobile-nav-btn"
@@ -374,7 +403,7 @@ export const Header = ({
 
               {/* Mobile Navigation List */}
               <div className="py-6 space-y-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-[#6B6B6B] mb-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#6B6864] mb-2">
                   Shop By Category
                 </p>
                 {navCategories.map((cat) => {
@@ -383,7 +412,7 @@ export const Header = ({
                     <button
                       key={cat.slug}
                       onClick={() => handleCategoryClick(cat)}
-                      className={`w-full flex items-center justify-between py-2 text-left text-base font-medium transition-colors cursor-pointer ${isActive ? 'text-[#C8A87C] font-semibold' : 'text-[#1A1A1A]'
+                      className={`w-full flex items-center justify-between py-2 text-left text-base font-medium transition-colors cursor-pointer ${isActive ? 'text-[#506040] font-semibold' : 'text-[#1D241C]'
                         }`}
                     >
                       <span>{cat.label}</span>
@@ -401,11 +430,11 @@ export const Header = ({
                       onScrollToLookbook();
                     }, 100);
                   }}
-                  className="w-full flex items-center justify-between py-2 text-left text-base font-medium text-[#1A1A1A] cursor-pointer"
+                  className="w-full flex items-center justify-between py-2 text-left text-base font-medium text-[#1D241C] cursor-pointer"
                 >
                   <span className="flex items-center gap-2">
                     Editorial Lookbook
-                    <span className="px-1.5 py-0.5 bg-[#E8D5D0] text-[10px] font-bold rounded-xs">
+                    <span className="px-1.5 py-0.5 bg-[#E5ECE0] text-[#506040] text-[10px] font-bold rounded-xs">
                       EDIT
                     </span>
                   </span>

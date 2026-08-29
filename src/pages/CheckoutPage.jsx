@@ -34,24 +34,24 @@ export const CheckoutPage = ({
   const navigate = useNavigate();
 
   // Form State
-  const [email, setEmail] = useState(currentUser?.email || 'eleanor.vance@sumilux.com');
-  const [phone, setPhone] = useState('+1 (415) 890-2144');
+  const defaultAddr = addresses.find((a) => a.isDefault) || addresses[0];
+  const [email, setEmail] = useState(currentUser?.email || '');
+  const [phone, setPhone] = useState(defaultAddr?.phone || currentUser?.phone || '');
   const [saveInfo, setSaveInfo] = useState(true);
-  const [newsletter, setNewsletter] = useState(true);
+  const [newsletter, setNewsletter] = useState(false);
 
   // Selected Saved Address or Custom Input
-  const defaultAddr = addresses.find((a) => a.isDefault) || addresses[0];
-  const [selectedAddressId, setSelectedAddressId] = useState(defaultAddr?.id || 'custom');
+  const [selectedAddressId, setSelectedAddressId] = useState(defaultAddr ? (defaultAddr.id || defaultAddr._id) : 'custom');
 
   const [shippingAddress, setShippingAddress] = useState({
-    firstName: currentUser?.name?.split(' ')[0] || 'Eleanor',
-    lastName: currentUser?.name?.split(' ')[1] || 'Vance',
-    street: defaultAddr?.street || '742 Montgomery Street',
-    apartment: defaultAddr?.apartment || 'Suite 1400',
-    city: defaultAddr?.city || 'San Francisco',
-    state: defaultAddr?.state || 'CA',
-    postalCode: defaultAddr?.postalCode || '94111',
-    country: defaultAddr?.country || 'United States'
+    firstName: defaultAddr?.fullName?.split(' ')[0] || defaultAddr?.name?.split(' ')[0] || currentUser?.name?.split(' ')[0] || '',
+    lastName: defaultAddr?.fullName?.split(' ').slice(1).join(' ') || defaultAddr?.name?.split(' ').slice(1).join(' ') || currentUser?.name?.split(' ').slice(1).join(' ') || '',
+    street: defaultAddr?.street || '',
+    apartment: defaultAddr?.apartment || '',
+    city: defaultAddr?.city || '',
+    state: defaultAddr?.state || '',
+    postalCode: defaultAddr?.postalCode || '',
+    country: defaultAddr?.country || 'India'
   });
 
   // Shipping Method
@@ -60,7 +60,7 @@ export const CheckoutPage = ({
   // Payment Method
   const [paymentMethodTab, setPaymentMethodTab] = useState('card'); // 'card' | 'applepay' | 'klarna'
   const [cardData, setCardData] = useState({
-    nameOnCard: currentUser?.name || 'Eleanor Vance',
+    nameOnCard: currentUser?.name || '',
     cardNumber: '•••• •••• •••• 8821',
     expDate: '09/29',
     cvv: '882'
@@ -79,16 +79,18 @@ export const CheckoutPage = ({
 
   // If user selects a saved address, update fields
   const handleSelectSavedAddress = (addr) => {
-    setSelectedAddressId(addr.id);
+    setSelectedAddressId(addr.id || addr._id);
+    const fullNameStr = addr.fullName || addr.name || '';
+    const parts = fullNameStr.split(' ');
     setShippingAddress({
-      firstName: addr.name?.split(' ')[0] || currentUser?.name?.split(' ')[0] || 'Eleanor',
-      lastName: addr.name?.split(' ')[1] || currentUser?.name?.split(' ')[1] || 'Vance',
-      street: addr.street,
+      firstName: parts[0] || '',
+      lastName: parts.slice(1).join(' ') || '',
+      street: addr.street || '',
       apartment: addr.apartment || '',
-      city: addr.city,
-      state: addr.state,
-      postalCode: addr.postalCode,
-      country: addr.country
+      city: addr.city || '',
+      state: addr.state || '',
+      postalCode: addr.postalCode || '',
+      country: addr.country || 'India'
     });
     if (addr.phone) setPhone(addr.phone);
   };
@@ -134,15 +136,15 @@ export const CheckoutPage = ({
 
       const orderPayload = {
         shippingAddress: {
-          name: `₹{shippingAddress.firstName} ₹{shippingAddress.lastName}`,
+          name: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim() || currentUser?.name || 'Customer',
           street: shippingAddress.apartment
-            ? `₹{shippingAddress.street}, ₹{shippingAddress.apartment}`
+            ? `${shippingAddress.street}, ${shippingAddress.apartment}`
             : shippingAddress.street,
           city: shippingAddress.city,
           state: shippingAddress.state,
           postalCode: shippingAddress.postalCode,
-          country: shippingAddress.country,
-          phone: phone
+          country: shippingAddress.country || 'India',
+          phone: phone || currentUser?.phone || ''
         },
         paymentMethod: paymentLabel,
         items: items,
@@ -155,7 +157,7 @@ export const CheckoutPage = ({
 
       setConfirmedOrder({
         orderNumber: placedOrderNumber || `SMLX-${Math.floor(100000 + Math.random() * 900000)}`,
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        date: new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }),
         email: email,
         shippingAddress: orderPayload.shippingAddress,
         items: [...items],
@@ -456,36 +458,46 @@ export const CheckoutPage = ({
               {/* Saved Address Quick Selector (If User has saved addresses) */}
               {addresses && addresses.length > 0 && (
                 <div className="space-y-2">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block">
-                    Saved Patron Addresses
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#1D241C] block">
+                    Select Saved Delivery Address
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {addresses.map((addr) => {
-                      const isSelected = selectedAddressId === addr.id;
+                      const isSelected = selectedAddressId === (addr.id || addr._id);
                       return (
                         <div
-                          key={addr.id}
+                          key={addr.id || addr._id}
                           onClick={() => handleSelectSavedAddress(addr)}
-                          className={`p-3.5 rounded-[4px] border transition-all cursor-pointer text-xs space-y-1 ${
+                          className={`p-3.5 rounded-xl border transition-all cursor-pointer text-xs space-y-1 ${
                             isSelected
-                              ? 'border-[#1A1A1A] bg-[#FAF8F5] ring-1 ring-[#1A1A1A]'
-                              : 'border-[#E8E3DE] bg-white hover:border-[#C8A87C]'
+                              ? 'border-[#506040] bg-[#FAF8F5] ring-2 ring-[#506040]/30'
+                              : 'border-[#E8E4DC] bg-white hover:border-[#C69E58]'
                           }`}
                         >
-                          <div className="flex items-center justify-between font-bold text-[#1A1A1A]">
-                            <span className="truncate">{addr.name}</span>
-                            {addr.isDefault && (
-                              <span className="text-[9px] font-mono uppercase bg-[#1A1A1A] text-white px-1.5 py-0.2 rounded">
-                                Default
+                          <div className="flex items-center justify-between font-bold text-[#1D241C]">
+                            <span className="truncate">{addr.fullName || addr.name}</span>
+                            <div className="flex items-center gap-1">
+                              <span className="text-[9px] font-mono uppercase bg-[#FAF8F5] border border-[#E8E4DC] text-[#687163] px-1.5 py-0.2 rounded">
+                                {addr.addressType || 'Home'}
                               </span>
-                            )}
+                              {addr.isDefault && (
+                                <span className="text-[9px] font-mono uppercase bg-[#506040] text-white px-1.5 py-0.2 rounded">
+                                  Default
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-[#6B6B6B] text-[11px] truncate">
-                            {addr.street} {addr.apartment}
+                          <div className="text-[#687163] text-[11px] truncate">
+                            {addr.street} {addr.apartment ? `, ${addr.apartment}` : ''}
                           </div>
-                          <div className="text-[#6B6B6B] text-[11px]">
+                          <div className="text-[#687163] text-[11px]">
                             {addr.city}, {addr.state} {addr.postalCode}
                           </div>
+                          {addr.phone && (
+                            <div className="text-[#1D241C] text-[10px] font-mono pt-0.5">
+                              📞 {addr.phone}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -578,11 +590,13 @@ export const CheckoutPage = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                      ZIP / Postal Code *
+                      PIN Code *
                     </label>
                     <input
                       required
                       type="text"
+                      placeholder="e.g. 400050"
+                      pattern="[0-9]{6}"
                       value={shippingAddress.postalCode}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, postalCode: e.target.value })}
                       className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C] font-mono"
@@ -590,21 +604,19 @@ export const CheckoutPage = ({
                   </div>
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                      Country / Territory *
+                      Country *
                     </label>
                     <select
                       value={shippingAddress.country}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
                       className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
                     >
+                      <option>India</option>
                       <option>United States</option>
                       <option>United Kingdom</option>
-                      <option>France</option>
-                      <option>Italy</option>
-                      <option>Germany</option>
-                      <option>Canada</option>
-                      <option>Japan</option>
                       <option>United Arab Emirates</option>
+                      <option>Singapore</option>
+                      <option>Australia</option>
                     </select>
                   </div>
                 </div>
