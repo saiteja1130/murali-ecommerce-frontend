@@ -38,14 +38,14 @@ export const ContactPage = () => {
         <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-[#6B6B6B]">
           <Link to="/" className="hover:text-[#1A1A1A] transition-colors">Home</Link>
           <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-          <span className="text-[#1A1A1A] font-semibold">Contact Client Concierge</span>
+          <span className="text-[#1A1A1A] font-semibold">Contact Us</span>
         </nav>
 
         {/* Page Header */}
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#C8A87C]/15 border border-[#C8A87C]/30 text-[#A68758] text-[10px] font-mono font-bold tracking-widest uppercase rounded-full">
             <Sparkles className="w-3 h-3 text-[#C8A87C]" />
-            Atelier Client Concierge
+            Contact & Support
           </span>
           <h1 className="font-serif text-3xl sm:text-5xl font-bold tracking-tight text-[#1A1A1A]">
             We Are at Your Service

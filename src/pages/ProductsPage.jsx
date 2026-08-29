@@ -335,32 +335,110 @@ export const ProductsPage = ({
         </div>
       </div>
 
-      {/* Price Range Slider */}
+      {/* Single Dual-Thumb Price Range Slider */}
       <div>
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-2 pb-2 border-b border-[#E8E3DE]">
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A]">
             Price Range
           </h4>
-          <span className="text-xs font-mono font-semibold text-[#C8A87C]">
+          <span className="text-xs font-mono font-bold text-[#A68758] bg-[#FAF6F0] px-2.5 py-0.5 rounded-xs border border-[#E8E3DE]">
             ${priceRange[0]} – ${priceRange[1]}
           </span>
         </div>
-        <input
-          type="range"
-          min="0"
-          max="750"
-          step="25"
-          value={priceRange[1]}
-          onChange={(e) => {
-            setPriceRange([priceRange[0], parseInt(e.target.value)]);
-            setCurrentPage(1);
-          }}
-          className="w-full h-1.5 bg-[#E8E3DE] rounded-lg appearance-none cursor-pointer accent-[#1A1A1A]"
-        />
-        <div className="flex items-center justify-between text-[10px] text-neutral-400 font-mono mt-1">
-          <span>₹0</span>
-          <span>₹5,000</span>
-          <span>₹25,000+</span>
+
+        {/* Single Dual-Thumb Slider Track */}
+        <div className="py-3">
+          <div className="relative w-full h-2 flex items-center">
+            {/* Background Rail */}
+            <div className="absolute w-full h-1.5 bg-[#E8E3DE] rounded-full" />
+
+            {/* Active Range Highlight Between Min and Max */}
+            <div
+              className="absolute h-1.5 bg-[#1A1A1A] rounded-full"
+              style={{
+                left: `${(priceRange[0] / 750) * 100}%`,
+                right: `${100 - (priceRange[1] / 750) * 100}%`
+              }}
+            />
+
+            {/* Min Range Thumb Input */}
+            <input
+              type="range"
+              min="0"
+              max="750"
+              step="10"
+              value={priceRange[0]}
+              onChange={(e) => {
+                const val = Math.min(Number(e.target.value), priceRange[1] - 15);
+                setPriceRange([val, priceRange[1]]);
+                setCurrentPage(1);
+              }}
+              className={`absolute top-0 left-0 w-full h-full appearance-none pointer-events-none bg-transparent focus:outline-none ${
+                priceRange[0] > 750 - 100 ? 'z-30' : 'z-10'
+              } [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4.5 [&::-webkit-slider-thumb]:h-4.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#1A1A1A] [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#C8A87C] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:scale-115 [&::-webkit-slider-thumb]:transition-transform [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4.5 [&::-moz-range-thumb]:h-4.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#1A1A1A] [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#C8A87C] [&::-moz-range-thumb]:cursor-pointer`}
+            />
+
+            {/* Max Range Thumb Input */}
+            <input
+              type="range"
+              min="0"
+              max="750"
+              step="10"
+              value={priceRange[1]}
+              onChange={(e) => {
+                const val = Math.max(Number(e.target.value), priceRange[0] + 15);
+                setPriceRange([priceRange[0], val]);
+                setCurrentPage(1);
+              }}
+              className="absolute top-0 left-0 w-full h-full appearance-none pointer-events-none bg-transparent focus:outline-none z-20 [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4.5 [&::-webkit-slider-thumb]:h-4.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#1A1A1A] [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-[#C8A87C] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:hover:scale-115 [&::-webkit-slider-thumb]:transition-transform [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4.5 [&::-moz-range-thumb]:h-4.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#1A1A1A] [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-[#C8A87C] [&::-moz-range-thumb]:cursor-pointer"
+            />
+          </div>
+
+          <div className="flex items-center justify-between text-[10px] text-neutral-400 font-mono mt-2">
+            <span>$0 (Min)</span>
+            <span>$375</span>
+            <span>$750 (Max)</span>
+          </div>
+        </div>
+
+        {/* Quick Min & Max Numeric Inputs */}
+        <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-[#F2EFE9]">
+          <div className="flex items-center gap-1.5 bg-[#FAF8F5] px-2.5 py-1.5 rounded-xs border border-[#E8E3DE]">
+            <span className="text-[10px] font-semibold text-[#6B6B6B] uppercase">Min:</span>
+            <span className="text-xs font-mono font-bold text-[#1A1A1A]">${priceRange[0]}</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-[#FAF8F5] px-2.5 py-1.5 rounded-xs border border-[#E8E3DE]">
+            <span className="text-[10px] font-semibold text-[#6B6B6B] uppercase">Max:</span>
+            <span className="text-xs font-mono font-bold text-[#1A1A1A]">${priceRange[1]}</span>
+          </div>
+        </div>
+
+        {/* Quick Price Presets */}
+        <div className="grid grid-cols-2 gap-1.5 pt-2 mt-2">
+          {[
+            { label: 'Under $100', range: [0, 100] },
+            { label: '$100 – $250', range: [100, 250] },
+            { label: '$250 – $500', range: [250, 500] },
+            { label: '$500 – $750', range: [500, 750] },
+          ].map((preset) => {
+            const isSelected = priceRange[0] === preset.range[0] && priceRange[1] === preset.range[1];
+            return (
+              <button
+                key={preset.label}
+                onClick={() => {
+                  setPriceRange(preset.range);
+                  setCurrentPage(1);
+                }}
+                className={`px-2 py-1 text-[11px] font-mono rounded-xs border transition-colors cursor-pointer text-center ${
+                  isSelected
+                    ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]'
+                    : 'bg-[#FAF8F5] text-[#6B6B6B] border-[#E8E3DE] hover:border-[#1A1A1A] hover:text-[#1A1A1A]'
+                }`}
+              >
+                {preset.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 

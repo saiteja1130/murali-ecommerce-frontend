@@ -124,7 +124,7 @@ export const Footer = ({ onSelectCategory, onScrollToLookbook, onNavigateToPage 
             </li>
             <li>
               <Link to="/contact" className="hover:text-white transition-colors text-left block">
-                Contact Concierge
+                Contact Us
               </Link>
             </li>
             <li>

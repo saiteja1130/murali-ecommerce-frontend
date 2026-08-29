@@ -87,7 +87,7 @@ export const NotFoundPage = () => {
               to="/contact"
               className="px-4 py-2 bg-[#FAF8F5] hover:bg-[#1A1A1A] text-[#1A1A1A] hover:text-white border border-[#E8E3DE] rounded-xs text-xs font-medium transition-colors"
             >
-              Contact Concierge
+              Contact Us
             </Link>
           </div>
         </div>
