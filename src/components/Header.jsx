@@ -335,7 +335,7 @@ export const Header = ({
                 )}
               </div>
               <span className="inline-block text-xs font-semibold tracking-wider uppercase">
-                {cartCount > 0 ? `$${cartTotal.toFixed(2)}` : 'Bag'}
+                {cartCount > 0 ? `₹${cartTotal.toFixed(2)}` : 'Bag'}
               </span>
             </button>
           </div>

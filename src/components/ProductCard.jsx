@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag, Star, Check, ArrowRight } from 'lucide-react';
-import { resolveImageUrl } from '../utils/productAdapter';
+import { resolveImageUrl, FALLBACK_PRODUCT_IMAGE } from '../utils/productAdapter';
 import { useAuth } from '../context/AuthContext';
 
 export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlisted, onClickProduct }) => {
@@ -40,7 +40,7 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
     const handleQuickAdd = (e) => {
         e.stopPropagation();
         if (onAddToCart) {
-            onAddToCart(product, sizes[0], selectedColor);
+            onAddToCart(product, sizes[0], selectedColor, 1);
             if (!token || !isAuthenticated) return;
             setIsAddedRecently(true);
             setTimeout(() => setIsAddedRecently(false), 1800);
@@ -71,7 +71,9 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
             src={primaryImage}
             alt={product?.name || 'Product'}
             onError={(e) => {
-              e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+              if (e.currentTarget.src !== FALLBACK_PRODUCT_IMAGE) {
+                e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+              }
             }}
             className={`w-full h-full object-cover object-center transition-all duration-700 ease-out ${
               product?.isStockAvailable === false ? 'opacity-70 grayscale-[30%]' : ''
@@ -87,7 +89,9 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
               src={hoverImage}
               alt={`${product?.name} alternate view`}
               onError={(e) => {
-                e.currentTarget.src = primaryImage;
+                if (e.currentTarget.src !== primaryImage && e.currentTarget.src !== FALLBACK_PRODUCT_IMAGE) {
+                  e.currentTarget.src = primaryImage || FALLBACK_PRODUCT_IMAGE;
+                }
               }}
               className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-700 ease-out ${
                 product?.isStockAvailable === false ? 'opacity-70 grayscale-[30%]' : ''

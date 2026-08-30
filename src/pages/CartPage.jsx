@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, Trash2, ArrowRight, Sparkles, ShieldCheck, Tag, ArrowLeft, Truck, RotateCcw, AlertCircle } from 'lucide-react';
+import {
+  ShoppingBag,
+  Trash2,
+  ArrowRight,
+  Sparkles,
+  ShieldCheck,
+  Tag,
+  ArrowLeft,
+  Truck,
+  RotateCcw,
+  AlertCircle
+} from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
 import { resolveImageUrl } from '../utils/productAdapter';
@@ -21,11 +32,11 @@ export const CartPage = ({
 }) => {
   const navigate = useNavigate();
   const {
-    freeShippingThreshold,
-    shippingCost,
+    freeShippingThreshold: ctxFreeShippingThreshold,
     shippingFee,
-    cartSubtotal,
-    cartTotal,
+    shippingCost: ctxShippingCost,
+    cartSubtotal: ctxCartSubtotal,
+    cartTotal: ctxCartTotal,
     discountAmount: ctxDiscountAmount,
     discountRate: ctxDiscountRate,
     promoCode: ctxPromoCode,
@@ -38,25 +49,26 @@ export const CartPage = ({
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const [orderNote, setOrderNote] = useState('');
 
-  const activePromoCode = propPromoCode || ctxPromoCode;
-  const activeDiscountRate = propDiscountRate || ctxDiscountRate || 0;
+  const freeShippingThreshold = ctxFreeShippingThreshold !== undefined ? ctxFreeShippingThreshold : 5000;
 
-  const hasOutOfStockItems = items.some((item) => item.product?.isStockAvailable === false);
-
-  // Subtotal only sums in-stock items
-  const subtotal = cartSubtotal !== undefined
-    ? cartSubtotal
+  // Subtotal calculation ignoring out-of-stock items
+  const subtotal = ctxCartSubtotal !== undefined
+    ? ctxCartSubtotal
     : items.reduce((acc, item) => {
         if (item.product?.isStockAvailable === false) return acc;
-        return acc + (Number(item.product.price) || 0) * item.quantity;
+        return acc + (Number(item.product?.price) || 0) * item.quantity;
       }, 0);
 
-  const threshold = freeShippingThreshold || 5000;
-  const progressPercent = Math.min(100, Math.round((subtotal / threshold) * 100));
-  const amountNeeded = Math.max(0, threshold - subtotal);
+  const activeDiscountRate = propDiscountRate !== undefined ? propDiscountRate : (ctxDiscountRate || 0);
   const discountAmount = ctxDiscountAmount !== undefined ? ctxDiscountAmount : (subtotal * activeDiscountRate);
-  const calculatedShipping = (freeShippingThreshold && subtotal >= freeShippingThreshold) || items.length === 0 ? 0 : (shippingCost !== undefined ? shippingCost : shippingFee);
-  const total = subtotal > 0 ? subtotal - discountAmount + calculatedShipping : 0;
+  const shippingCost = subtotal >= freeShippingThreshold || items.length === 0 ? 0 : (shippingFee || 30.0);
+  const total = subtotal > 0 ? subtotal - discountAmount + shippingCost : 0;
+
+  const progressPercent = Math.min(100, Math.round((subtotal / (freeShippingThreshold || 1)) * 100));
+  const amountNeeded = Math.max(0, freeShippingThreshold - subtotal);
+
+  const activePromoCode = propPromoCode || ctxPromoCode;
+  const hasOutOfStockItems = items.some((item) => item.product?.isStockAvailable === false);
 
   const handleApplyPromo = async (e) => {
     e.preventDefault();
@@ -81,7 +93,9 @@ export const CartPage = ({
     }
   };
 
-  const recommendedProducts = allProducts.filter((p) => p.isFeatured || p.badge === 'BESTSELLER').slice(0, 4);
+  const recommendedProducts = allProducts
+    .filter((p) => p.isFeatured || p.badge === 'BESTSELLER')
+    .slice(0, 4);
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] py-8 lg:py-12 animate-fade-in text-[#1D241C]">
@@ -90,7 +104,9 @@ export const CartPage = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E8E4DC] mb-8">
           <div>
             <div className="flex items-center gap-2 text-xs text-[#687163] uppercase tracking-wider mb-1 font-mono">
-              <span className="cursor-pointer hover:text-[#1D241C]" onClick={() => navigate('/')}>Home</span>
+              <span className="cursor-pointer hover:text-[#1D241C]" onClick={() => navigate('/')}>
+                Home
+              </span>
               <span>/</span>
               <span className="text-[#1D241C] font-semibold">Shopping Bag</span>
             </div>
@@ -178,7 +194,8 @@ export const CartPage = ({
                         src={resolveImageUrl(item.product?.image || item.product?.images?.[0])}
                         alt={item.product?.name || 'Product'}
                         onError={(e) => {
-                          e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+                          e.currentTarget.src =
+                            'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
                         }}
                         className="w-20 h-26 object-cover rounded-xs bg-[#FAF8F5] border border-[#E8E4DC] flex-shrink-0"
                       />
@@ -190,15 +207,17 @@ export const CartPage = ({
                           {item.product.name}
                         </h3>
                         <div className="flex items-center gap-3 text-xs text-[#687163] pt-0.5">
-                          <span>Size: <strong className="text-[#1D241C]">{item.selectedSize}</strong></span>
+                          <span>
+                            Size: <strong className="text-[#1D241C]">{item.selectedSize}</strong>
+                          </span>
                           <span>•</span>
                           <span className="flex items-center gap-1.5">
                             Color:
                             <span
                               className="w-2.5 h-2.5 rounded-full border border-neutral-300 inline-block"
-                              style={{ backgroundColor: item.selectedColor.hex }}
+                              style={{ backgroundColor: item.selectedColor?.hex || '#1D241C' }}
                             />
-                            <strong className="text-[#1D241C]">{item.selectedColor.name}</strong>
+                            <strong className="text-[#1D241C]">{item.selectedColor?.name || 'Standard'}</strong>
                           </span>
                         </div>
 
@@ -212,13 +231,14 @@ export const CartPage = ({
                       </div>
                     </div>
 
-                    {/* Quantity Modifier & Subtotal */}
-                    <div className="flex items-center justify-between w-full sm:w-auto sm:justify-end gap-6 pt-3 sm:pt-0 border-t sm:border-t-0 border-[#E8E4DC]">
+                    {/* Quantity Modifier, Subtotal & Delete */}
+                    <div className="flex items-center justify-between w-full sm:w-auto sm:justify-end gap-5 pt-3 sm:pt-0 border-t sm:border-t-0 border-[#E8E4DC]">
                       {/* Quantity Selector */}
                       <div className="flex items-center border border-[#E8E4DC] rounded-xs bg-[#FAF8F5]">
                         <button
                           onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
                           className="w-8 h-8 flex items-center justify-center text-sm font-bold text-[#1D241C] hover:bg-[#E8E4DC] transition-colors cursor-pointer"
+                          aria-label="Decrease quantity"
                         >
                           -
                         </button>
@@ -229,6 +249,7 @@ export const CartPage = ({
                           onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
                           disabled={item.product?.isStockAvailable === false}
                           className="w-8 h-8 flex items-center justify-center text-sm font-bold text-[#1D241C] hover:bg-[#E8E4DC] transition-colors cursor-pointer disabled:opacity-40"
+                          aria-label="Increase quantity"
                         >
                           +
                         </button>
@@ -236,41 +257,45 @@ export const CartPage = ({
 
                       {/* Price */}
                       <div className="text-right min-w-[90px]">
-                        <span className="font-sans text-base font-bold text-[#1D241C] block">
-                          ₹{((item.product.price || 0) * item.quantity).toFixed(2)}
+                        <span className="font-mono text-sm sm:text-base font-bold text-[#1D241C] block">
+                          ₹{((item.product?.price || 0) * item.quantity).toFixed(2)}
                         </span>
                         <span className="text-[11px] text-[#687163] font-mono block">
-                          ₹{(item.product.price || 0).toFixed(2)} each
+                          ₹{(item.product?.price || 0).toFixed(2)} each
                         </span>
                       </div>
 
-                      {/* Delete */}
-                      <button
-                        onClick={() => onRemoveItem(item.id)}
-                        className="text-[#687163] hover:text-rose-600 p-1.5 transition-colors cursor-pointer"
-                        title="Remove piece"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {/* Remove Button */}
+                      {onRemoveItem && (
+                        <button
+                          onClick={() => onRemoveItem(item.id)}
+                          className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-xs transition-colors cursor-pointer"
+                          title="Remove item"
+                          aria-label="Remove item"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
+              </div>
 
-                {/* Cart Action Buttons */}
-                <div className="p-4 bg-[#FAF8F5] flex items-center justify-between">
-                  <button
-                    onClick={onClearCart}
-                    className="text-xs font-semibold uppercase tracking-wider text-rose-700 hover:text-rose-900 transition-colors cursor-pointer"
-                  >
-                    Clear Shopping Bag
-                  </button>
-                  <button
-                    onClick={() => navigate('/products')}
-                    className="text-xs font-semibold uppercase tracking-wider text-[#1D241C] hover:text-[#C69E58] cursor-pointer"
-                  >
-                    + Add More Items
-                  </button>
-                </div>
+              {/* Table Footer Actions */}
+              <div className="p-4 bg-[#FAF8F5] border border-[#E8E4DC] rounded-[4px] flex items-center justify-between">
+                <button
+                  onClick={onClearCart}
+                  className="text-xs text-neutral-500 hover:text-rose-600 font-medium transition-colors cursor-pointer"
+                >
+                  Clear All Items
+                </button>
+
+                <button
+                  onClick={() => navigate('/products')}
+                  className="text-xs font-semibold uppercase tracking-wider text-[#1D241C] hover:text-[#C69E58] transition-colors cursor-pointer"
+                >
+                  + Add More Items
+                </button>
               </div>
 
               {/* Delivery Instructions Note */}
@@ -321,9 +346,21 @@ export const CartPage = ({
                   </div>
 
                   {promoMessage && (
-                    <p className={`text-[11px] ${promoMessage.isError ? 'text-rose-600' : 'text-emerald-700 font-medium'}`}>
+                    <p
+                      className={`text-[11px] ${
+                        promoMessage.isError ? 'text-rose-600' : 'text-emerald-700 font-medium'
+                      }`}
+                    >
                       {promoMessage.text}
                     </p>
+                  )}
+                  {activePromoCode && (
+                    <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#A68758] font-mono">
+                      <Tag className="w-3 h-3" />
+                      <span>
+                        Active code: <strong>{activePromoCode}</strong> ({(activeDiscountRate * 100).toFixed(0)}% OFF)
+                      </span>
+                    </div>
                   )}
                 </form>
 
@@ -342,12 +379,12 @@ export const CartPage = ({
                   )}
 
                   <div className="flex justify-between">
-                    <span>Shipping</span>
+                    <span>Worldwide Express Shipping</span>
                     <span>
-                      {calculatedShipping === 0 ? (
-                        <strong className="text-emerald-700 uppercase tracking-wide">Free</strong>
+                      {shippingCost === 0 ? (
+                        <strong className="text-emerald-700 uppercase tracking-wide">Complimentary</strong>
                       ) : (
-                        `₹${Number(calculatedShipping).toFixed(2)}`
+                        `₹${Number(shippingCost).toFixed(2)}`
                       )}
                     </span>
                   </div>
@@ -382,7 +419,9 @@ export const CartPage = ({
                   }`}
                 >
                   <span>{hasOutOfStockItems ? 'Remove Unavailable Items' : 'Proceed to Checkout'}</span>
-                  {!hasOutOfStockItems && <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />}
+                  {!hasOutOfStockItems && (
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  )}
                 </button>
 
                 {/* Trust & Guarantee */}
@@ -401,7 +440,7 @@ export const CartPage = ({
           </div>
         )}
 
-        {/* You May Also Like / Curated Recommendations */}
+        {/* Curated Recommendations */}
         {recommendedProducts.length > 0 && (
           <div className="mt-16 pt-12 border-t border-[#E8E4DC]">
             <div className="flex items-center justify-between mb-8">
@@ -409,9 +448,7 @@ export const CartPage = ({
                 <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#C69E58] block">
                   Curated Haute Additions
                 </span>
-                <h2 className="font-serif text-2xl font-bold text-[#1D241C]">
-                  Complete Your Look
-                </h2>
+                <h2 className="font-serif text-2xl font-bold text-[#1D241C]">Complete Your Look</h2>
               </div>
               <button
                 onClick={() => navigate('/products')}
