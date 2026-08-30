@@ -13,6 +13,55 @@ export const AuthProvider = ({ children }) => {
     return localStorage.getItem('sumilux_token') || null;
   });
 
+  // Global Auth Modal State for Action-Gating
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalConfig, setAuthModalConfig] = useState({
+    mode: 'login',
+    title: 'Sign In Required',
+    message: 'Please sign in to proceed.',
+    onSuccess: null,
+  });
+
+  const openAuthModal = useCallback(({ mode = 'login', title = 'Sign In Required', message = 'Please sign in to proceed.', onSuccess = null } = {}) => {
+    setAuthModalConfig({
+      mode,
+      title,
+      message,
+      onSuccess,
+    });
+    setIsAuthModalOpen(true);
+  }, []);
+
+  const closeAuthModal = useCallback(() => {
+    setIsAuthModalOpen(false);
+  }, []);
+
+  const requireAuth = useCallback(
+    (actionCallback, { title = 'Sign In to Proceed', message = 'Please sign in to continue.' } = {}) => {
+      if (token && currentUser) {
+        if (typeof actionCallback === 'function') {
+          actionCallback();
+        }
+        return true;
+      }
+
+      // Save redirect target URL for post-login return
+      try {
+        const currentPath = window.location.pathname + window.location.search;
+        if (currentPath && currentPath !== '/login' && currentPath !== '/signup') {
+          sessionStorage.setItem('sumilux_redirect_after_login', currentPath);
+        }
+      } catch (e) {
+        console.warn('SessionStorage error:', e);
+      }
+
+      // Direct redirection to the login page
+      window.location.href = '/login';
+      return false;
+    },
+    [token, currentUser]
+  );
+
   // User Saved Addresses State
   const [userAddresses, setUserAddresses] = useState(() => {
     const saved = localStorage.getItem('sumilux_addresses');
@@ -435,6 +484,11 @@ export const AuthProvider = ({ children }) => {
         orders: userOrders,
         payments: userPayments,
         recordOrder,
+        isAuthModalOpen,
+        authModalConfig,
+        openAuthModal,
+        closeAuthModal,
+        requireAuth,
       }}
     >
       {children}

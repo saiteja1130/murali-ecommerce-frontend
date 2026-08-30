@@ -1,16 +1,40 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { normalizeProduct, normalizeCategory } from '../utils/productAdapter';
+import { normalizeProduct, normalizeCategory, normalizeMainCategory } from '../utils/productAdapter';
 import api from './api';
+import { useAuth } from './AuthContext';
+import { useCart } from './CartContext';
+import { useWishlist } from './WishlistContext';
 
 const StoreContext = createContext(undefined);
 
 export const StoreProvider = ({ children }) => {
-  const [products, setProducts] = useState([]);
+  const [mainCategories, setMainCategories] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [products, setProducts] = useState([]);
+  const [isLoadingMainCategories, setIsLoadingMainCategories] = useState(true);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
 
-  // Fetch live categories from Backend API
+  // Fetch live main categories (Women, Kids, etc.)
+  const fetchMainCategories = useCallback(async () => {
+    setIsLoadingMainCategories(true);
+    try {
+      const response = await api.get('/api/main-categories');
+      const apiMainCats = response.data?.data || [];
+      if (apiMainCats.length > 0) {
+        setMainCategories(apiMainCats.map(normalizeMainCategory).filter(Boolean));
+      } else {
+        setMainCategories([]);
+      }
+    } catch (error) {
+      console.warn('Failed to load main categories:', error.message);
+      setMainCategories([]);
+    } finally {
+      setIsLoadingMainCategories(false);
+    }
+  }, []);
+
+  // Fetch live subcategories from Backend API
   const fetchCategories = useCallback(async () => {
     setIsLoadingCategories(true);
     try {
@@ -50,41 +74,15 @@ export const StoreProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    fetchMainCategories();
     fetchCategories();
     fetchProducts();
-  }, [fetchCategories, fetchProducts]);
+  }, [fetchMainCategories, fetchCategories, fetchProducts]);
 
+  const [activeMainCategory, setActiveMainCategory] = useState('All');
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [currency, setCurrency] = useState('INR');
-
-  // Shopping Bag & Wishlist State (Clean initial state without mock dummy items)
-  const [cart, setCart] = useState(() => {
-    const saved = localStorage.getItem('sumilux_cart');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return [];
-      }
-    }
-    return [];
-  });
-
-  const [wishlist, setWishlist] = useState(() => {
-    const saved = localStorage.getItem('sumilux_wishlist');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return [];
-      }
-    }
-    return [];
-  });
-
-  const [promoCode, setPromoCode] = useState('');
-  const [discountRate, setDiscountRate] = useState(0);
 
   // UI Drawers, Modals & Toast State
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -92,27 +90,21 @@ export const StoreProvider = ({ children }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
 
-  // Persistence
-  useEffect(() => {
-    localStorage.setItem('sumilux_cart', JSON.stringify(cart));
-  }, [cart]);
-
-  useEffect(() => {
-    localStorage.setItem('sumilux_wishlist', JSON.stringify(wishlist));
-  }, [wishlist]);
-
   // Stable Toast Handlers
   const dismissToast = useCallback((id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const showToast = useCallback((toast) => {
-    const id = Date.now().toString();
-    setToasts((prev) => [...prev, { ...toast, id }]);
-    setTimeout(() => {
-      dismissToast(id);
-    }, 3500);
-  }, [dismissToast]);
+  const showToast = useCallback(
+    (toast) => {
+      const id = Date.now().toString();
+      setToasts((prev) => [...prev, { ...toast, id }]);
+      setTimeout(() => {
+        dismissToast(id);
+      }, 3500);
+    },
+    [dismissToast]
+  );
 
   // Drawer Toggles
   const openCart = useCallback(() => setIsCartOpen(true), []);
@@ -122,168 +114,133 @@ export const StoreProvider = ({ children }) => {
   const openSearch = useCallback(() => setIsSearchOpen(true), []);
   const closeSearch = useCallback(() => setIsSearchOpen(false), []);
 
-  // Cart Operations
-  const addToCart = useCallback((product, selectedSize, selectedColor, quantity = 1) => {
-    if (!product) return;
-    const size = selectedSize || product.sizes?.[0] || 'Standard';
-    const color = selectedColor || product.colors?.[0] || { name: 'Standard', hex: '#1D241C' };
-    const cartItemId = `${product.id || product._id}-${size}-${color.name || color}`;
+  // Access Cart, Wishlist, & Auth hooks
+  const { token, isAuthenticated } = useAuth();
+  const cartContext = useCart();
+  const wishlistContext = useWishlist();
 
-    setCart((prev) => {
-      const existing = prev.find((item) => item.id === cartItemId);
-      if (existing) {
-        return prev.map((item) =>
-          item.id === cartItemId ? { ...item, quantity: item.quantity + quantity } : item
-        );
-      } else {
-        return [...prev, { id: cartItemId, product, quantity, selectedSize: size, selectedColor: color }];
+  // Wishlist products derived from catalog
+  const wishlistProducts = useMemo(
+    () => products.filter((p) => wishlistContext.wishlist.includes(p.id || p._id)),
+    [products, wishlistContext.wishlist]
+  );
+
+  // Unified bridge for add to cart with toast
+  const addToCartWithFeedback = useCallback(
+    async (product, selectedSize, selectedColor, quantity) => {
+      if (!product) return;
+
+      // If not authenticated, let cartContext handle login redirection without triggering toast
+      if (!token || !isAuthenticated) {
+        await cartContext.addToCart(product, selectedSize, selectedColor, quantity);
+        return;
       }
-    });
 
-    showToast({
-      type: 'cart',
-      title: 'Added to Bag',
-      message: `${quantity}× ${product.name} (${size} / ${color.name || color})`,
-      image: product.image || product.images?.[0]
-    });
-  }, [showToast]);
-
-  const updateCartQuantity = useCallback((id, newQty) => {
-    if (newQty <= 0) {
-      setCart((prev) => prev.filter((i) => i.id !== id));
-      return;
-    }
-    setCart((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity: newQty } : item))
-    );
-  }, []);
-
-  const removeCartItem = useCallback((id) => {
-    setCart((prev) => {
-      const item = prev.find((i) => i.id === id);
-      if (item) {
+      if (product.isStockAvailable === false) {
         showToast({
-          type: 'info',
-          title: 'Removed from Bag',
-          message: item.product?.name || 'Product removed'
+          type: 'error',
+          title: 'Out of Stock',
+          message: `${product.name} is currently out of stock and cannot be added.`,
         });
+        return;
       }
-      return prev.filter((i) => i.id !== id);
-    });
-  }, [showToast]);
 
-  const clearCart = useCallback(() => {
-    setCart([]);
-    showToast({
-      type: 'info',
-      title: 'Shopping Bag Emptied',
-      message: 'All items have been removed.'
-    });
-  }, [showToast]);
+      const res = await cartContext.addToCart(product, selectedSize, selectedColor, quantity);
+      if (res === false) return;
 
-  // Wishlist Operations
-  const toggleWishlist = useCallback((product) => {
-    if (!product) return;
-    const prodId = product.id || product._id;
-    setWishlist((prev) => {
-      const isSaved = prev.includes(prodId);
+      const size = selectedSize || product.sizes?.[0] || 'Standard';
+      const color = selectedColor || product.colors?.[0] || { name: 'Standard', hex: '#1D241C' };
+
+      showToast({
+        type: 'cart',
+        title: 'Added to Bag',
+        message: `${quantity}× ${product.name} (${size} / ${color.name || color})`,
+        image: product.image || product.images?.[0],
+      });
+    },
+    [cartContext, showToast, token, isAuthenticated]
+  );
+
+  // Unified bridge for wishlist toggle with toast
+  const toggleWishlistWithFeedback = useCallback(
+    (product) => {
+      if (!product) return;
+
+      // If not authenticated, let wishlistContext handle login redirection without triggering toast
+      if (!token || !isAuthenticated) {
+        wishlistContext.toggleWishlist(product);
+        return;
+      }
+
+      const prodId = product.id || product._id;
+      const isSaved = wishlistContext.isWishlisted(prodId);
+
+      wishlistContext.toggleWishlist(product);
+
       if (isSaved) {
         showToast({
           type: 'info',
           title: 'Removed from Wishlist',
-          message: product.name
+          message: product.name,
         });
-        return prev.filter((id) => id !== prodId);
       } else {
         showToast({
           type: 'wishlist',
           title: 'Saved to Wishlist',
           message: product.name,
-          image: product.image || product.images?.[0]
+          image: product.image || product.images?.[0],
         });
-        return [...prev, prodId];
       }
-    });
-  }, [showToast]);
-
-  const removeFromWishlist = useCallback((productId) => {
-    setWishlist((prev) => prev.filter((id) => id !== productId));
-  }, []);
-
-  const clearWishlist = useCallback(() => {
-    setWishlist([]);
-  }, []);
-
-  const moveWishlistToCart = useCallback((product) => {
-    addToCart(product);
-    removeFromWishlist(product.id || product._id);
-  }, [addToCart, removeFromWishlist]);
-
-  // Promo Code Operations
-  const applyPromoCode = useCallback((code) => {
-    if (code && code.trim().toUpperCase() === 'SUMI15') {
-      setPromoCode('SUMI15');
-      setDiscountRate(0.15);
-      showToast({
-        type: 'success',
-        title: 'Promo Applied',
-        message: '15% discount has been applied to your order.'
-      });
-      return true;
-    }
-    return false;
-  }, [showToast]);
-
-  // Financial Calculations (INR ₹ Standard)
-  const cartSubtotal = useMemo(
-    () => cart.reduce((acc, i) => acc + (Number(i.product?.price) || 0) * i.quantity, 0),
-    [cart]
+    },
+    [wishlistContext, showToast, token, isAuthenticated]
   );
-  const cartItemCount = useMemo(() => cart.reduce((acc, i) => acc + i.quantity, 0), [cart]);
-  const discountAmount = useMemo(() => cartSubtotal * discountRate, [cartSubtotal, discountRate]);
-  const shippingCost = useMemo(
-    () => (cartSubtotal >= 5000 || cart.length === 0 ? 0 : 199.0),
-    [cartSubtotal, cart.length]
-  );
-  const cartTotal = useMemo(
-    () => cartSubtotal - discountAmount + shippingCost,
-    [cartSubtotal, discountAmount, shippingCost]
-  );
-  const wishlistProducts = useMemo(
-    () => products.filter((p) => wishlist.includes(p.id || p._id)),
-    [products, wishlist]
+
+  const moveWishlistToCart = useCallback(
+    (product) => {
+      addToCartWithFeedback(product);
+      wishlistContext.removeFromWishlist(product.id || product._id);
+    },
+    [addToCartWithFeedback, wishlistContext]
   );
 
   return (
     <StoreContext.Provider
       value={{
-        products,
+        mainCategories,
         categories,
+        products,
+        activeMainCategory,
+        setActiveMainCategory,
         activeCategory,
         setActiveCategory,
         searchQuery,
         setSearchQuery,
         currency,
         setCurrency,
-        cart,
-        wishlist,
+        // Cart values (seamlessly bridged from CartContext)
+        cart: cartContext.cart,
+        promoCode: cartContext.promoCode,
+        discountRate: cartContext.discountRate,
+        discountAmount: cartContext.discountAmount,
+        cartSubtotal: cartContext.cartSubtotal,
+        cartItemCount: cartContext.cartItemCount,
+        shippingCost: cartContext.shippingCost,
+        cartTotal: cartContext.cartTotal,
+        hasOutOfStockItems: cartContext.hasOutOfStockItems,
+        outOfStockItems: cartContext.outOfStockItems,
+        addToCart: addToCartWithFeedback,
+        updateCartQuantity: cartContext.updateCartQuantity,
+        removeCartItem: cartContext.removeCartItem,
+        clearCart: cartContext.clearCart,
+        applyPromoCode: cartContext.applyPromoCode,
+        // Wishlist values (seamlessly bridged from WishlistContext)
+        wishlist: wishlistContext.wishlist,
         wishlistProducts,
-        promoCode,
-        discountRate,
-        cartSubtotal,
-        cartItemCount,
-        discountAmount,
-        shippingCost,
-        cartTotal,
-        addToCart,
-        updateCartQuantity,
-        removeCartItem,
-        clearCart,
-        toggleWishlist,
-        removeFromWishlist,
-        clearWishlist,
+        toggleWishlist: toggleWishlistWithFeedback,
+        removeFromWishlist: wishlistContext.removeFromWishlist,
+        clearWishlist: wishlistContext.clearWishlist,
         moveWishlistToCart,
-        applyPromoCode,
+        // UI & Drawers
         isCartOpen,
         setIsCartOpen,
         openCart,
@@ -298,11 +255,13 @@ export const StoreProvider = ({ children }) => {
         closeSearch,
         isLoadingProducts,
         isLoadingCategories,
+        isLoadingMainCategories,
         refreshProducts: fetchProducts,
         refreshCategories: fetchCategories,
+        refreshMainCategories: fetchMainCategories,
         toasts,
         showToast,
-        dismissToast
+        dismissToast,
       }}
     >
       {children}
@@ -317,7 +276,5 @@ export const useStore = () => {
   }
   return context;
 };
-
-export const useCart = () => useStore();
 
 export default StoreContext;

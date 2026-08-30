@@ -8,13 +8,13 @@ export const Header = ({
   activeCategory,
   onSelectCategory,
   onOpenSearch,
+  mainCategories = [],
   categories = [],
   cartCount,
   cartTotal,
   wishlistCount,
   currency,
   onSelectCurrency,
-  onScrollToLookbook,
   currentUser,
   onLogout
 }) => {
@@ -34,21 +34,24 @@ export const Header = ({
   }, []);
 
   const navCategories = React.useMemo(() => {
-    const list = [{ label: 'All Products', slug: 'All', path: '/products' }];
-    if (Array.isArray(categories) && categories.length > 0) {
-      categories.forEach((cat) => {
-        const slug = cat.slug || cat.name;
-        if (!list.some((item) => item.slug.toLowerCase() === slug.toLowerCase())) {
+    const list = [{ label: 'All Products', slug: 'all', path: '/products' }];
+    if (Array.isArray(mainCategories) && mainCategories.length > 0) {
+      mainCategories.forEach((mCat) => {
+        const slug = (mCat.slug || mCat.name || '').toLowerCase();
+        if (slug && !list.some((item) => item.slug.toLowerCase() === slug)) {
           list.push({
-            label: cat.name,
+            label: mCat.name,
             slug: slug,
-            path: `/products/${slug.toLowerCase()}`
+            path: `/products/${slug}`
           });
         }
       });
+    } else {
+      list.push({ label: 'Women', slug: 'women', path: '/products/women' });
+      list.push({ label: 'Kids', slug: 'kids', path: '/products/kids' });
     }
     return list;
-  }, [categories]);
+  }, [mainCategories]);
 
   const currencies = [
     { code: 'USD', symbol: '$', label: 'INR (₹)' },
@@ -59,9 +62,9 @@ export const Header = ({
 
   const handleCategoryClick = (cat) => {
     const slug = typeof cat === 'string' ? cat : cat.slug;
-    onSelectCategory(slug);
+    if (onSelectCategory) onSelectCategory(slug);
     setMobileMenuOpen(false);
-    if (slug === 'All') {
+    if (!slug || slug === 'All' || slug === 'all') {
       navigate('/products');
     } else {
       navigate(`/products/${slug.toLowerCase()}`);
@@ -161,23 +164,6 @@ export const Header = ({
                 </button>
               );
             })}
-
-            {/* Editorial Lookbook Link */}
-            <button
-              onClick={() => {
-                if (onNavigateToPage) onNavigateToPage('home');
-                navigate('/');
-                setTimeout(() => {
-                  onScrollToLookbook();
-                }, 100);
-              }}
-              className="text-xs xl:text-sm font-semibold tracking-wider uppercase transition-all py-1.5 whitespace-nowrap relative group text-[#6B6B6B] hover:text-[#1A1A1A] flex items-center gap-1.5 cursor-pointer"
-            >
-              <span>Lookbook</span>
-              <span className="px-1 py-0.2 bg-[#E8D5D0] text-[#1A1A1A] text-[9px] font-bold rounded-xs tracking-normal">
-                EDIT
-              </span>
-            </button>
           </nav>
 
           {/* Right Action Controls: Search, User, Wishlist, Cart */}
@@ -214,7 +200,7 @@ export const Header = ({
                     <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-[#E8E3DE] rounded-[4px] shadow-xl py-2 z-50 animate-fade-in text-xs">
                       <div className="px-4 py-2 border-b border-[#E8E3DE]">
                         <p className="font-semibold text-[#1A1A1A] truncate">{currentUser.name}</p>
-                        <p className="text-[10px] text-[#6B6B6B] font-mono uppercase tracking-wider">Patron Account</p>
+                        <p className="text-[10px] text-[#6B6B6B] font-mono uppercase tracking-wider">My Account</p>
                       </div>
 
                       <button
@@ -236,16 +222,6 @@ export const Header = ({
                         className="w-full text-left px-4 py-2 hover:bg-[#F8F6F3] text-[#1A1A1A] transition-colors cursor-pointer"
                       >
                         Saved Addresses
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setUserDropdownOpen(false);
-                          navigate('/account/payments');
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-[#F8F6F3] text-[#1A1A1A] transition-colors cursor-pointer"
-                      >
-                        Payment History
                       </button>
 
                       <button
@@ -420,26 +396,6 @@ export const Header = ({
                     </button>
                   );
                 })}
-
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    if (onNavigateToPage) onNavigateToPage('home');
-                    navigate('/');
-                    setTimeout(() => {
-                      onScrollToLookbook();
-                    }, 100);
-                  }}
-                  className="w-full flex items-center justify-between py-2 text-left text-base font-medium text-[#1D241C] cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    Editorial Lookbook
-                    <span className="px-1.5 py-0.5 bg-[#E5ECE0] text-[#506040] text-[10px] font-bold rounded-xs">
-                      EDIT
-                    </span>
-                  </span>
-                  <ArrowRight className="w-4 h-4 text-neutral-400" />
-                </button>
               </div>
             </div>
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle2, Sparkles, ChevronRight, Headphones, MessageSquare } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, CheckCircle2, Sparkles, ChevronRight, Headphones, MessageSquare, Building2 } from 'lucide-react';
 
 export const ContactPage = () => {
   const [form, setForm] = useState({
@@ -198,34 +198,45 @@ export const ContactPage = () => {
             {/* Direct Support Details */}
             <div className="bg-white rounded-2xl border border-[#E8E4DC] p-6 shadow-2xs space-y-4">
               <h3 className="font-serif text-lg font-bold text-[#1D241C]">
-                Direct Contact Information
+                Official Business &amp; Support Details
               </h3>
 
               <div className="space-y-3 text-xs">
                 <div className="flex items-start gap-3 p-3.5 bg-[#FAF8F5] rounded-xl border border-[#E8E4DC]">
+                  <Building2 className="w-4 h-4 text-[#506040] shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-[#1D241C]">Registered Operating Entity</div>
+                    <div className="text-[#1D241C] font-bold mt-0.5">Murari&apos;s Glam &amp; Glow</div>
+                    <div className="text-[11px] text-[#687163] mt-0.5">
+                      Prime Commercial Avenue, Road No. 10, Banjara Hills, Hyderabad, Telangana – 500034, India
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3.5 bg-[#FAF8F5] rounded-xl border border-[#E8E4DC]">
                   <Mail className="w-4 h-4 text-[#506040] shrink-0 mt-0.5" />
                   <div>
-                    <div className="font-semibold text-[#1D241C]">Email Support</div>
-                    <a href="mailto:support@murarisglamandglow.com" className="text-[#506040] hover:underline font-medium">
-                      support@murarisglamandglow.com
+                    <div className="font-semibold text-[#1D241C]">Customer Care Email</div>
+                    <a href="mailto:support@murarisglamglow.com" className="text-[#506040] hover:underline font-bold">
+                      support@murarisglamglow.com
                     </a>
-                    <div className="text-[11px] text-[#687163] mt-0.5">Replies within 24 hours</div>
+                    <div className="text-[11px] text-[#687163] mt-0.5">Formal response within 24 hours</div>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 p-3.5 bg-[#FAF8F5] rounded-xl border border-[#E8E4DC]">
                   <Phone className="w-4 h-4 text-[#506040] shrink-0 mt-0.5" />
                   <div>
-                    <div className="font-semibold text-[#1D241C]">Phone Support</div>
+                    <div className="font-semibold text-[#1D241C]">Customer Helpline</div>
                     <div className="font-mono text-[#1D241C] font-bold">+91 98765 43210</div>
-                    <div className="text-[11px] text-[#687163] mt-0.5">Monday – Saturday: 10:00 AM – 7:00 PM IST</div>
+                    <div className="text-[11px] text-[#687163] mt-0.5">Monday – Saturday: 9:00 AM – 8:00 PM IST</div>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 p-3.5 bg-[#FAF8F5] rounded-xl border border-[#E8E4DC]">
                   <Headphones className="w-4 h-4 text-[#506040] shrink-0 mt-0.5" />
                   <div>
-                    <div className="font-semibold text-[#1D241C]">Help Center & FAQs</div>
+                    <div className="font-semibold text-[#1D241C]">Help Center &amp; FAQs</div>
                     <Link to="/faq" className="text-[#506040] hover:underline font-semibold flex items-center gap-1 mt-0.5">
                       <span>View Frequently Asked Questions →</span>
                     </Link>
@@ -237,26 +248,26 @@ export const ContactPage = () => {
             {/* Store Locations */}
             <div className="bg-white rounded-2xl border border-[#E8E4DC] p-6 shadow-2xs space-y-4">
               <h3 className="font-serif text-lg font-bold text-[#1D241C]">
-                Store Locations
+                Flagship Experience Centers
               </h3>
 
               <div className="space-y-4 text-xs">
                 <div className="border-b border-[#E8E4DC] pb-3 space-y-1">
                   <div className="font-bold text-[#1D241C] flex items-center justify-between">
-                    <span>Mumbai Store</span>
-                    <span className="text-[10px] text-[#506040] font-mono font-bold">Flagship</span>
+                    <span>Hyderabad Center</span>
+                    <span className="text-[10px] text-[#506040] font-mono font-bold">Flagship Hub</span>
                   </div>
-                  <p className="text-[#687163]">Linking Road, Bandra West, Mumbai, Maharashtra 400050</p>
-                  <p className="text-[11px] text-[#687163]">Open: Mon–Sun 10:00 AM – 8:00 PM</p>
+                  <p className="text-[#687163]">Road No. 10, Banjara Hills, Hyderabad, Telangana 500034</p>
+                  <p className="text-[11px] text-[#687163]">Open: Mon–Sat 9:00 AM – 8:00 PM</p>
                 </div>
 
                 <div className="space-y-1">
                   <div className="font-bold text-[#1D241C] flex items-center justify-between">
-                    <span>New Delhi Store</span>
-                    <span className="text-[10px] text-[#506040] font-mono font-bold">Boutique</span>
+                    <span>Mumbai Boutique</span>
+                    <span className="text-[10px] text-[#506040] font-mono font-bold">Experience Studio</span>
                   </div>
-                  <p className="text-[#687163]">DLF Emporio, Vasant Kunj, New Delhi 110070</p>
-                  <p className="text-[11px] text-[#687163]">Open: Mon–Sun 11:00 AM – 8:00 PM</p>
+                  <p className="text-[#687163]">Linking Road, Bandra West, Mumbai, Maharashtra 400050</p>
+                  <p className="text-[11px] text-[#687163]">Open: Mon–Sun 10:00 AM – 8:00 PM</p>
                 </div>
               </div>
             </div>

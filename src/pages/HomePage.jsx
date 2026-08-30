@@ -1,12 +1,10 @@
 import React from 'react';
 import { useHero, useStore } from '../context/RootContext';
-import { REVIEWS } from '../data/mockData';
 import { HeroCarousel } from '../components/HeroCarousel';
 import { TrustBar } from '../components/TrustBar';
 import { CategoryGrid } from '../components/CategoryGrid';
 import { ProductGrid } from '../components/ProductGrid';
 import { CategoryShowcase } from '../components/CategoryShowcase';
-import { CustomerReviews } from '../components/CustomerReviews';
 import { InstagramFeed } from '../components/InstagramFeed';
 
 export const HomePage = ({
@@ -15,6 +13,7 @@ export const HomePage = ({
   onAddToCart,
   onToggleWishlist,
   wishlistIds,
+  mainCategories: propMainCategories,
   categories: propCategories,
   products: propProducts,
   searchQuery,
@@ -22,7 +21,11 @@ export const HomePage = ({
   onClickProduct
 }) => {
   const { heroSlides } = useHero();
-  const { categories: ctxCategories, products: ctxProducts } = useStore();
+  const { mainCategories: ctxMainCategories, categories: ctxCategories, products: ctxProducts } = useStore();
+
+  const displayMainCategories = propMainCategories && propMainCategories.length > 0
+    ? propMainCategories
+    : (ctxMainCategories && ctxMainCategories.length > 0 ? ctxMainCategories : []);
 
   const displayCategories = propCategories && propCategories.length > 0
     ? propCategories
@@ -32,18 +35,26 @@ export const HomePage = ({
     ? propProducts
     : (ctxProducts || []);
 
+  // For CategoryGrid on homepage, display Main Categories if present
+  const categoryGridItems = displayMainCategories.length > 0 ? displayMainCategories : displayCategories;
+
   return (
     <div className="flex-1 animate-fade-in">
       <HeroCarousel slides={heroSlides} onSelectCategory={onSelectCategory} />
 
       <TrustBar />
 
-      {displayCategories.length > 0 && (
-        <CategoryGrid categories={displayCategories} onSelectCategory={onSelectCategory} />
+      {categoryGridItems.length > 0 && (
+        <CategoryGrid
+          categories={categoryGridItems}
+          isMainCategories={displayMainCategories.length > 0}
+          onSelectCategory={onSelectCategory}
+        />
       )}
 
       <ProductGrid
         products={displayProducts}
+        mainCategories={displayMainCategories}
         categories={displayCategories}
         selectedCategory={activeCategory}
         onSelectCategory={onSelectCategory}
@@ -55,11 +66,13 @@ export const HomePage = ({
         onClickProduct={onClickProduct}
       />
 
-      {displayCategories.length > 0 && (
-        <CategoryShowcase categories={displayCategories} onSelectCategory={onSelectCategory} />
+      {categoryGridItems.length > 0 && (
+        <CategoryShowcase
+          categories={categoryGridItems}
+          isMainCategories={displayMainCategories.length > 0}
+          onSelectCategory={onSelectCategory}
+        />
       )}
-
-      <CustomerReviews reviews={REVIEWS} />
 
       <InstagramFeed />
     </div>

@@ -1,19 +1,25 @@
 import React from 'react';
 import { AuthProvider, useAuth } from './AuthContext';
-import { StoreProvider, useStore, useCart } from './StoreContext';
+import { CartProvider, useCart } from './CartContext';
+import { WishlistProvider, useWishlist } from './WishlistContext';
+import { StoreProvider, useStore } from './StoreContext';
 import { HeroProvider, useHero } from './HeroContext';
 
 export const RootProvider = ({ children }) => {
   return (
     <AuthProvider>
-      <StoreProvider>
-        <HeroProvider>
-          {children}
-        </HeroProvider>
-      </StoreProvider>
+      <CartProvider>
+        <WishlistProvider>
+          <StoreProvider>
+            <HeroProvider>
+              {children}
+            </HeroProvider>
+          </StoreProvider>
+        </WishlistProvider>
+      </CartProvider>
     </AuthProvider>
   );
 };
 
-export { useAuth, useStore, useCart, useHero };
+export { useAuth, useCart, useWishlist, useStore, useHero };
 export default RootProvider;

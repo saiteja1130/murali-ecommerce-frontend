@@ -3,18 +3,26 @@
  * Bridges MongoDB database models with Storefront UI contracts
  */
 
+export const resolveImageUrl = (img) => {
+  if (!img) return 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+  if (img.startsWith('http://') || img.startsWith('https://')) return img;
+  if (img.startsWith('/uploads')) return `http://localhost:5000${img}`;
+  return img;
+};
+
 export const normalizeProduct = (item) => {
   if (!item) return null;
 
-  // 1. Image Resolution (Handles images[], galleryImages[], image, hoverImage)
-  const images = Array.isArray(item.images) && item.images.length > 0
+  // 1. Image Resolution (Handles images[], galleryImages[], image, hoverImage, local /uploads)
+  const rawImages = Array.isArray(item.images) && item.images.length > 0
     ? item.images
     : (Array.isArray(item.galleryImages) && item.galleryImages.length > 0
       ? item.galleryImages
       : [item.image || item.hoverImage || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900']);
 
-  const primaryImage = images[0] || item.image || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
-  const hoverImage = images[1] || item.hoverImage || primaryImage;
+  const images = rawImages.map(resolveImageUrl);
+  const primaryImage = images[0] || resolveImageUrl(item.image);
+  const hoverImage = images[1] || resolveImageUrl(item.hoverImage) || primaryImage;
 
   // 2. Variant, Color & Size Matrix Extraction
   let colors = [];
@@ -69,7 +77,22 @@ export const normalizeProduct = (item) => {
     categoryId = item.category;
   }
 
-  // 4. Badge & Promotion derivation
+  // 4. Main Category Resolution (Women, Kids, Men, etc.)
+  let mainCategoryName = '';
+  let mainCategorySlug = '';
+  let mainCategoryId = '';
+
+  if (item.mainCategory && typeof item.mainCategory === 'object') {
+    mainCategoryName = item.mainCategory.name || '';
+    mainCategorySlug = item.mainCategory.slug || '';
+    mainCategoryId = item.mainCategory._id || item.mainCategory.id || '';
+  } else if (typeof item.mainCategory === 'string') {
+    mainCategoryName = item.mainCategory;
+    mainCategorySlug = item.mainCategory.toLowerCase();
+    mainCategoryId = item.mainCategory;
+  }
+
+  // 5. Badge & Promotion derivation
   let badge = item.badge || null;
   const originalPrice = item.originalPrice ? Number(item.originalPrice) : null;
   const currentPrice = typeof item.price === 'number' ? item.price : Number(item.price) || 0;
@@ -90,6 +113,9 @@ export const normalizeProduct = (item) => {
     category: categoryName,
     categorySlug,
     categoryId,
+    mainCategory: mainCategoryName,
+    mainCategorySlug,
+    mainCategoryId,
     subcategory: item.subcategory || categoryName,
     price: currentPrice,
     originalPrice,
@@ -119,11 +145,28 @@ export const normalizeCategory = (cat) => {
     id: cat._id || cat.id || `cat-${Math.random().toString(36).slice(2, 7)}`,
     name: cat.name || 'Category',
     slug: cat.slug || cat.name?.toLowerCase().replace(/ /g, '-') || 'category',
-    image: cat.image || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=800',
+    mainCategory: cat.mainCategory?.name || (typeof cat.mainCategory === 'string' ? cat.mainCategory : ''),
+    mainCategorySlug: cat.mainCategory?.slug || (typeof cat.mainCategory === 'string' ? cat.mainCategory.toLowerCase() : ''),
+    mainCategoryId: cat.mainCategory?._id || cat.mainCategory?.id || cat.mainCategory || '',
+    image: resolveImageUrl(cat.image),
     description: cat.description || '',
     subtitle: cat.subtitle || cat.description || 'Featured Collection',
     itemCount: typeof cat.itemCount === 'number' ? cat.itemCount : 0,
     isFeatured: cat.isFeatured !== false,
     order: cat.order || 0
+  };
+};
+
+export const normalizeMainCategory = (mCat) => {
+  if (!mCat) return null;
+  return {
+    id: mCat._id || mCat.id || `mcat-${Math.random().toString(36).slice(2, 7)}`,
+    name: mCat.name || 'Department',
+    slug: mCat.slug || mCat.name?.toLowerCase().replace(/ /g, '-') || 'department',
+    image: resolveImageUrl(mCat.image),
+    description: mCat.description || '',
+    subcategoryCount: mCat.subcategoryCount || 0,
+    isActive: mCat.isActive !== false,
+    order: mCat.order || 0,
   };
 };

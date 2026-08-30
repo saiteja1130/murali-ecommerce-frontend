@@ -7,721 +7,410 @@ import {
   FileText,
   Mail,
   CheckCircle2,
-  ArrowLeft,
-  Sparkles,
-  Cookie,
-  RefreshCw,
-  Clock,
   ChevronRight,
-  Download,
-  Printer,
   UserCheck,
   Database,
-  ExternalLink,
-  Share2,
   Building2,
   Smartphone,
   UserX,
-  Receipt,
-  Scale
+  CreditCard,
+  Scale,
+  Trash2,
+  ExternalLink,
+  Cookie
 } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
 export const PrivacyPolicyPage = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [cookieAnalytics, setCookieAnalytics] = useState(() => {
-    const saved = localStorage.getItem('sumilux_cookie_analytics');
-    return saved !== null ? JSON.parse(saved) : true;
+  const { freeShippingThreshold, shippingFee } = useCart();
+  const [activeSection, setActiveSection] = useState('overview');
+  const [cookieConsent, setCookieConsent] = useState(() => {
+    return localStorage.getItem('murari_cookie_consent') || 'accepted';
   });
-  const [cookieMarketing, setCookieMarketing] = useState(() => {
-    const saved = localStorage.getItem('sumilux_cookie_marketing');
-    return saved !== null ? JSON.parse(saved) : false;
-  });
-  const [cookieSaved, setCookieSaved] = useState(false);
-  const [exportSuccess, setExportSuccess] = useState(false);
 
-  // Scrollspy to highlight active sidebar item on scroll
-  useEffect(() => {
-    const sectionIds = [
-      'overview',
-      'collection',
-      'usage-sharing',
-      'cookies',
-      'rights-retention',
-      'children',
-      'grievance'
-    ];
+  const sections = [
+    { id: 'overview', label: '1. Overview & Commitment' },
+    { id: 'data-collected', label: '2. Information We Collect' },
+    { id: 'payment-security', label: '3. Razorpay & Payment Security' },
+    { id: 'play-store-compliance', label: '4. Google Play & Device Safety' },
+    { id: 'usage-sharing', label: '5. How We Use & Share Data' },
+    { id: 'cookies-tracking', label: '6. Cookies & Web Analytics' },
+    { id: 'retention-deletion', label: '7. Data Retention & Account Deletion' },
+    { id: 'user-rights', label: '8. Your Rights & Choices' },
+    { id: 'children-privacy', label: '9. Children’s Privacy Protection' },
+    { id: 'grievance-officer', label: '10. Grievance Officer & Contact' }
+  ];
 
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY + 180;
-      for (const sectionId of sectionIds) {
-        const element = document.getElementById(sectionId);
-        if (element) {
-          const top = element.offsetTop;
-          const height = element.offsetHeight;
-          if (scrollPosition >= top && scrollPosition < top + height) {
-            setActiveTab(sectionId);
-            break;
-          }
-        }
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollToSection = (id) => {
-    setActiveTab(id);
-    const element = document.getElementById(id);
-    if (element) {
-      const yOffset = -100;
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: 'smooth' });
+  const scrollTo = (id) => {
+    setActiveSection(id);
+    const el = document.getElementById(id);
+    if (el) {
+      const offset = 90;
+      const bodyRect = document.body.getBoundingClientRect().top;
+      const elementRect = el.getBoundingClientRect().top;
+      const elementPosition = elementRect - bodyRect;
+      const offsetPosition = elementPosition - offset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
     }
   };
 
-  const handleSaveCookiePreferences = () => {
-    localStorage.setItem('sumilux_cookie_analytics', JSON.stringify(cookieAnalytics));
-    localStorage.setItem('sumilux_cookie_marketing', JSON.stringify(cookieMarketing));
-    setCookieSaved(true);
-    setTimeout(() => setCookieSaved(false), 3500);
-  };
-
-  const handleExportDataArchive = () => {
-    const patronData = {
-      client: 'SUMILUX Verified Patron',
-      timestamp: new Date().toISOString(),
-      governance: 'GDPR / CCPA / DPDP India Privacy & Portability Charter (Article 20)',
-      encryptionStandard: 'AES-256 TLS 1.3',
-      storedAttributes: {
-        preferences: {
-          currency: 'INR / USD / GBP',
-          analyticsConsent: cookieAnalytics,
-          marketingConsent: cookieMarketing,
-        },
-        dataRetentionPolicy: 'Active session + 36 months audit trail for statutory tax and anti-fraud verification'
-      }
-    };
-
-    const blob = new Blob([JSON.stringify(patronData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `sumilux-patron-privacy-export-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    setExportSuccess(true);
-    setTimeout(() => setExportSuccess(false), 4000);
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const sections = [
-    { id: 'overview', label: '1. Overview & Business Scope', icon: FileText },
-    { id: 'collection', label: '2. Information We Collect', icon: Eye },
-    { id: 'usage-sharing', label: '3. Data Usage & Sharing', icon: Share2 },
-    { id: 'cookies', label: '4. Cookies & Device Ad IDs', icon: Cookie },
-    { id: 'rights-retention', label: '5. Rights & Data Retention', icon: Lock },
-    { id: 'children', label: '6. Age Policy (18+) & Minors', icon: UserX },
-    { id: 'grievance', label: '7. Statutory Grievance Redressal', icon: Scale },
-  ];
-
   return (
-    <div className="min-h-screen bg-[#F8F6F3] py-8 lg:py-16 animate-fade-in font-sans text-[#1A1A1A]">
+    <div className="min-h-screen bg-[#FAF8F5] py-8 lg:py-16 animate-fade-in font-sans text-[#1D241C]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-[#6B6B6B]">
-          <Link to="/" className="hover:text-[#1A1A1A] transition-colors">Home</Link>
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-[#687163]">
+          <Link to="/" className="hover:text-[#1D241C] transition-colors">Home</Link>
           <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-          <span className="text-[#1A1A1A] font-semibold">Privacy Policy & Security Charter</span>
+          <span className="text-[#1D241C] font-semibold">Privacy Policy</span>
         </nav>
 
-        {/* Page Header Hero Card */}
-        <div className="bg-white rounded-[4px] border border-[#E8E3DE] p-8 sm:p-12 shadow-2xs flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="space-y-3 max-w-3xl">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#C8A87C]/15 text-[#A68758] text-[10px] font-mono font-bold tracking-widest uppercase rounded-xs">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#C8A87C]" />
-              Sumilux Legal & Data Trust
+        {/* Hero Header Card */}
+        <div className="bg-white rounded-2xl border border-[#E8E4DC] p-8 sm:p-12 shadow-2xs space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#506040]/15 text-[#506040] text-[10px] font-mono font-bold tracking-widest uppercase rounded-lg border border-[#506040]/30">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#506040]" />
+              Razorpay &amp; Google Play Store Compliant
             </span>
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#1A1A1A] leading-tight">
-              Privacy Policy & Security Charter
-            </h1>
-            <p className="text-xs sm:text-sm text-[#6B6B6B] leading-relaxed">
-              Effective Date: January 2026 (Last Updated: April 2026). How SUMILUX Studio Ltd. and its affiliates collect, safeguard, and process your personal data in strict compliance with the Digital Personal Data Protection (DPDP) Act, Information Technology Act 2000, GDPR, UK-GDPR, and CCPA.
-            </p>
+            <span className="text-[11px] text-[#687163] font-mono">
+              Last Updated: January 1, 2026 • Version 2.4
+            </span>
+          </div>
+          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#1D241C]">
+            Privacy Policy &amp; Data Safety Charter
+          </h1>
+          <p className="text-xs sm:text-sm text-[#687163] max-w-3xl leading-relaxed">
+            At <strong>Murari&apos;s Glam &amp; Glow</strong>, we are committed to safeguarding your personal information, securing digital transactions, and complying with the <em>Information Technology Act, 2000</em>, the <em>SPDI Rules 2011</em>, <em>Google Play Developer Data Safety Policies</em>, and <em>Razorpay Payment Gateway Standards</em>.
+          </p>
+        </div>
+
+        {/* Key Security Pillars Badges */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 bg-white rounded-xl border border-[#E8E4DC] shadow-2xs flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="font-bold text-xs text-[#1D241C]">256-Bit SSL Encryption</div>
+              <div className="text-[11px] text-[#687163]">TLS 1.3 secure channel</div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2.5 flex-wrap self-start md:self-auto shrink-0">
-            <button
-              onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] hover:border-[#1A1A1A] text-xs font-semibold uppercase tracking-wider text-[#1A1A1A] rounded-xs transition-colors cursor-pointer"
-              title="Print Charter"
-            >
-              <Printer className="w-4 h-4 text-[#6B6B6B]" />
-              <span>Print</span>
-            </button>
+          <div className="p-4 bg-white rounded-xl border border-[#E8E4DC] shadow-2xs flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="font-bold text-xs text-[#1D241C]">PCI-DSS Compliant</div>
+              <div className="text-[11px] text-[#687163]">Zero card storage on servers</div>
+            </div>
+          </div>
 
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-semibold uppercase tracking-wider rounded-xs transition-colors shadow-2xs"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Return to Boutique</span>
-            </Link>
+          <div className="p-4 bg-white rounded-xl border border-[#E8E4DC] shadow-2xs flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center shrink-0">
+              <Smartphone className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="font-bold text-xs text-[#1D241C]">Google Play Certified</div>
+              <div className="text-[11px] text-[#687163]">Transparent data safety</div>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white rounded-xl border border-[#E8E4DC] shadow-2xs flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+              <Trash2 className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="font-bold text-xs text-[#1D241C]">Account Deletion</div>
+              <div className="text-[11px] text-[#687163]">Instant self-service removal</div>
+            </div>
           </div>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-          {/* Left Navigation Sidebar */}
-          <div className="lg:col-span-4 space-y-5 lg:sticky lg:top-24">
-            <div className="bg-white p-5 rounded-[4px] border border-[#E8E3DE] shadow-2xs space-y-2">
-              <div className="flex items-center justify-between px-3 py-1 border-b border-[#F2EFE9] pb-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[#6B6B6B]">
-                  Charter Sections
-                </span>
-                <span className="text-[10px] font-mono text-[#A68758]">7 Clauses</span>
-              </div>
+        {/* 2-Column Content: Sidebar Menu (Left) + Document Content (Right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Sticky Table of Contents Sidebar */}
+          <aside className="lg:col-span-4 sticky top-28 hidden lg:block">
+            <div className="bg-white rounded-2xl border border-[#E8E4DC] p-6 shadow-2xs space-y-3">
+              <h3 className="font-serif text-sm font-bold text-[#1D241C] uppercase tracking-wider">
+                Policy Sections
+              </h3>
+              <nav className="space-y-1 text-xs">
+                {sections.map((sec) => (
+                  <button
+                    key={sec.id}
+                    onClick={() => scrollTo(sec.id)}
+                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors cursor-pointer ${
+                      activeSection === sec.id
+                        ? 'bg-[#1D241C] text-white font-semibold shadow-xs'
+                        : 'text-[#687163] hover:text-[#1D241C] hover:bg-[#FAF8F5]'
+                    }`}
+                  >
+                    {sec.label}
+                  </button>
+                ))}
+              </nav>
 
-              <div className="space-y-1 pt-1">
-                {sections.map((sec) => {
-                  const Icon = sec.icon;
-                  const isActive = activeTab === sec.id;
-                  return (
-                    <button
-                      key={sec.id}
-                      onClick={() => scrollToSection(sec.id)}
-                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xs text-xs font-semibold transition-all text-left cursor-pointer ${
-                        isActive
-                          ? 'bg-[#1A1A1A] text-white shadow-xs'
-                          : 'text-[#1A1A1A] hover:bg-[#F8F6F3] hover:text-[#C8A87C]'
-                      }`}
-                    >
-                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#C8A87C]' : 'text-[#6B6B6B]'}`} />
-                      <span className="truncate">{sec.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Zero Data Selling Pledge Box */}
-            <div className="bg-white p-5 rounded-[4px] border border-[#E8E3DE] shadow-2xs space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-[#1A1A1A] uppercase tracking-wider">
-                <Sparkles className="w-4 h-4 text-[#C8A87C]" />
-                <span>Zero Data Selling Pledge</span>
-              </div>
-              <p className="text-xs text-[#6B6B6B] leading-relaxed">
-                SUMILUX does not sell, rent, monetize, or trade client personal data, body measurement metrics, or silhouette records to third-party data brokers.
-              </p>
-              <div className="pt-2 border-t border-[#F2EFE9] flex items-center gap-2 text-[11px] text-[#A68758] font-medium">
-                <UserCheck className="w-3.5 h-3.5" />
-                <span>Patron Privacy Guaranteed</span>
-              </div>
-            </div>
-
-            {/* Statutory Grievance Redressal Card */}
-            <div className="bg-[#FAF8F5] p-5 rounded-[4px] border border-[#E8E3DE] space-y-2 text-xs">
-              <div className="font-bold text-[#1A1A1A] flex items-center gap-1.5">
-                <Scale className="w-3.5 h-3.5 text-[#C8A87C]" />
-                <span>Grievance Redressal Officer</span>
-              </div>
-              <p className="text-[#6B6B6B] leading-relaxed">
-                In compliance with the Information Technology Act 2000:
-              </p>
-              <div className="space-y-0.5 pt-1">
-                <div className="font-semibold text-[#1A1A1A]">Mr. Karthik R.</div>
-                <div className="text-[11px] text-[#6B6B6B]">Associate Director – Data Governance</div>
-                <a
-                  href="mailto:privacy.grievance@sumilux.com?subject=Privacy%20Grievance%20Escalation"
-                  className="inline-flex items-center gap-1 font-semibold text-[#1A1A1A] hover:text-[#C8A87C] transition-colors pt-1"
+              <div className="pt-4 border-t border-[#E8E4DC] space-y-2">
+                <Link
+                  to="/delete-account"
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors"
                 >
-                  <span>privacy.grievance@sumilux.com</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Detailed Clauses & Interactive Controls */}
-          <div className="lg:col-span-8 space-y-8">
-            {/* Section 1: Overview & Scope */}
-            <section
-              id="overview"
-              className="bg-white p-6 sm:p-10 rounded-[4px] border border-[#E8E3DE] shadow-2xs space-y-6 scroll-mt-28"
-            >
-              <div className="border-b border-[#F2EFE9] pb-4">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#A68758] block mb-1">
-                  Section 01
-                </span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A]">
-                  1. Our Privacy Philosophy, Scope & Business Restructuring
-                </h2>
-              </div>
-
-              <div className="space-y-4 text-xs sm:text-sm text-[#6B6B6B] leading-relaxed">
-                <p>
-                  At SUMILUX (operated by SUMILUX Studio Ltd., 12 Mayfair Gardens, London, UK and its affiliates across India and international logistics hubs), we value the trust you place in us and recognize the importance of secure transactions and client discretion.
-                </p>
-                <p>
-                  This Privacy Policy describes how we collect, use, share, and process your personal data through our digital boutique, mobile applications, and concierge platforms. By visiting our Platform, providing personal details, or acquiring our garments, you expressly agree to be bound by the terms of this Privacy Policy, our Terms of Service, and applicable laws of India (including the Digital Personal Data Protection Act 2023 and Information Technology Act 2000), UK-GDPR, and EU GDPR.
-                </p>
-              </div>
-
-              {/* 3 Core Pillars */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                <div className="p-4 bg-[#F8F6F3] rounded-xs border border-[#E8E3DE] space-y-1.5">
-                  <Lock className="w-5 h-5 text-[#C8A87C]" />
-                  <h3 className="text-xs font-bold text-[#1A1A1A]">256-Bit SSL Encryption</h3>
-                  <p className="text-[11px] text-[#6B6B6B] leading-normal">
-                    Bank-grade TLS 1.3 cryptographic protocols secure all checkout telemetry and patron logins.
-                  </p>
-                </div>
-
-                <div className="p-4 bg-[#F8F6F3] rounded-xs border border-[#E8E3DE] space-y-1.5">
-                  <ShieldCheck className="w-5 h-5 text-[#C8A87C]" />
-                  <h3 className="text-xs font-bold text-[#1A1A1A]">DPDP, GDPR & CCPA Compliant</h3>
-                  <p className="text-[11px] text-[#6B6B6B] leading-normal">
-                    Comprehensive patron control over data access, rectification, portability, and consent withdrawal.
-                  </p>
-                </div>
-
-                <div className="p-4 bg-[#F8F6F3] rounded-xs border border-[#E8E3DE] space-y-1.5">
-                  <Clock className="w-5 h-5 text-[#C8A87C]" />
-                  <h3 className="text-xs font-bold text-[#1A1A1A]">Minimal Data Retention</h3>
-                  <p className="text-[11px] text-[#6B6B6B] leading-normal">
-                    We only retain records necessary for delivery fulfillment, statutory audits, and fraud prevention.
-                  </p>
-                </div>
-              </div>
-
-              {/* Merger & Acquisition Clause */}
-              <div className="p-4 bg-[#FAF8F5] rounded-xs border border-[#E8E3DE] space-y-2">
-                <div className="flex items-center gap-2 font-bold text-xs text-[#1A1A1A]">
-                  <Building2 className="w-4 h-4 text-[#C8A87C]" />
-                  <span>Business Transfers, Mergers & Acquisitions</span>
-                </div>
-                <p className="text-xs text-[#6B6B6B] leading-relaxed">
-                  In the event that SUMILUX undergoes a business reorganization, amalgamation, asset sale, or merger with another corporate entity, patron records may be transferred as an essential business asset. Any acquiring entity or successor will remain strictly bound by the commitments and safeguards set forth in this Privacy Policy.
-                </p>
-              </div>
-            </section>
-
-            {/* Section 2: Information We Collect */}
-            <section
-              id="collection"
-              className="bg-white p-6 sm:p-10 rounded-[4px] border border-[#E8E3DE] shadow-2xs space-y-6 scroll-mt-28"
-            >
-              <div className="border-b border-[#F2EFE9] pb-4">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#A68758] block mb-1">
-                  Section 02
-                </span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A]">
-                  2. Personal Data We Collect & Device Permissions
-                </h2>
-              </div>
-
-              <div className="space-y-4 text-xs sm:text-sm text-[#6B6B6B] leading-relaxed">
-                <p>
-                  When you interact with our digital atelier, we collect information provided directly by you, generated automatically through your browsing activity, or accessed via device permissions:
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                  <div className="p-4 bg-[#FAF8F5] rounded-xs border border-[#E8E3DE] space-y-1.5">
-                    <h3 className="font-bold text-[#1A1A1A] text-xs">Patron Profile & Credentials</h3>
-                    <p className="text-[11px] text-[#6B6B6B]">
-                      Full name, verified email address, phone number, password hashes (salted SHA-256), and bespoke garment silhouette sizing preferences.
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-[#FAF8F5] rounded-xs border border-[#E8E3DE] space-y-1.5">
-                    <h3 className="font-bold text-[#1A1A1A] text-xs">Commerce, Shipping & Gifting</h3>
-                    <p className="text-[11px] text-[#6B6B6B]">
-                      Physical delivery addresses, courier GPS delivery notes, gift messages, and order history.
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-[#FAF8F5] rounded-xs border border-[#E8E3DE] space-y-1.5">
-                    <h3 className="font-bold text-[#1A1A1A] text-xs">PCI-DSS Tokenized Payments</h3>
-                    <p className="text-[11px] text-[#6B6B6B]">
-                      Credit/debit card numbers and UPI handles are processed via certified Level 1 PCI-DSS gateways (Stripe/Razorpay/Apple Pay). SUMILUX never stores raw card credentials.
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-[#FAF8F5] rounded-xs border border-[#E8E3DE] space-y-1.5">
-                    <h3 className="font-bold text-[#1A1A1A] text-xs">Tax Invoicing & Statutory KYC</h3>
-                    <p className="text-[11px] text-[#6B6B6B]">
-                      GST Identification Numbers (GSTIN) and PAN details when requested by business patrons for B2B tax invoicing or high-value customs declarations.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Device Hardware Permissions */}
-                <div className="p-4 bg-[#F8F6F3] rounded-xs border border-[#E8E3DE] space-y-2">
-                  <div className="flex items-center gap-2 font-bold text-xs text-[#1A1A1A]">
-                    <Smartphone className="w-4 h-4 text-[#C8A87C]" />
-                    <span>Device Permissions & Hardware Capabilities</span>
-                  </div>
-                  <p className="text-xs text-[#6B6B6B] leading-relaxed">
-                    With your explicit permission, our mobile app or web platform may request access to:
-                  </p>
-                  <ul className="list-disc list-inside text-xs text-[#6B6B6B] space-y-1 pl-1">
-                    <li><strong className="text-[#1A1A1A]">Camera & Photo Library:</strong> To enable visual wardrobe search, garment barcode scanning, and virtual try-on features.</li>
-                    <li><strong className="text-[#1A1A1A]">Microphone:</strong> To facilitate hands-free concierge voice queries and search commands.</li>
-                    <li><strong className="text-[#1A1A1A]">Location (GPS):</strong> To pinpoint regional boutique availability, accurate shipping time estimates, and local currency display.</li>
-                    <li><strong className="text-[#1A1A1A]">SMS Telemetry:</strong> Solely for automated one-time password (OTP) verification during patron authentication.</li>
-                  </ul>
-                </div>
-
-                {/* Recipient Gifting Warranty */}
-                <div className="p-4 bg-[#FAF8F5] rounded-xs border border-[#E8E3DE] space-y-1.5">
-                  <div className="flex items-center gap-2 font-bold text-xs text-[#1A1A1A]">
-                    <Receipt className="w-4 h-4 text-[#C8A87C]" />
-                    <span>Gifting & Third-Party Recipient Representation</span>
-                  </div>
-                  <p className="text-xs text-[#6B6B6B] leading-relaxed">
-                    If you provide personal data belonging to another individual (such as recipient delivery addresses, phone numbers, or gift notes), you represent and warrant that you have obtained their full consent and authority to share their information with SUMILUX in accordance with this Privacy Policy.
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* Section 3: Data Usage & Sharing */}
-            <section
-              id="usage-sharing"
-              className="bg-white p-6 sm:p-10 rounded-[4px] border border-[#E8E3DE] shadow-2xs space-y-6 scroll-mt-28"
-            >
-              <div className="border-b border-[#F2EFE9] pb-4">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#A68758] block mb-1">
-                  Section 03
-                </span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A]">
-                  3. How We Use Information & Sharing Ecosystem
-                </h2>
-              </div>
-
-              <div className="space-y-4 text-xs sm:text-sm text-[#6B6B6B] leading-relaxed">
-                <p>
-                  We utilize your data to fulfill tailoring orders, coordinate DHL/FedEx logistics, process transactions, deliver customer support, detect fraud, and provide tailored product recommendations.
-                </p>
-
-                <div className="space-y-3">
-                  <h3 className="font-bold text-xs uppercase tracking-wider text-[#1A1A1A]">Categories of Third Parties with Whom We Share Data:</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="p-3 bg-[#FAF8F5] rounded-xs border border-[#E8E3DE]">
-                      <strong className="text-[#1A1A1A] block mb-0.5">Atelier Logistics & Couriers</strong>
-                      <span className="text-[11px] text-[#6B6B6B]">DHL Express, FedEx, and SUMILUX Chauffeur Couriers for package transit and signature confirmation.</span>
-                    </div>
-
-                    <div className="p-3 bg-[#FAF8F5] rounded-xs border border-[#E8E3DE]">
-                      <strong className="text-[#1A1A1A] block mb-0.5">Payment Gateways & BNPL Partners</strong>
-                      <span className="text-[11px] text-[#6B6B6B]">Stripe, Apple Pay, and authorized credit/lending partners for credit underwriting and EMI payment processing.</span>
-                    </div>
-
-                    <div className="p-3 bg-[#FAF8F5] rounded-xs border border-[#E8E3DE]">
-                      <strong className="text-[#1A1A1A] block mb-0.5">Group Companies & Affiliates</strong>
-                      <span className="text-[11px] text-[#6B6B6B]">Our corporate subsidiaries to provide unified patron services, loyalty point redemptions, and salon previews.</span>
-                    </div>
-
-                    <div className="p-3 bg-[#FAF8F5] rounded-xs border border-[#E8E3DE]">
-                      <strong className="text-[#1A1A1A] block mb-0.5">Legal, Regulatory & Law Enforcement</strong>
-                      <span className="text-[11px] text-[#6B6B6B]">To respond to lawful court orders, subpoenas, or protect patron safety and investigate credit card fraud.</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Omni-Channel Communication Consent */}
-                <div className="p-4 bg-[#F8F6F3] rounded-xs border border-[#E8E3DE] space-y-2">
-                  <h3 className="font-bold text-xs text-[#1A1A1A]">Omni-Channel Communication Consent</h3>
-                  <p className="text-xs text-[#6B6B6B] leading-relaxed">
-                    By submitting an order or creating an account, you consent to receive transactional and concierge service dispatches via <strong>SMS, WhatsApp, Email, and Phone</strong> regarding order confirmation, dispatch telemetry, delivery scheduling, and security notifications. You may manage marketing communication preferences at any time.
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            {/* Section 4: Cookies & Device Ad IDs */}
-            <section
-              id="cookies"
-              className="bg-white p-6 sm:p-10 rounded-[4px] border border-[#E8E3DE] shadow-2xs space-y-6 scroll-mt-28"
-            >
-              <div className="border-b border-[#F2EFE9] pb-4">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#A68758] block mb-1">
-                  Section 04
-                </span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A]">
-                  4. Cookies, Tracking & Mobile Advertising IDs (GAID / IDFA)
-                </h2>
-              </div>
-
-              <p className="text-xs sm:text-sm text-[#6B6B6B] leading-relaxed">
-                We use cookies and device identifiers to keep your shopping bag intact, prevent session hijacking, remember localized currency, and analyze showroom performance. You can customize your cookie preferences below:
-              </p>
-
-              {/* Cookie Controls Box */}
-              <div className="bg-[#FAF8F5] p-5 sm:p-6 rounded-xs border border-[#E8E3DE] space-y-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <span className="text-xs font-bold text-[#1A1A1A] block">Essential Session Cookies (Required)</span>
-                    <span className="text-[11px] text-[#6B6B6B]">Required for cart items, currency conversion, and checkout security.</span>
-                  </div>
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 bg-white px-2.5 py-1 rounded-xs border border-[#E8E3DE] shrink-0">
-                    Always Active
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between gap-4 pt-3 border-t border-[#E8E3DE]">
-                  <div>
-                    <span className="text-xs font-bold text-[#1A1A1A] block">Performance & Experience Analytics</span>
-                    <span className="text-[11px] text-[#6B6B6B]">Allows us to optimize image loading speeds and refine boutique navigation.</span>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={cookieAnalytics}
-                      onChange={(e) => setCookieAnalytics(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-10 h-5 bg-neutral-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#1A1A1A]"></div>
-                  </label>
-                </div>
-
-                <div className="flex items-center justify-between gap-4 pt-3 border-t border-[#E8E3DE]">
-                  <div>
-                    <span className="text-xs font-bold text-[#1A1A1A] block">Private Showroom Editorial Alerts</span>
-                    <span className="text-[11px] text-[#6B6B6B]">Enables personalized capsule notifications based on your silhouette favorites.</span>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={cookieMarketing}
-                      onChange={(e) => setCookieMarketing(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-10 h-5 bg-neutral-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#1A1A1A]"></div>
-                  </label>
-                </div>
-
-                <div className="pt-4 border-t border-[#E8E3DE] flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <button
-                    onClick={handleSaveCookiePreferences}
-                    className="w-full sm:w-auto px-5 py-2.5 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-bold uppercase tracking-wider rounded-xs transition-colors shadow-2xs flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>Save Cookie Preferences</span>
-                  </button>
-
-                  {cookieSaved && (
-                    <span className="text-xs font-semibold text-emerald-700 flex items-center gap-1.5 animate-fade-in">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Preferences Saved to Local Storage</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Mobile Advertising Identifiers (GAID / IDFA) */}
-              <div className="p-4 bg-[#F8F6F3] rounded-xs border border-[#E8E3DE] space-y-1.5">
-                <h3 className="font-bold text-xs text-[#1A1A1A]">Device Ad Identifiers & Tracking Opt-Out</h3>
-                <p className="text-xs text-[#6B6B6B] leading-relaxed">
-                  Third-party advertising partners may recognize your Google Advertising ID (GAID) or Apple Identifier for Advertisers (IDFA). You may reset or opt out of personalized ad tracking directly within your iOS Settings (<em>Privacy &gt; Tracking</em>) or Android Settings (<em>Google &gt; Ads &gt; Opt out of Ads Personalization</em>).
-                </p>
-              </div>
-            </section>
-
-            {/* Section 5: Rights & Data Retention */}
-            <section
-              id="rights-retention"
-              className="bg-white p-6 sm:p-10 rounded-[4px] border border-[#E8E3DE] shadow-2xs space-y-6 scroll-mt-28"
-            >
-              <div className="border-b border-[#F2EFE9] pb-4">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#A68758] block mb-1">
-                  Section 05
-                </span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A]">
-                  5. Your Statutory Privacy Rights & Retention Policy
-                </h2>
-              </div>
-
-              <p className="text-xs sm:text-sm text-[#6B6B6B] leading-relaxed">
-                Under the Indian DPDP Act, GDPR, UK-GDPR, and CCPA, patrons possess comprehensive rights over their personal records:
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                <div className="p-4 bg-[#FAF8F5] rounded-xs border border-[#E8E3DE] space-y-1.5">
-                  <strong className="text-[#1A1A1A] text-xs block">Right to Access & Portability</strong>
-                  <p className="text-[11px] text-[#6B6B6B] leading-relaxed">
-                    Request a structured, machine-readable JSON copy of all personal records and measurement charts associated with your patron profile.
-                  </p>
-                </div>
-
-                <div className="p-4 bg-[#FAF8F5] rounded-xs border border-[#E8E3DE] space-y-1.5">
-                  <strong className="text-[#1A1A1A] text-xs block">Right to Erasure & Forgotten Status</strong>
-                  <p className="text-[11px] text-[#6B6B6B] leading-relaxed">
-                    Request permanent erasure of your account, marketing profiles, and silhouette records from our active databases.
-                  </p>
-                </div>
-
-                <div className="p-4 bg-[#FAF8F5] rounded-xs border border-[#E8E3DE] space-y-1.5">
-                  <strong className="text-[#1A1A1A] text-xs block">Right to Rectification</strong>
-                  <p className="text-[11px] text-[#6B6B6B] leading-relaxed">
-                    Instantly correct or update any address, sizing detail, or email preference through your Patron Account portal.
-                  </p>
-                </div>
-
-                <div className="p-4 bg-[#FAF8F5] rounded-xs border border-[#E8E3DE] space-y-1.5">
-                  <strong className="text-[#1A1A1A] text-xs block">Right to Withdraw Consent</strong>
-                  <p className="text-[11px] text-[#6B6B6B] leading-relaxed">
-                    Withdraw previously granted consent at any time by emailing our Data Governance Officer with "Withdrawal of Consent" in the subject line.
-                  </p>
-                </div>
-              </div>
-
-              {/* Data Portability Tools */}
-              <div className="p-5 bg-[#F8F6F3] rounded-xs border border-[#E8E3DE] space-y-3">
-                <div className="flex items-center gap-2 text-xs font-bold text-[#1A1A1A]">
-                  <Database className="w-4 h-4 text-[#C8A87C]" />
-                  <span>Patron Self-Service Data Portability Tool</span>
-                </div>
-                <p className="text-xs text-[#6B6B6B]">
-                  Exercise your GDPR Article 20 & DPDP data portability rights immediately:
-                </p>
-                <div className="flex items-center gap-3 flex-wrap pt-1">
-                  <button
-                    onClick={handleExportDataArchive}
-                    className="px-4 py-2 bg-white border border-[#E8E3DE] hover:border-[#1A1A1A] text-xs font-semibold text-[#1A1A1A] rounded-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  >
-                    <Download className="w-3.5 h-3.5 text-[#C8A87C]" />
-                    <span>Download Data Archive (JSON)</span>
-                  </button>
-
-                  <a
-                    href="mailto:privacy.grievance@sumilux.com?subject=GDPR%20Data%20Erasure%20Request&body=Please%20delete%20all%20personal%20records%20associated%20with%20my%20patron%20account."
-                    className="px-4 py-2 bg-white border border-[#E8E3DE] hover:border-[#C8A87C] text-xs font-semibold text-[#6B6B6B] hover:text-[#1A1A1A] rounded-xs transition-colors flex items-center gap-1.5"
-                  >
-                    <Mail className="w-3.5 h-3.5" />
-                    <span>Request Data Erasure via Email</span>
-                  </a>
-
-                  {exportSuccess && (
-                    <span className="text-xs font-semibold text-emerald-700 flex items-center gap-1 animate-fade-in">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Archive Export Downloaded</span>
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Data Retention & Archival Clause */}
-              <div className="p-4 bg-[#FAF8F5] rounded-xs border border-[#E8E3DE] space-y-1.5 text-xs text-[#6B6B6B] leading-relaxed">
-                <strong className="text-[#1A1A1A] block">Data Retention & Fraud Prevention Archival</strong>
-                <p>
-                  We retain personal data only for as long as necessary to fulfill order delivery or satisfy statutory tax, customs, and corporate accounting laws. Even upon account deletion, certain transaction and payment telemetry may be retained in anonymized, restricted-access archives to resolve payment chargebacks, prevent repeat fraud, and defend against potential legal claims.
-                </p>
-              </div>
-            </section>
-
-            {/* Section 6: Children's Privacy */}
-            <section
-              id="children"
-              className="bg-white p-6 sm:p-10 rounded-[4px] border border-[#E8E3DE] shadow-2xs space-y-6 scroll-mt-28"
-            >
-              <div className="border-b border-[#F2EFE9] pb-4">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#A68758] block mb-1">
-                  Section 06
-                </span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A]">
-                  6. Age of Majority & Children’s Information
-                </h2>
-              </div>
-
-              <div className="space-y-3 text-xs sm:text-sm text-[#6B6B6B] leading-relaxed">
-                <p>
-                  Use of the SUMILUX Platform is available exclusively to individuals who can form legally binding contracts under the Indian Contract Act 1872 or the legal age of majority in their jurisdiction (minimum 18 years of age).
-                </p>
-                <p>
-                  We do not knowingly solicit or collect personal data from children under the age of 18. If a parent or guardian becomes aware that a minor has provided us with personal data without proper authorization, please contact our Grievance Officer immediately to have the information permanently expunged.
-                </p>
-              </div>
-            </section>
-
-            {/* Section 7: Statutory Grievance Redressal */}
-            <section
-              id="grievance"
-              className="bg-white p-6 sm:p-10 rounded-[4px] border border-[#E8E3DE] shadow-2xs space-y-6 scroll-mt-28"
-            >
-              <div className="border-b border-[#F2EFE9] pb-4">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#A68758] block mb-1">
-                  Section 07
-                </span>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A]">
-                  7. Statutory Grievance Redressal Officer & Corporate Contacts
-                </h2>
-              </div>
-
-              <p className="text-xs sm:text-sm text-[#6B6B6B] leading-relaxed">
-                In accordance with the Information Technology Act 2000, Information Technology (Intermediary Guidelines and Digital Media Ethics Code) Rules 2021, and the Consumer Protection (E-Commerce) Rules 2020, the designated Grievance Officer details are published below:
-              </p>
-
-              <div className="bg-[#FAF8F5] p-6 rounded-xs border border-[#E8E3DE] space-y-4 text-xs leading-relaxed">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <span className="text-[#6B6B6B] block text-[11px] uppercase tracking-wider font-mono">Grievance Officer</span>
-                    <strong className="text-[#1A1A1A] text-sm font-serif">Mr. Karthik R.</strong>
-                    <div className="text-[#6B6B6B] text-[11px]">Associate Director – Data Governance</div>
-                  </div>
-
-                  <div>
-                    <span className="text-[#6B6B6B] block text-[11px] uppercase tracking-wider font-mono">Dedicated Grievance Email</span>
-                    <a
-                      href="mailto:privacy.grievance@sumilux.com"
-                      className="text-[#1A1A1A] font-semibold hover:text-[#C8A87C] transition-colors"
-                    >
-                      privacy.grievance@sumilux.com
-                    </a>
-                  </div>
-
-                  <div>
-                    <span className="text-[#6B6B6B] block text-[11px] uppercase tracking-wider font-mono">Operating Corporate Entity</span>
-                    <span className="text-[#1A1A1A] font-semibold">SUMILUX Studio Ltd.</span>
-                    <div className="text-[#6B6B6B] text-[11px]">CIN: U51109KA2026PTC088214</div>
-                  </div>
-
-                  <div>
-                    <span className="text-[#6B6B6B] block text-[11px] uppercase tracking-wider font-mono">Registered Office Address</span>
-                    <span className="text-[#1A1A1A]">12 Mayfair Gardens, London W1K 4QT, UK & Embassy Tech Village, Outer Ring Road, Bengaluru 560103, India</span>
-                  </div>
-
-                  <div>
-                    <span className="text-[#6B6B6B] block text-[11px] uppercase tracking-wider font-mono">Telephone Inquiries</span>
-                    <a href="tel:044-45614709" className="text-[#1A1A1A] font-mono hover:text-[#C8A87C]">044-45614709</a> / <a href="tel:044-45714709" className="text-[#1A1A1A] font-mono hover:text-[#C8A87C]">044-45714709</a>
-                  </div>
-
-                  <div>
-                    <span className="text-[#6B6B6B] block text-[11px] uppercase tracking-wider font-mono">Statutory Resolution SLA</span>
-                    <span className="text-[#1A1A1A]">Acknowledgment within 48 hours; resolution within 30 days as per IT Rules</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Support Link */}
-              <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+                  <span>Request Account Deletion</span>
+                  <UserX className="w-3.5 h-3.5" />
+                </Link>
                 <Link
                   to="/contact"
-                  className="inline-flex items-center gap-1.5 font-semibold text-[#1A1A1A] hover:text-[#C8A87C] transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-[#506040] bg-[#FAF8F5] hover:bg-[#E8E4DC]/60 rounded-lg transition-colors"
                 >
-                  <span>Need assistance with your order or privacy? Contact Us</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <span>Contact Grievance Officer</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
                 </Link>
-                <span className="text-[#6B6B6B]">Last updated: April 2026</span>
+              </div>
+            </div>
+          </aside>
+
+          {/* Main Legal Content */}
+          <main className="lg:col-span-8 space-y-8 bg-white rounded-2xl border border-[#E8E4DC] p-6 sm:p-10 shadow-2xs text-xs sm:text-sm text-[#687163] leading-relaxed">
+            {/* Section 1 */}
+            <section id="overview" className="space-y-3 scroll-mt-28 border-b border-[#E8E4DC] pb-8">
+              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C] flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-[#506040]" />
+                1. Overview &amp; Commercial Commitment
+              </h2>
+              <p>
+                This Privacy Policy describes how <strong>Murari&apos;s Glam &amp; Glow</strong> (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) collects, processes, stores, and protects personal information obtained from customers who visit our web portal, Android application, and mobile checkout platform.
+              </p>
+              <p>
+                We do not sell, rent, or trade your personal information to any third parties for their independent marketing purposes. All data collected is utilized solely to process your orders, facilitate deliveries, manage authentication, prevent fraudulent transactions, and enhance your user experience.
+              </p>
+            </section>
+
+            {/* Section 2 */}
+            <section id="data-collected" className="space-y-3 scroll-mt-28 border-b border-[#E8E4DC] pb-8">
+              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C] flex items-center gap-2">
+                <Database className="w-5 h-5 text-[#506040]" />
+                2. Information We Collect
+              </h2>
+              <p>We only collect information strictly required to fulfill your shopping and service requests:</p>
+              <ul className="list-disc list-inside space-y-2 pl-2">
+                <li>
+                  <strong>Personal Identification Data:</strong> Full Name, Email Address, and Mobile Phone Number (provided during registration or checkout).
+                </li>
+                <li>
+                  <strong>Shipping &amp; Billing Data:</strong> Postal address, apartment/suite number, city, state, postal PIN code, and recipient contact number for delivery routing.
+                </li>
+                <li>
+                  <strong>Account Credentials:</strong> Securely salted and hashed passwords (we never have access to plain-text passwords).
+                </li>
+                <li>
+                  <strong>Order History &amp; Favorites:</strong> Items purchased, order statuses, transaction identifiers, and wishlist items.
+                </li>
+                <li>
+                  <strong>Device &amp; Technical Information:</strong> IP address, browser type, operating system version, and anonymous session analytics to optimize site performance and prevent spam/bots.
+                </li>
+              </ul>
+            </section>
+
+            {/* Section 3: Razorpay Compliance */}
+            <section id="payment-security" className="space-y-3 scroll-mt-28 border-b border-[#E8E4DC] pb-8">
+              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C] flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-[#506040]" />
+                3. Razorpay Payment Gateway &amp; Financial Security
+              </h2>
+              <div className="p-4 bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl space-y-2 text-xs">
+                <div className="font-bold text-[#1D241C] flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  PCI-DSS Level 1 Compliant Payment Architecture
+                </div>
+                <p>
+                  All online payments (UPI, Debit/Credit Cards, Net Banking, and Wallets) are processed through <strong>Razorpay Software Private Limited</strong>, an RBI-authorized, PCI-DSS Level 1 compliant payment aggregator.
+                </p>
+              </div>
+              <ul className="list-disc list-inside space-y-2 pl-2">
+                <li>
+                  <strong>No Card Data Stored:</strong> Murari&apos;s Glam &amp; Glow does not store, capture, or have access to your full credit/debit card numbers, CVV codes, UPI PINs, or net banking credentials. All sensitive card capture is handled directly inside Razorpay&apos;s encrypted vault.
+                </li>
+                <li>
+                  <strong>Tokenization Standards:</strong> In compliance with Reserve Bank of India (RBI) tokenization guidelines, card details are secured using encrypted tokens without exposing primary account numbers.
+                </li>
+                <li>
+                  <strong>Idempotent &amp; Fraud-Protected:</strong> Every payment transaction is assigned a unique cryptographic transaction ID to prevent double-charging and secure against payment tampering.
+                </li>
+              </ul>
+            </section>
+
+            {/* Section 4: Google Play Compliance */}
+            <section id="play-store-compliance" className="space-y-3 scroll-mt-28 border-b border-[#E8E4DC] pb-8">
+              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C] flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-[#506040]" />
+                4. Google Play Store &amp; App Data Safety Disclosures
+              </h2>
+              <p>
+                In strict adherence to the Google Play Developer Policy and Data Safety disclosures:
+              </p>
+              <ul className="list-disc list-inside space-y-2 pl-2">
+                <li>
+                  <strong>Data Encryption in Transit:</strong> All data transmitted between your mobile device and our backend servers is encrypted using standard <strong>TLS 1.3 / HTTPS</strong> cryptographic protocols.
+                </li>
+                <li>
+                  <strong>No Sensitive Device Permissions:</strong> Our app does not require background location tracking, microphone access, contact book access, or SMS scraping permissions.
+                </li>
+                <li>
+                  <strong>Third-Party Analytics:</strong> We only use privacy-preserving analytics to track app stability, crash logs, and load times.
+                </li>
+              </ul>
+            </section>
+
+            {/* Section 5 */}
+            <section id="usage-sharing" className="space-y-3 scroll-mt-28 border-b border-[#E8E4DC] pb-8">
+              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C] flex items-center gap-2">
+                <Eye className="w-5 h-5 text-[#506040]" />
+                5. How We Use &amp; Share Information
+              </h2>
+              <p>
+                Your information is shared only with verified operational service providers under strict non-disclosure obligations:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="p-3.5 bg-[#FAF8F5] rounded-xl border border-[#E8E4DC]">
+                  <div className="font-bold text-xs text-[#1D241C]">Logistics &amp; Courier Partners</div>
+                  <div className="text-[11px] text-[#687163] mt-0.5">
+                    BlueDart, Delhivery, DTDC receive your shipping name, address, and contact number solely to deliver your parcel.
+                  </div>
+                </div>
+                <div className="p-3.5 bg-[#FAF8F5] rounded-xl border border-[#E8E4DC]">
+                  <div className="font-bold text-xs text-[#1D241C]">Payment Gateways</div>
+                  <div className="text-[11px] text-[#687163] mt-0.5">
+                    Razorpay receives order amounts and customer billing details for secure transaction clearance.
+                  </div>
+                </div>
+                <div className="p-3.5 bg-[#FAF8F5] rounded-xl border border-[#E8E4DC]">
+                  <div className="font-bold text-xs text-[#1D241C]">Transactional SMS &amp; Email</div>
+                  <div className="text-[11px] text-[#687163] mt-0.5">
+                    Automated dispatch notifications, OTPs, and invoice delivery.
+                  </div>
+                </div>
+                <div className="p-3.5 bg-[#FAF8F5] rounded-xl border border-[#E8E4DC]">
+                  <div className="font-bold text-xs text-[#1D241C]">Legal &amp; Regulatory Authorities</div>
+                  <div className="text-[11px] text-[#687163] mt-0.5">
+                    Shared only if strictly mandated under valid court orders, statutory GST audits, or law enforcement warrants.
+                  </div>
+                </div>
               </div>
             </section>
-          </div>
+
+            {/* Section 6 */}
+            <section id="cookies-tracking" className="space-y-3 scroll-mt-28 border-b border-[#E8E4DC] pb-8">
+              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C] flex items-center gap-2">
+                <Cookie className="w-5 h-5 text-[#506040]" />
+                6. Cookies &amp; Local Storage Usage
+              </h2>
+              <p>
+                We use strictly necessary cookies and local storage items to maintain your authenticated login session, keep items in your shopping bag, and remember your regional currency preference. You can manage or clear cookies anytime in your browser settings.
+              </p>
+            </section>
+
+            {/* Section 7: Account Deletion (Google Play Mandate) */}
+            <section id="retention-deletion" className="space-y-3 scroll-mt-28 border-b border-[#E8E4DC] pb-8">
+              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C] flex items-center gap-2">
+                <UserX className="w-5 h-5 text-rose-700" />
+                7. Data Retention &amp; User Account Deletion Request
+              </h2>
+              <p>
+                In compliance with Google Play Store User Data policies and the Digital Personal Data Protection Act, we provide users with full control over their account data.
+              </p>
+              <div className="p-4 bg-rose-50/70 border border-rose-200 rounded-xl space-y-2 text-xs">
+                <div className="font-bold text-rose-900 flex items-center gap-1.5">
+                  <UserX className="w-4 h-4 text-rose-700" />
+                  Self-Service Account Deletion
+                </div>
+                <p className="text-rose-800">
+                  You can permanently delete your account, contact details, saved addresses, and wishlist at any time. Visit our dedicated{' '}
+                  <Link to="/delete-account" className="font-bold underline text-rose-900">
+                    Account Deletion Portal
+                  </Link>{' '}
+                  or email{' '}
+                  <a href="mailto:privacy@murarisglamglow.com" className="font-bold underline text-rose-900">
+                    privacy@murarisglamglow.com
+                  </a>.
+                </p>
+              </div>
+              <p className="text-[11px] text-[#687163]">
+                <em>Note: Past financial invoices and tax ledgers are retained for the statutory period required under Indian GST laws before permanent purging.</em>
+              </p>
+            </section>
+
+            {/* Section 8 */}
+            <section id="user-rights" className="space-y-3 scroll-mt-28 border-b border-[#E8E4DC] pb-8">
+              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C] flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-[#506040]" />
+                8. Your Privacy Rights &amp; Choices
+              </h2>
+              <ul className="list-disc list-inside space-y-1.5 pl-2">
+                <li><strong>Right to Access:</strong> View all profile information and order history inside your Account Portal.</li>
+                <li><strong>Right to Rectification:</strong> Edit your name, phone, and saved addresses directly in your profile.</li>
+                <li><strong>Right to Erasure:</strong> Request permanent erasure of your account and personal identifiers.</li>
+                <li><strong>Right to Opt-Out:</strong> Unsubscribe from non-essential promotional communications with one click.</li>
+              </ul>
+            </section>
+
+            {/* Section 9 */}
+            <section id="children-privacy" className="space-y-3 scroll-mt-28 border-b border-[#E8E4DC] pb-8">
+              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C] flex items-center gap-2">
+                <Scale className="w-5 h-5 text-[#506040]" />
+                9. Children&apos;s Privacy Protection
+              </h2>
+              <p>
+                While our catalog includes curated children&apos;s and kids&apos; apparel, our website and purchasing features are strictly intended for use by adults (parents and legal guardians aged 18 years or older). We do not knowingly collect personal information directly from minors.
+              </p>
+            </section>
+
+            {/* Section 10: Grievance Officer */}
+            <section id="grievance-officer" className="space-y-4 scroll-mt-28">
+              <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C] flex items-center gap-2">
+                <Mail className="w-5 h-5 text-[#506040]" />
+                10. Grievance Redressal Officer (IT Act, 2000 Compliance)
+              </h2>
+              <p>
+                In accordance with the <em>Information Technology Act, 2000</em> and the <em>Information Technology (Reasonable Security Practices and Procedures and Sensitive Personal Data or Information) Rules, 2011</em>, the contact details of the Grievance Officer are published below:
+              </p>
+
+              <div className="p-6 bg-[#FAF8F5] rounded-2xl border border-[#E8E4DC] space-y-3 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-[#687163] block">Designated Grievance Officer:</span>
+                    <strong className="text-[#1D241C] text-sm">Nodal Privacy &amp; Compliance Officer</strong>
+                  </div>
+                  <div>
+                    <span className="text-[#687163] block">Company Name:</span>
+                    <strong className="text-[#1D241C] text-sm">Murari&apos;s Glam &amp; Glow</strong>
+                  </div>
+                  <div>
+                    <span className="text-[#687163] block">Direct Compliance Email:</span>
+                    <a href="mailto:grievance@murarisglamglow.com" className="text-[#506040] font-bold underline">
+                      grievance@murarisglamglow.com
+                    </a>
+                  </div>
+                  <div>
+                    <span className="text-[#687163] block">Customer Support Desk:</span>
+                    <a href="mailto:support@murarisglamglow.com" className="text-[#506040] font-bold underline">
+                      support@murarisglamglow.com
+                    </a>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-[#E8E4DC] text-[#687163]">
+                  <strong>Operating Address:</strong> Murari&apos;s Glam &amp; Glow, Prime Commercial Avenue, Banjara Hills, Hyderabad, Telangana – 500034, India.
+                </div>
+
+                <div className="text-[11px] text-[#687163]">
+                  <em>Turnaround Time: All privacy grievances are formally acknowledged within 24 hours and resolved within 15 to 30 business days as prescribed by law.</em>
+                </div>
+              </div>
+            </section>
+          </main>
         </div>
       </div>
     </div>

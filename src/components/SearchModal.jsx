@@ -26,9 +26,14 @@ export const SearchModal = ({ isOpen, onClose, products, onSelectProduct, onSear
     if (!isOpen)
         return null;
     const matchedProducts = searchTerm.trim()
-        ? products.filter((p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        ? products.filter((p) =>
+            (p.name && p.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (p.category && p.category.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (p.subcategory && p.subcategory.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (Array.isArray(p.tags) && p.tags.some((t) => typeof t === 'string' && t.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+            (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+          )
         : [];
     const handleFormSubmit = (e) => {
         e.preventDefault();

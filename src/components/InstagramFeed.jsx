@@ -10,12 +10,12 @@ export const InstagramFeed = () => {
             Community Gallery
           </span>
           <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#1A1A1A]">
-            Styled by You #SumiluxStyle
+            Styled by You #MurarisGlamGlow
           </h2>
         </div>
         <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#1A1A1A] hover:text-[#C8A87C] transition-colors mt-2 md:mt-0">
           <Instagram className="w-4 h-4" />
-          <span>Follow @sumilux.studios</span>
+          <span>Follow @murarisglamglow</span>
         </a>
       </div>
 
