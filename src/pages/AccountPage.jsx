@@ -23,6 +23,7 @@ import {
   RotateCcw,
   Headphones
 } from 'lucide-react';
+import { resolveImageUrl } from '../utils/productAdapter';
 
 export const AccountPage = ({
   currentUser,
@@ -191,7 +192,7 @@ export const AccountPage = ({
         <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-[#6B6B6B] mb-6">
           <Link to="/" className="hover:text-[#1A1A1A] transition-colors">Home</Link>
           <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-          <Link to="/account/orders" className="hover:text-[#1A1A1A] transition-colors">Patron Account</Link>
+          <Link to="/account/orders" className="hover:text-[#1A1A1A] transition-colors">My Account</Link>
           {activeTab === 'order-detail' && activeOrder && (
             <>
               <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
@@ -289,21 +290,6 @@ export const AccountPage = ({
             </button>
 
             <button
-              onClick={() => handleTabChange('payments')}
-              className={`w-full flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wider rounded-xs transition-all cursor-pointer ${
-                activeTab === 'payments'
-                  ? 'bg-[#1A1A1A] text-white shadow-xs'
-                  : 'text-[#6B6B6B] hover:text-[#1A1A1A] hover:bg-[#F8F6F3]'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <CreditCard className="w-4 h-4 text-[#C8A87C]" />
-                <span>Payment History</span>
-              </div>
-              <span className="font-mono text-[11px] opacity-80">{payments.length}</span>
-            </button>
-
-            <button
               onClick={() => handleTabChange('profile')}
               className={`w-full flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wider rounded-xs transition-all cursor-pointer ${
                 activeTab === 'profile'
@@ -313,7 +299,7 @@ export const AccountPage = ({
             >
               <div className="flex items-center gap-3">
                 <User className="w-4 h-4 text-[#C8A87C]" />
-                <span>Patron Profile</span>
+                <span>My Profile</span>
               </div>
             </button>
 
@@ -339,7 +325,7 @@ export const AccountPage = ({
                   <div>
                     <h2 className="font-serif text-xl font-bold text-[#1A1A1A]">Order History</h2>
                     <p className="text-xs text-[#6B6B6B] mt-0.5">
-                      Review all past orders, delivery tracking numbers, and garment receipts.
+                      View all your past orders, delivery status, and invoices.
                     </p>
                   </div>
                   <Link
@@ -356,7 +342,7 @@ export const AccountPage = ({
                     <Package className="w-12 h-12 text-[#C8A87C] mx-auto opacity-50" />
                     <h3 className="font-serif text-lg font-bold text-[#1A1A1A]">No Orders Placed Yet</h3>
                     <p className="text-xs text-[#6B6B6B] max-w-sm mx-auto">
-                      Your atelier collection wardrobe is waiting. Explore our signature pieces crafted from certified organic textiles.
+                      You have not placed any orders yet. Explore our fashion collections and find styles you love.
                     </p>
                     <Link
                       to="/products"
@@ -574,9 +560,12 @@ export const AccountPage = ({
                       <div key={idx} className="py-4 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                           <img
-                            src={item.image}
+                            src={resolveImageUrl(item.image || item.product?.image || item.product?.images?.[0])}
                             alt={item.name}
-                            className="w-16 h-20 object-cover rounded-xs border border-[#E8E3DE] bg-[#F8F6F3]"
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+                            }}
+                            className="w-16 h-20 object-cover rounded-xs border border-[#E8E4DC] bg-[#F8F6F3]"
                           />
                           <div className="space-y-1">
                             <h4 className="font-serif font-bold text-sm text-[#1A1A1A]">
@@ -597,7 +586,7 @@ export const AccountPage = ({
 
                         <div className="text-right">
                           <div className="font-mono text-base font-bold text-[#1A1A1A]">
-                            ${(item.price * item.quantity).toFixed(2)}
+                            ₹{(item.price * item.quantity).toFixed(2)}
                           </div>
                           <div className="text-[11px] text-[#6B6B6B]">
                             ₹{item.price.toFixed(2)} each
@@ -785,130 +774,14 @@ export const AccountPage = ({
             )}
 
             {/* ============================================================
-                TAB 4: PAYMENT HISTORY & METHODS
-            ============================================================ */}
-            {activeTab === 'payments' && (
-              <div className="space-y-8">
-                {/* Transaction Ledger */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-[#E8E3DE]">
-                    <div>
-                      <h2 className="font-serif text-xl font-bold text-[#1A1A1A]">Payment Histories</h2>
-                      <p className="text-xs text-[#6B6B6B] mt-0.5">
-                        Detailed audit trail of all authorizations, payments, and settlements.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-[4px] border border-[#E8E3DE] shadow-2xs overflow-x-auto">
-                    <table className="w-full text-left text-xs">
-                      <thead>
-                        <tr className="border-b border-[#E8E3DE] bg-[#FAF8F5] text-[10px] uppercase tracking-wider text-[#6B6B6B]">
-                          <th className="py-3.5 px-4 font-semibold">Transaction</th>
-                          <th className="py-3.5 px-4 font-semibold">Date</th>
-                          <th className="py-3.5 px-4 font-semibold">Method</th>
-                          <th className="py-3.5 px-4 font-semibold">Order</th>
-                          <th className="py-3.5 px-4 font-semibold">Amount</th>
-                          <th className="py-3.5 px-4 font-semibold">Status</th>
-                          <th className="py-3.5 px-4 font-semibold text-right">Receipt</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#F2EFE9]">
-                        {payments.map((p) => (
-                          <tr key={p.id} className="hover:bg-[#FAF8F5] transition-colors">
-                            <td className="py-3.5 px-4 font-mono font-semibold text-[#1A1A1A]">
-                              {p.transactionId || p.id}
-                            </td>
-                            <td className="py-3.5 px-4 text-[#6B6B6B]">{p.date}</td>
-                            <td className="py-3.5 px-4 text-[#1A1A1A] font-medium flex items-center gap-1.5">
-                              <CreditCard className="w-3.5 h-3.5 text-[#C8A87C]" />
-                              <span>{p.method}</span>
-                            </td>
-                            <td className="py-3.5 px-4 font-mono text-[#A68758]">{p.orderNumber}</td>
-                            <td className="py-3.5 px-4 font-mono font-bold text-[#1A1A1A]">
-                              ${p.amount?.toFixed(2)}
-                            </td>
-                            <td className="py-3.5 px-4">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                {p.status || 'Settled'}
-                              </span>
-                            </td>
-                            <td className="py-3.5 px-4 text-right">
-                              <button
-                                onClick={() => window.print()}
-                                className="text-xs text-[#A68758] hover:text-[#1A1A1A] font-semibold underline cursor-pointer"
-                              >
-                                PDF Receipt
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Saved Payment Methods */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-[#E8E3DE]">
-                    <div>
-                      <h3 className="font-serif text-lg font-bold text-[#1A1A1A]">Saved Payment Methods</h3>
-                      <p className="text-xs text-[#6B6B6B] mt-0.5">
-                        Encrypted payment methods for instant 1-click checkout.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-5 bg-white border border-[#C8A87C] rounded-[4px] shadow-2xs relative flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <span className="font-mono text-sm font-bold text-[#1D241C]">Saved Card</span>
-                          <span className="px-2 py-0.5 bg-[#506040]/15 text-[#506040] text-[10px] font-mono font-bold rounded">
-                            Primary
-                          </span>
-                        </div>
-                        <p className="font-mono text-base tracking-widest text-[#1D241C]">•••• •••• •••• 8821</p>
-                        <p className="text-xs text-[#687163] mt-2">Expires 12/28 • {currentUser?.name || 'Customer'}</p>
-                      </div>
-                      <div className="mt-4 pt-3 border-t border-[#F2EFE9] flex items-center justify-between text-xs text-[#6B6B6B]">
-                        <span className="flex items-center gap-1 text-emerald-700">
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          TLS 1.3 Verified
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="p-5 bg-white border border-[#E8E3DE] rounded-[4px] shadow-2xs relative flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <span className="font-mono text-sm font-bold text-[#1A1A1A]">Apple Pay</span>
-                          <span className="text-[10px] text-neutral-400 font-mono">Biometric</span>
-                        </div>
-                        <p className="font-mono text-base tracking-widest text-[#1A1A1A]">Linked Device Card</p>
-                        <p className="text-xs text-[#6B6B6B] mt-2">Apple Wallet • Touch ID / Face ID</p>
-                      </div>
-                      <div className="mt-4 pt-3 border-t border-[#F2EFE9] flex items-center justify-between text-xs text-[#6B6B6B]">
-                        <span className="flex items-center gap-1 text-emerald-700">
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          Tokenized Security
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ============================================================
-                TAB 5: PATRON PROFILE & PREFERENCES
+                TAB 3: PROFILE DETAILS
             ============================================================ */}
             {activeTab === 'profile' && (
               <div className="space-y-6">
                 <div className="pb-3 border-b border-[#E8E3DE]">
-                  <h2 className="font-serif text-xl font-bold text-[#1A1A1A]">Patron Profile & Atelier Preferences</h2>
+                  <h2 className="font-serif text-xl font-bold text-[#1A1A1A]">My Profile & Account Details</h2>
                   <p className="text-xs text-[#6B6B6B] mt-0.5">
-                    Customize your personal details, preferred garment sizing, and concierge communication.
+                    Update your personal contact information and account details.
                   </p>
                 </div>
 
@@ -947,24 +820,14 @@ export const AccountPage = ({
                         className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58] font-mono"
                       />
                     </div>
-                    <div>
-                      <label className="text-xs font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                        Preferred Size
-                      </label>
-                      <select className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]">
-                        <option>Small (IT 40 / US 4)</option>
-                        <option>Medium (IT 42 / US 6)</option>
-                        <option>Large (IT 44 / US 8)</option>
-                      </select>
-                    </div>
                   </div>
 
                   <div className="pt-4 border-t border-[#F2EFE9] flex justify-end">
                     <button
-                      onClick={() => alert('Profile preferences saved successfully.')}
+                      onClick={() => alert('Profile details saved successfully.')}
                       className="px-6 py-2.5 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-semibold uppercase tracking-wider rounded-xs transition-colors cursor-pointer"
                     >
-                      Save Preferences
+                      Save Profile
                     </button>
                   </div>
                 </div>

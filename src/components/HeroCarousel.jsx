@@ -112,15 +112,6 @@ export const HeroCarousel = ({ slides = [], onSelectCategory }) => {
             <span>{activeSlide.ctaText || activeSlide.cta || 'Explore Collection'}</span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </button>
-
-          <button onClick={() => {
-            const target = document.getElementById('lookbook-section');
-            if (target) {
-              target.scrollIntoView({ behavior: 'smooth' });
-            }
-          }} className="inline-flex items-center gap-2 px-5 py-3.5 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white text-xs md:text-sm font-medium uppercase tracking-wider transition-colors border border-white/25 rounded-xs">
-            Explore Editorial Lookbook
-          </button>
         </div>
       </div>
     </div>

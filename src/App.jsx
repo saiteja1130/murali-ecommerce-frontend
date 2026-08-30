@@ -9,9 +9,8 @@ import { RootProvider, useAuth, useStore } from './context/RootContext';
 // Navigation & Layout Components
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
-import { CartDrawer } from './components/CartDrawer';
-import { WishlistDrawer } from './components/WishlistDrawer';
 import { SearchModal } from './components/SearchModal';
+import { AuthModal } from './components/AuthModal';
 import { Toast } from './components/Toast';
 
 // Storefront Pages
@@ -32,6 +31,8 @@ import { AboutPage } from './pages/AboutPage';
 import { ContactPage } from './pages/ContactPage';
 import { ShippingPolicyPage } from './pages/ShippingPolicyPage';
 import { ReturnsPolicyPage } from './pages/ReturnsPolicyPage';
+import { CancellationPolicyPage } from './pages/CancellationPolicyPage';
+import { DeleteAccountPage } from './pages/DeleteAccountPage';
 import { TermsPage } from './pages/TermsPage';
 import { FaqPage } from './pages/FaqPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
@@ -58,6 +59,7 @@ const AppContent = () => {
   } = useAuth();
 
   const {
+    mainCategories,
     products,
     categories,
     activeCategory,
@@ -116,19 +118,6 @@ const AppContent = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [openSearch]);
 
-  const handleScrollToLookbook = () => {
-    if (location.pathname !== '/') {
-      navigate('/');
-      setTimeout(() => {
-        const el = document.getElementById('lookbook-section');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 200);
-    } else {
-      const el = document.getElementById('lookbook-section');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   const handleDirectCheckout = (product, selectedSize, selectedColor, quantity = 1) => {
     addToCart(product, selectedSize, selectedColor, quantity);
     navigate('/checkout');
@@ -174,13 +163,13 @@ const AppContent = () => {
         activeCategory={activeCategory}
         onSelectCategory={setActiveCategory}
         onOpenSearch={openSearch}
+        mainCategories={mainCategories}
         categories={categories}
         cartCount={cartItemCount}
         cartTotal={cartSubtotal}
         wishlistCount={wishlist.length}
         currency={currency}
         onSelectCurrency={setCurrency}
-        onScrollToLookbook={handleScrollToLookbook}
         currentUser={currentUser}
         onLogout={logout}
       />
@@ -197,6 +186,7 @@ const AppContent = () => {
                 onAddToCart={addToCart}
                 onToggleWishlist={toggleWishlist}
                 wishlistIds={wishlist}
+                mainCategories={mainCategories}
                 categories={categories}
                 searchQuery={searchQuery}
                 onClearSearch={() => setSearchQuery('')}
@@ -211,6 +201,7 @@ const AppContent = () => {
             element={
               <ProductsPage
                 allProducts={products}
+                mainCategories={mainCategories}
                 categories={categories}
                 onAddToCart={addToCart}
                 onToggleWishlist={toggleWishlist}
@@ -224,6 +215,7 @@ const AppContent = () => {
             element={
               <ProductsPage
                 allProducts={products}
+                mainCategories={mainCategories}
                 categories={categories}
                 onAddToCart={addToCart}
                 onToggleWishlist={toggleWishlist}
@@ -237,6 +229,7 @@ const AppContent = () => {
             element={
               <ProductsPage
                 allProducts={products}
+                mainCategories={mainCategories}
                 categories={categories}
                 onAddToCart={addToCart}
                 onToggleWishlist={toggleWishlist}
@@ -436,54 +429,37 @@ const AppContent = () => {
             }
           />
 
-          {/* Trust, Policy & Information Routes */}
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/contact-us" element={<ContactPage />} />
           <Route path="/shipping-policy" element={<ShippingPolicyPage />} />
+          <Route path="/shipping" element={<ShippingPolicyPage />} />
           <Route path="/returns-policy" element={<ReturnsPolicyPage />} />
+          <Route path="/returns" element={<ReturnsPolicyPage />} />
+          <Route path="/cancellation-policy" element={<CancellationPolicyPage />} />
+          <Route path="/cancellation" element={<CancellationPolicyPage />} />
+          <Route path="/refund-policy" element={<CancellationPolicyPage />} />
+          <Route path="/refunds" element={<CancellationPolicyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/terms-of-service" element={<TermsPage />} />
+          <Route path="/terms-and-conditions" element={<TermsPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/delete-account" element={<DeleteAccountPage />} />
+          <Route path="/data-deletion" element={<DeleteAccountPage />} />
+          <Route path="/account-deletion" element={<DeleteAccountPage />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/support" element={<Navigate to="/contact" replace />} />
           <Route path="/help" element={<Navigate to="/contact" replace />} />
 
-          {/* Auth Routes */}
           <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
           <Route path="/signup" element={<SignupPage onSignupSuccess={handleSignupSuccess} />} />
 
-          {/* Error 404 Route */}
           <Route path="/404" element={<NotFoundPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
-
-      {/* Footer */}
-      <Footer onSelectCategory={setActiveCategory} onScrollToLookbook={handleScrollToLookbook} />
-
-      {/* Drawers & Modals */}
-      <CartDrawer
-        isOpen={isCartOpen}
-        onClose={closeCart}
-        items={cart}
-        onUpdateQuantity={updateCartQuantity}
-        onRemoveItem={removeCartItem}
-        onProceedToCheckout={() => {
-          closeCart();
-          navigate('/checkout');
-        }}
-        promoCode={promoCode}
-        onApplyPromoCode={applyPromoCode}
-        discountRate={discountRate}
-      />
-
-      <WishlistDrawer
-        isOpen={isWishlistOpen}
-        onClose={closeWishlist}
-        wishlistProducts={wishlistProducts}
-        onRemoveFromWishlist={removeFromWishlist}
-        onMoveToCart={moveWishlistToCart}
-      />
+      <Footer onSelectCategory={setActiveCategory} />
 
       <SearchModal
         isOpen={isSearchOpen}
@@ -499,7 +475,8 @@ const AppContent = () => {
         }}
       />
 
-      {/* Global Toast Notifications */}
+      <AuthModal />
+
       <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   );

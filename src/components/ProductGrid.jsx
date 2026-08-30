@@ -6,6 +6,7 @@ import { ProductCard } from './ProductCard';
 
 export const ProductGrid = ({
   products: propProducts,
+  mainCategories: propMainCategories,
   categories: propCategories,
   selectedCategory = 'All',
   onSelectCategory,
@@ -17,8 +18,9 @@ export const ProductGrid = ({
   onClickProduct
 }) => {
   const navigate = useNavigate();
-  const { categories: ctxCategories, products: ctxProducts } = useStore();
+  const { mainCategories: ctxMainCategories, categories: ctxCategories, products: ctxProducts } = useStore();
 
+  const mainCategoriesList = propMainCategories && propMainCategories.length > 0 ? propMainCategories : (ctxMainCategories || []);
   const categoriesList = propCategories && propCategories.length > 0 ? propCategories : (ctxCategories || []);
   const products = propProducts && propProducts.length > 0 ? propProducts : (ctxProducts || []);
 
@@ -28,21 +30,24 @@ export const ProductGrid = ({
 
   const dynamicCategories = useMemo(() => {
     const list = [{ label: 'All Items', value: 'All' }];
-    if (Array.isArray(categoriesList) && categoriesList.length > 0) {
-      categoriesList.forEach((cat) => {
+    const sourceList = mainCategoriesList.length > 0 ? mainCategoriesList : categoriesList;
+    if (Array.isArray(sourceList) && sourceList.length > 0) {
+      sourceList.forEach((cat) => {
         list.push({ label: cat.name, value: cat.slug || cat.name });
       });
     }
     return list;
-  }, [categoriesList]);
+  }, [mainCategoriesList, categoriesList]);
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
-    // Filter by Category
+    // Filter by Category / Main Category
     if (selectedCategory !== 'All') {
       result = result.filter(
         (p) =>
+          p.mainCategorySlug?.toLowerCase() === selectedCategory.toLowerCase() ||
+          p.mainCategory?.toLowerCase() === selectedCategory.toLowerCase() ||
           p.category?.toLowerCase() === selectedCategory.toLowerCase() ||
           p.categorySlug?.toLowerCase() === selectedCategory.toLowerCase()
       );
@@ -211,7 +216,6 @@ export const ProductGrid = ({
               Sort by:
             </span>
             <select
-              id="sort-select-dropdown"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="bg-white border border-[#E8E4DC] text-xs text-[#1D241C] font-medium py-1.5 px-3 rounded-xs focus:outline-none focus:border-[#C69E58] cursor-pointer"
@@ -219,8 +223,6 @@ export const ProductGrid = ({
               <option value="featured">Featured</option>
               <option value="price-asc">Price: Low to High</option>
               <option value="price-desc">Price: High to Low</option>
-              <option value="rating">Top Rated</option>
-              <option value="reviews">Most Popular</option>
             </select>
           </div>
         </div>

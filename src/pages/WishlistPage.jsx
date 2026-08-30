@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, ShoppingBag, Trash2, Share2, Check, Star } from 'lucide-react';
+import { Heart, ShoppingBag, Trash2, Share2, Check } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
+import { resolveImageUrl } from '../utils/productAdapter';
 export const WishlistPage = ({ wishlistProducts, onRemoveFromWishlist, onClearWishlist, onAddToCart, allProducts, onToggleWishlist, wishlistIds }) => {
   const navigate = useNavigate();
   const [selectedSizes, setSelectedSizes] = useState({});
@@ -74,7 +75,15 @@ export const WishlistPage = ({ wishlistProducts, onRemoveFromWishlist, onClearWi
           return (<div key={product.id} className="bg-white rounded-[4px] border border-[#E8E3DE] hover:border-[#C8A87C]/60 overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group">
             {/* Thumbnail Stage */}
             <div className="relative aspect-[3/4] bg-[#F4EFEA] overflow-hidden">
-              <img src={product.image} alt={product.name} onClick={() => navigate(`/product/${product.id}`)} className="w-full h-full object-cover object-center cursor-pointer transition-transform duration-700 group-hover:scale-105" />
+              <img
+                src={resolveImageUrl(product.image || product.images?.[0])}
+                alt={product.name}
+                onError={(e) => {
+                  e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+                }}
+                onClick={() => navigate(`/product/${product.id}`)}
+                className="w-full h-full object-cover object-center cursor-pointer transition-transform duration-700 group-hover:scale-105"
+              />
 
               {/* Badge */}
               {product.badge && (<span className="absolute top-3 left-3 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-[#1A1A1A] text-white rounded-xs">
@@ -94,10 +103,6 @@ export const WishlistPage = ({ wishlistProducts, onRemoveFromWishlist, onClearWi
                   <span className="uppercase tracking-widest text-[10px] font-semibold text-[#C8A87C]">
                     {product.category}
                   </span>
-                  <div className="flex items-center gap-1 text-amber-500">
-                    <Star className="w-3 h-3 fill-current" />
-                    <span className="font-semibold text-xs text-[#1A1A1A]">{product.rating}</span>
-                  </div>
                 </div>
 
                 <h3 onClick={() => navigate(`/product/${product.id}`)} className="font-serif text-sm font-bold text-[#1A1A1A] hover:text-[#C8A87C] cursor-pointer truncate">
@@ -155,12 +160,12 @@ export const WishlistPage = ({ wishlistProducts, onRemoveFromWishlist, onClearWi
               Your Wishlist is Empty
             </h2>
             <p className="text-xs text-[#6B6B6B] max-w-md mx-auto">
-              Save your favorite tailored silhouettes, silk dresses, and leather essentials by tapping the heart icon on any garment across our boutique.
+              Save your favorite items by tapping the heart icon on any product.
             </p>
           </div>
 
           <button onClick={() => navigate('/')} className="px-8 py-3.5 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-bold uppercase tracking-widest rounded-xs transition-colors shadow-md">
-            Explore New Collections
+            Explore Products
           </button>
         </div>)}
 
@@ -169,10 +174,10 @@ export const WishlistPage = ({ wishlistProducts, onRemoveFromWishlist, onClearWi
         <div className="flex items-end justify-between mb-8">
           <div>
             <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#C8A87C]">
-              Inspiration For Your Wardrobe
+              Recommended for You
             </span>
             <h3 className="font-serif text-2xl md:text-3xl font-bold text-[#1A1A1A] mt-1">
-              Trending Sumilux Pieces
+              Trending Items
             </h3>
           </div>
         </div>

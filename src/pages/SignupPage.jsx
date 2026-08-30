@@ -143,7 +143,9 @@ export const SignupPage = () => {
     setIsLoading(true);
     try {
       await verifyEmail(email, fullEnteredOtp);
-      navigate('/');
+      const redirectUrl = sessionStorage.getItem('sumilux_redirect_after_login') || '/';
+      sessionStorage.removeItem('sumilux_redirect_after_login');
+      navigate(redirectUrl);
     } catch (error) {
       setErrorMessage(error.response?.data?.message || error.message || 'Invalid or expired OTP code.');
     } finally {

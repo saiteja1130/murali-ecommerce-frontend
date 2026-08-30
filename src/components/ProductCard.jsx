@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag, Star, Check, ArrowRight } from 'lucide-react';
+import { resolveImageUrl } from '../utils/productAdapter';
+import { useAuth } from '../context/AuthContext';
 
 export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlisted, onClickProduct }) => {
     const navigate = useNavigate();
+    const { token, isAuthenticated } = useAuth();
     const [isHovered, setIsHovered] = useState(false);
     
     // Defensive extraction of colors and sizes
@@ -23,8 +26,8 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
         ? Math.round(((originalPrice - price) / originalPrice) * 100)
         : null;
 
-    const primaryImage = product?.image || product?.images?.[0] || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
-    const hoverImage = product?.hoverImage || product?.images?.[1] || primaryImage;
+    const primaryImage = resolveImageUrl(product?.image || product?.images?.[0]);
+    const hoverImage = resolveImageUrl(product?.hoverImage || product?.images?.[1] || primaryImage);
 
     const handleCardClick = () => {
         if (onClickProduct) {
@@ -38,6 +41,7 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
         e.stopPropagation();
         if (onAddToCart) {
             onAddToCart(product, sizes[0], selectedColor);
+            if (!token || !isAuthenticated) return;
             setIsAddedRecently(true);
             setTimeout(() => setIsAddedRecently(false), 1800);
         }
@@ -65,8 +69,13 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
           {/* Primary Image */}
           <img
             src={primaryImage}
-            alt={product?.name || 'Garment'}
+            alt={product?.name || 'Product'}
+            onError={(e) => {
+              e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+            }}
             className={`w-full h-full object-cover object-center transition-all duration-700 ease-out ${
+              product?.isStockAvailable === false ? 'opacity-70 grayscale-[30%]' : ''
+            } ${
               isHovered && hoverImage !== primaryImage ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
             }`}
             loading="lazy"
@@ -77,7 +86,12 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
             <img
               src={hoverImage}
               alt={`${product?.name} alternate view`}
+              onError={(e) => {
+                e.currentTarget.src = primaryImage;
+              }}
               className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-700 ease-out ${
+                product?.isStockAvailable === false ? 'opacity-70 grayscale-[30%]' : ''
+              } ${
                 isHovered ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
               }`}
               loading="lazy"
@@ -86,7 +100,11 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
 
           {/* Badge Indicator (Top-Left) */}
           <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
-            {product?.badge && (
+            {product?.isStockAvailable === false ? (
+              <span className="px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase rounded-xs shadow-xs bg-[#2A2D28] text-white border border-neutral-700">
+                Out of Stock
+              </span>
+            ) : product?.badge ? (
               <span className={`px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase rounded-xs shadow-xs ${
                 product.badge === 'SALE'
                   ? 'bg-[#C69E58] text-[#1D241C]'
@@ -98,9 +116,9 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
               }`}>
                 {product.badge === 'SALE' && discountPercent ? `-${discountPercent}%` : product.badge}
               </span>
-            )}
+            ) : null}
 
-            {isLowStock && (
+            {product?.isStockAvailable !== false && isLowStock && (
               <span className="px-2 py-0.5 text-[9px] font-mono font-bold tracking-wider uppercase rounded-xs bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
                 Only {product.totalStock} Left
               </span>
@@ -172,16 +190,11 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
         {/* Card Content Details */}
         <div className="p-4 flex flex-col flex-1 justify-between bg-white">
           <div>
-            {/* Category & Star Rating */}
+            {/* Category */}
             <div className="flex items-center justify-between text-xs text-[#687163] mb-1.5">
-              <span className="uppercase tracking-widest font-medium text-[11px] truncate max-w-[140px]">
+              <span className="uppercase tracking-widest font-medium text-[11px] truncate">
                 {product?.category || 'Collection'}
               </span>
-              <div className="flex items-center gap-1 text-amber-600 shrink-0">
-                <Star className="w-3.5 h-3.5 fill-current" />
-                <span className="font-semibold text-xs text-[#1D241C]">{product?.rating || 5.0}</span>
-                <span className="text-[11px] text-[#687163]">({product?.reviews || 12})</span>
-              </div>
             </div>
 
             {/* Product Name */}
