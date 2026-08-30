@@ -4,7 +4,7 @@ import { Search, ChevronDown, ChevronUp, HelpCircle, ChevronRight, Headphones, A
 import { useCart } from '../context/CartContext';
 
 export const FaqPage = () => {
-  const { freeShippingThreshold = 5000, shippingFee = 30 } = useCart();
+  const { freeShippingThreshold, shippingFee } = useCart();
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [openItems, setOpenItems] = useState({ 'faq-1': true, 'faq-3': true, 'faq-5': true });

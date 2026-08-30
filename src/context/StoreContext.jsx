@@ -127,7 +127,7 @@ export const StoreProvider = ({ children }) => {
 
   // Unified bridge for add to cart with toast
   const addToCartWithFeedback = useCallback(
-    async (product, selectedSize, selectedColor, quantity = 1) => {
+    async (product, selectedSize, selectedColor, quantity) => {
       if (!product) return;
 
       // If not authenticated, let cartContext handle login redirection without triggering toast

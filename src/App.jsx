@@ -118,7 +118,7 @@ const AppContent = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [openSearch]);
 
-  const handleDirectCheckout = (product, selectedSize, selectedColor, quantity = 1) => {
+  const handleDirectCheckout = (product, selectedSize, selectedColor, quantity) => {
     addToCart(product, selectedSize, selectedColor, quantity);
     navigate('/checkout');
   };

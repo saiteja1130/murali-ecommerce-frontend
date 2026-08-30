@@ -4,7 +4,7 @@ import { RotateCcw, Clock, ShieldCheck, CheckCircle2, AlertCircle, ChevronRight,
 import { useCart } from '../context/CartContext';
 
 export const CancellationPolicyPage = () => {
-  const { freeShippingThreshold = 5000, shippingFee = 30 } = useCart();
+  const { freeShippingThreshold, shippingFee } = useCart();
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] py-8 lg:py-16 animate-fade-in font-sans text-[#1D241C]">

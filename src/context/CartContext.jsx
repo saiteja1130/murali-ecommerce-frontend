@@ -97,7 +97,7 @@ export const CartProvider = ({ children }) => {
 
   // Add Item to Cart
   const addToCart = useCallback(
-    async (product, arg2 = 1, arg3 = 'Standard', arg4 = { name: 'Standard', hex: '#1D241C' }) => {
+    async (product, arg2, arg3, arg4) => {
       if (!product) return;
 
       // REQUIRE LOGIN / SIGNUP: Prompt auth modal if unauthenticated

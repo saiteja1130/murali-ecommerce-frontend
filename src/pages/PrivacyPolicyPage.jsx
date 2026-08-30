@@ -22,7 +22,7 @@ import {
 import { useCart } from '../context/CartContext';
 
 export const PrivacyPolicyPage = () => {
-  const { freeShippingThreshold = 5000, shippingFee = 30 } = useCart();
+  const { freeShippingThreshold, shippingFee } = useCart();
   const [activeSection, setActiveSection] = useState('overview');
   const [cookieConsent, setCookieConsent] = useState(() => {
     return localStorage.getItem('murari_cookie_consent') || 'accepted';

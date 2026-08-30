@@ -36,8 +36,8 @@ export const CheckoutPage = ({
 }) => {
   const navigate = useNavigate();
   const {
-    freeShippingThreshold = 5000,
-    shippingFee = 30,
+    freeShippingThreshold,
+    shippingFee,
     shippingCost: ctxShippingCost,
     cartSubtotal: ctxCartSubtotal,
     discountAmount: ctxDiscountAmount,

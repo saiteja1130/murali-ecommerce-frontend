@@ -13,7 +13,7 @@ export const CartPage = ({
   onProceedToCheckout,
   promoCode: propPromoCode,
   onApplyPromoCode,
-  discountRate: propDiscountRate = 0,
+  discountRate: propDiscountRate,
   allProducts = [],
   onAddToCart,
   onToggleWishlist,
@@ -21,9 +21,9 @@ export const CartPage = ({
 }) => {
   const navigate = useNavigate();
   const {
-    freeShippingThreshold = 5000,
-    shippingCost = 30,
-    shippingFee = 30,
+    freeShippingThreshold,
+    shippingCost,
+    shippingFee,
     cartSubtotal,
     cartTotal,
     discountAmount: ctxDiscountAmount,
@@ -51,10 +51,11 @@ export const CartPage = ({
         return acc + (Number(item.product.price) || 0) * item.quantity;
       }, 0);
 
-  const progressPercent = Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100));
-  const amountNeeded = Math.max(0, freeShippingThreshold - subtotal);
+  const threshold = freeShippingThreshold || 5000;
+  const progressPercent = Math.min(100, Math.round((subtotal / threshold) * 100));
+  const amountNeeded = Math.max(0, threshold - subtotal);
   const discountAmount = ctxDiscountAmount !== undefined ? ctxDiscountAmount : (subtotal * activeDiscountRate);
-  const calculatedShipping = subtotal >= freeShippingThreshold || items.length === 0 ? 0 : (shippingCost !== undefined ? shippingCost : shippingFee);
+  const calculatedShipping = (freeShippingThreshold && subtotal >= freeShippingThreshold) || items.length === 0 ? 0 : (shippingCost !== undefined ? shippingCost : shippingFee);
   const total = subtotal > 0 ? subtotal - discountAmount + calculatedShipping : 0;
 
   const handleApplyPromo = async (e) => {
