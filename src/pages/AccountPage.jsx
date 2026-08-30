@@ -24,6 +24,8 @@ import {
   Headphones
 } from 'lucide-react';
 import { resolveImageUrl } from '../utils/productAdapter';
+import api from '../context/api';
+import { useAuth } from '../context/AuthContext';
 
 export const AccountPage = ({
   currentUser,
@@ -40,6 +42,7 @@ export const AccountPage = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { tab = 'orders', id: orderIdParam } = useParams();
+  const { cancelOrder, fetchOrders } = useAuth();
 
   // Determine active tab from route or state
   const [activeTab, setActiveTab] = useState(tab);
@@ -62,10 +65,15 @@ export const AccountPage = ({
     isDefault: false
   });
 
-  // Reorder notification feedback
-  const [reorderSuccess, setReorderSuccess] = useState('');
+  // Profile Edit State
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileName, setProfileName] = useState(currentUser?.name || '');
+  const [profilePhone, setProfilePhone] = useState(currentUser?.phone || '');
+  const [profileMessage, setProfileMessage] = useState('');
 
-  // Sync tab with URL
+  // Active selected order object
+  const activeOrder = orders.find((o) => o.id === selectedOrderId || o.orderNumber === selectedOrderId) || orders[0] || null;
+
   useEffect(() => {
     if (orderIdParam) {
       setSelectedOrderId(orderIdParam);
@@ -77,8 +85,10 @@ export const AccountPage = ({
 
   const handleTabChange = (newTab) => {
     setActiveTab(newTab);
-    setSelectedOrderId(null);
-    navigate(`/account/${newTab}`);
+    if (newTab !== 'order-detail') {
+      setSelectedOrderId(null);
+      navigate(`/account/${newTab}`);
+    }
   };
 
   const handleViewOrderDetail = (orderId) => {
@@ -87,11 +97,6 @@ export const AccountPage = ({
     navigate(`/account/orders/${orderId}`);
   };
 
-  const activeOrder = orders.find(
-    (o) => o.id === selectedOrderId || o.orderNumber === selectedOrderId
-  ) || orders[0];
-
-  // Address modal handlers
   const handleOpenAddAddress = () => {
     setEditingAddress(null);
     setAddressForm({
@@ -146,31 +151,6 @@ export const AccountPage = ({
     }
   };
 
-  const handleReorder = (order) => {
-    if (!order || !order.items) return;
-    order.items.forEach((item) => {
-      if (onAddToCart) {
-        onAddToCart(
-          item.product || {
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            image: item.image,
-            images: [item.image],
-            category: 'Apparel',
-            sizes: ['S', 'M', 'L'],
-            colors: [{ name: item.color || 'Standard', hex: '#1A1A1A' }]
-          },
-          item.size || 'M',
-          { name: item.color || 'Standard', hex: '#1A1A1A' },
-          item.quantity || 1
-        );
-      }
-    });
-    setReorderSuccess('Pieces have been added to your shopping bag!');
-    setTimeout(() => setReorderSuccess(''), 4000);
-  };
-
   // Helper for status badge
   const getStatusBadge = (status) => {
     switch (status?.toLowerCase()) {
@@ -180,6 +160,11 @@ export const AccountPage = ({
         return 'bg-sky-50 text-sky-800 border-sky-200';
       case 'processing':
         return 'bg-amber-50 text-amber-800 border-amber-200';
+      case 'confirmed':
+        return 'bg-emerald-50 text-emerald-800 border-emerald-200';
+      case 'cancelled':
+      case 'returned':
+        return 'bg-neutral-100 text-neutral-600 border-neutral-200';
       default:
         return 'bg-neutral-100 text-neutral-800 border-neutral-200';
     }
@@ -242,30 +227,16 @@ export const AccountPage = ({
           </div>
         </div>
 
-        {/* Reorder Toast Banner */}
-        {reorderSuccess && (
-          <div className="mb-6 p-4 bg-[#4A7A5E]/10 border border-[#4A7A5E]/30 rounded-xs text-xs text-[#4A7A5E] flex items-center justify-between animate-fade-in">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#4A7A5E]" />
-              <span>{reorderSuccess}</span>
-            </div>
-            <Link to="/cart" className="font-bold underline hover:text-[#1A1A1A]">
-              View Shopping Bag →
-            </Link>
-          </div>
-        )}
-
         {/* Main Grid: Navigation Tabs (Left) + Content (Right) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Navigation Sidebar */}
           <div className="lg:col-span-3 space-y-2 bg-white p-3 rounded-[4px] border border-[#E8E3DE] shadow-2xs">
             <button
               onClick={() => handleTabChange('orders')}
-              className={`w-full flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wider rounded-xs transition-all cursor-pointer ${
-                activeTab === 'orders' || activeTab === 'order-detail'
+              className={`w-full flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wider rounded-xs transition-all cursor-pointer ${activeTab === 'orders' || activeTab === 'order-detail'
                   ? 'bg-[#1A1A1A] text-white shadow-xs'
                   : 'text-[#6B6B6B] hover:text-[#1A1A1A] hover:bg-[#F8F6F3]'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Package className="w-4 h-4 text-[#C8A87C]" />
@@ -275,12 +246,25 @@ export const AccountPage = ({
             </button>
 
             <button
-              onClick={() => handleTabChange('addresses')}
-              className={`w-full flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wider rounded-xs transition-all cursor-pointer ${
-                activeTab === 'addresses'
+              onClick={() => handleTabChange('payments')}
+              className={`w-full flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wider rounded-xs transition-all cursor-pointer ${activeTab === 'payments'
                   ? 'bg-[#1A1A1A] text-white shadow-xs'
                   : 'text-[#6B6B6B] hover:text-[#1A1A1A] hover:bg-[#F8F6F3]'
-              }`}
+                }`}
+            >
+              <div className="flex items-center gap-3">
+                <CreditCard className="w-4 h-4 text-[#C8A87C]" />
+                <span>Payment History</span>
+              </div>
+              <span className="font-mono text-[11px] opacity-80">{payments.length}</span>
+            </button>
+
+            <button
+              onClick={() => handleTabChange('addresses')}
+              className={`w-full flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wider rounded-xs transition-all cursor-pointer ${activeTab === 'addresses'
+                  ? 'bg-[#1A1A1A] text-white shadow-xs'
+                  : 'text-[#6B6B6B] hover:text-[#1A1A1A] hover:bg-[#F8F6F3]'
+                }`}
             >
               <div className="flex items-center gap-3">
                 <MapPin className="w-4 h-4 text-[#C8A87C]" />
@@ -291,11 +275,10 @@ export const AccountPage = ({
 
             <button
               onClick={() => handleTabChange('profile')}
-              className={`w-full flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wider rounded-xs transition-all cursor-pointer ${
-                activeTab === 'profile'
+              className={`w-full flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wider rounded-xs transition-all cursor-pointer ${activeTab === 'profile'
                   ? 'bg-[#1A1A1A] text-white shadow-xs'
                   : 'text-[#6B6B6B] hover:text-[#1A1A1A] hover:bg-[#F8F6F3]'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3">
                 <User className="w-4 h-4 text-[#C8A87C]" />
@@ -362,24 +345,38 @@ export const AccountPage = ({
                         {/* Order Header Summary */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#F2EFE9] text-xs">
                           <div className="space-y-1">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-mono font-bold text-sm text-[#1A1A1A]">
                                 {order.orderNumber}
+                              </span>
+                              <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider font-semibold border ${order.paymentStatus === 'paid'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    : order.paymentStatus === 'cod_pending'
+                                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                      : 'bg-neutral-100 text-neutral-700 border-neutral-200'
+                                  }`}
+                              >
+                                {order.paymentStatus === 'paid'
+                                  ? 'PAID'
+                                  : order.paymentStatus === 'cod_pending'
+                                    ? 'COD (PENDING)'
+                                    : order.paymentStatus?.toUpperCase()}
                               </span>
                               <span
                                 className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider border ${getStatusBadge(
                                   order.status
                                 )}`}
                               >
-                                {order.status}
+                                {order.status?.toUpperCase()}
                               </span>
                             </div>
-                            <div className="text-[11px] text-[#6B6B6B] flex items-center gap-3">
-                              <span>Placed on {order.date}</span>
+                            <div className="text-[11px] text-[#6B6B6B] flex items-center gap-2 sm:gap-3 flex-wrap">
+                              <span>Placed on {order.date || 'Recent'}</span>
                               <span>•</span>
                               <span>{order.items?.length || 0} Piece(s)</span>
                               <span>•</span>
-                              <span>Paid via {order.paymentMethod || 'Credit Card'}</span>
+                              <span>{order.paymentMethod === 'upi' ? 'UPI Instant Payment' : order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod || 'UPI'}</span>
                             </div>
                           </div>
 
@@ -387,7 +384,7 @@ export const AccountPage = ({
                             <div>
                               <div className="text-[10px] uppercase tracking-wider text-[#6B6B6B]">Total Amount</div>
                               <div className="font-mono text-base font-bold text-[#1A1A1A]">
-                                ₹{order.total?.toFixed(2)}
+                                ₹{Number(order.total || 0).toFixed(2)}
                               </div>
                             </div>
                             <button
@@ -402,34 +399,44 @@ export const AccountPage = ({
                         {/* Garments Thumbnails Gallery */}
                         <div className="mt-4 pt-2 flex items-center justify-between gap-4 flex-wrap">
                           <div className="flex items-center gap-3 overflow-x-auto pb-1">
-                            {order.items?.map((item, idx) => (
+                            {(order.items || []).map((item, idx) => (
                               <div key={idx} className="flex items-center gap-2 shrink-0">
                                 <img
-                                  src={item.image}
-                                  alt={item.name}
+                                  src={resolveImageUrl(item.image || item.product?.image || (Array.isArray(item.product?.images) && item.product.images[0]) || '')}
+                                  alt={item.name || 'Garment Piece'}
+                                  onError={(e) => {
+                                    e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+                                  }}
                                   className="w-14 h-16 object-cover rounded-xs border border-[#E8E3DE] bg-[#F8F6F3]"
                                 />
                                 <div className="text-xs">
                                   <p className="font-semibold text-[#1A1A1A] truncate max-w-[140px]">
-                                    {item.name}
+                                    {item.name || 'Garment Piece'}
                                   </p>
                                   <p className="text-[11px] text-[#6B6B6B]">
-                                    {item.size} • Qty: {item.quantity}
+                                    {item.selectedSize || item.size || 'Standard'} • Qty: {Number(item.quantity || 1)}
                                   </p>
                                 </div>
                               </div>
                             ))}
                           </div>
 
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleReorder(order)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#1A1A1A] hover:text-[#C8A87C] border border-[#E8E3DE] hover:border-[#C8A87C] rounded-xs transition-colors cursor-pointer bg-white"
-                            >
-                              <RotateCcw className="w-3.5 h-3.5" />
-                              <span>Reorder Pieces</span>
-                            </button>
-                          </div>
+                          {order.status === 'confirmed' && (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await cancelOrder(order.id);
+                                  } catch (err) {
+                                    console.error('Cancel order error:', err);
+                                  }
+                                }}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-neutral-500 hover:text-red-700 border border-[#E8E3DE] hover:border-red-300 rounded-xs transition-colors cursor-pointer bg-white"
+                              >
+                                <span>Cancel Order</span>
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -452,16 +459,30 @@ export const AccountPage = ({
                     >
                       ← Back to Orders List
                     </button>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="font-serif text-2xl font-bold text-[#1A1A1A]">
                         Order #{activeOrder.orderNumber}
                       </h2>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider font-semibold border ${activeOrder.paymentStatus === 'paid'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : activeOrder.paymentStatus === 'cod_pending'
+                              ? 'bg-blue-50 text-blue-700 border-blue-200'
+                              : 'bg-neutral-100 text-neutral-700 border-neutral-200'
+                          }`}
+                      >
+                        {activeOrder.paymentStatus === 'paid'
+                          ? 'PAID'
+                          : activeOrder.paymentStatus === 'cod_pending'
+                            ? 'COD (PENDING)'
+                            : activeOrder.paymentStatus?.toUpperCase()}
+                      </span>
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider border ${getStatusBadge(
                           activeOrder.status
                         )}`}
                       >
-                        {activeOrder.status}
+                        {activeOrder.status?.toUpperCase()}
                       </span>
                     </div>
                     <p className="text-xs text-[#6B6B6B] mt-1">
@@ -476,13 +497,6 @@ export const AccountPage = ({
                     >
                       <Printer className="w-4 h-4 text-[#C8A87C]" />
                       <span>Print Receipt</span>
-                    </button>
-                    <button
-                      onClick={() => handleReorder(activeOrder)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-semibold uppercase tracking-wider rounded-xs transition-colors cursor-pointer shadow-sm"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      <span>Reorder</span>
                     </button>
                   </div>
                 </div>
@@ -512,11 +526,10 @@ export const AccountPage = ({
                     ].map((item, idx) => (
                       <div key={idx} className="flex flex-col items-center text-center relative z-10">
                         <div
-                          className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold font-mono transition-colors shadow-2xs mb-2 ${
-                            item.done
+                          className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold font-mono transition-colors shadow-2xs mb-2 ${item.done
                               ? 'bg-[#1A1A1A] text-[#C8A87C] border border-[#C8A87C]'
                               : 'bg-[#F8F6F3] text-neutral-400 border border-[#E8E3DE]'
-                          }`}
+                            }`}
                         >
                           {item.done ? <CheckCircle2 className="w-4 h-4" /> : item.step}
                         </div>
@@ -536,15 +549,7 @@ export const AccountPage = ({
                           {activeOrder.trackingNumber}
                         </span>
                       </div>
-                      <a
-                        href={`https://www.dhl.com/en/express/tracking.html?AWB=${activeOrder.trackingNumber}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs font-semibold text-[#C8A87C] hover:underline flex items-center gap-1"
-                      >
-                        <span>Live Carrier Portal</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
+
                     </div>
                   )}
                 </div>
@@ -558,10 +563,10 @@ export const AccountPage = ({
                   <div className="divide-y divide-[#F2EFE9]">
                     {activeOrder.items?.map((item, idx) => (
                       <div key={idx} className="py-4 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 min-w-0">
                           <img
-                            src={resolveImageUrl(item.image || item.product?.image || item.product?.images?.[0])}
-                            alt={item.name}
+                            src={resolveImageUrl(item.image || item.product?.image || (Array.isArray(item.product?.images) && item.product.images[0]) || '')}
+                            alt={item.name || item.product?.name || 'Garment Piece'}
                             onError={(e) => {
                               e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
                             }}
@@ -569,14 +574,14 @@ export const AccountPage = ({
                           />
                           <div className="space-y-1">
                             <h4 className="font-serif font-bold text-sm text-[#1A1A1A]">
-                              {item.name}
+                              {item.name || item.product?.name || 'Garment Piece'}
                             </h4>
                             <div className="text-xs text-[#6B6B6B] flex items-center gap-3">
-                              <span>Size: <strong className="text-[#1A1A1A]">{item.size}</strong></span>
+                              <span>Size: <strong className="text-[#1A1A1A]">{item.selectedSize || item.size || 'Standard'}</strong></span>
                               <span>•</span>
-                              <span>Color: <strong className="text-[#1A1A1A]">{item.color || 'Signature'}</strong></span>
+                              <span>Color: <strong className="text-[#1A1A1A]">{typeof item.selectedColor === 'object' ? item.selectedColor?.name : (item.selectedColor || item.color || 'Standard')}</strong></span>
                               <span>•</span>
-                              <span>Quantity: <strong className="text-[#1A1A1A]">{item.quantity}</strong></span>
+                              <span>Quantity: <strong className="text-[#1A1A1A]">{Number(item.quantity || 1)}</strong></span>
                             </div>
                             <div className="text-[11px] text-[#A68758]">
                               Handcrafted with certified Italian textiles
@@ -586,10 +591,10 @@ export const AccountPage = ({
 
                         <div className="text-right">
                           <div className="font-mono text-base font-bold text-[#1A1A1A]">
-                            ₹{(item.price * item.quantity).toFixed(2)}
+                            ₹{(Number(item.price !== undefined ? item.price : (item.product?.price || 0)) * Number(item.quantity || 1)).toFixed(2)}
                           </div>
                           <div className="text-[11px] text-[#6B6B6B]">
-                            ₹{item.price.toFixed(2)} each
+                            ₹{Number(item.price !== undefined ? item.price : (item.product?.price || 0)).toFixed(2)} each
                           </div>
                         </div>
                       </div>
@@ -626,46 +631,149 @@ export const AccountPage = ({
                     </div>
                   </div>
 
-                  {/* Financial Breakdown */}
-                  <div className="bg-white rounded-[4px] border border-[#E8E3DE] p-6 shadow-2xs space-y-3">
-                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#506040]">
-                      <CreditCard className="w-4 h-4 text-[#506040]" />
-                      <span>Payment Summary</span>
+                  {/* Financial Breakdown & Payment Summary */}
+                  <div className="bg-white rounded-[4px] border border-[#E8E3DE] p-6 shadow-2xs space-y-4">
+                    <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-[#506040] border-b border-[#E8E4DC] pb-2">
+                      <div className="flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-[#506040]" />
+                        <span>Payment Summary</span>
+                      </div>
+                      <span className="font-mono text-[10px] text-[#1D241C]">
+                        {activeOrder.paymentMethod === 'upi' ? 'UPI Transfer' : activeOrder.paymentMethod === 'cod' ? 'Cash on Delivery' : activeOrder.paymentMethod}
+                      </span>
                     </div>
 
                     <div className="space-y-2 text-xs divide-y divide-[#E8E4DC]">
                       <div className="flex justify-between py-1 text-[#687163]">
                         <span>Subtotal</span>
                         <span className="font-mono text-[#1D241C]">
-                          ₹{Math.round((activeOrder.total || 0) * 1.15).toLocaleString('en-IN')}
+                          ₹{Number(activeOrder.subtotal !== undefined ? activeOrder.subtotal : (activeOrder.total || 0)).toFixed(2)}
                         </span>
                       </div>
-                      <div className="flex justify-between py-1 text-[#506040]">
-                        <span>Discount Applied</span>
-                        <span className="font-mono">-₹{Math.round((activeOrder.total || 0) * 0.15).toLocaleString('en-IN')}</span>
-                      </div>
+                      {Number(activeOrder.discount || 0) > 0 && (
+                        <div className="flex justify-between py-1 text-[#506040]">
+                          <span>Discount Applied</span>
+                          <span className="font-mono">-₹{Number(activeOrder.discount).toFixed(2)}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between py-1 text-[#687163]">
                         <span>Standard Delivery</span>
-                        <span className="font-mono text-emerald-700 uppercase font-semibold">Free</span>
+                        <span className="font-mono text-[#1D241C]">
+                          {Number(activeOrder.shippingCost || 0) === 0 ? (
+                            <span className="text-emerald-700 font-semibold uppercase">Free</span>
+                          ) : (
+                            `₹${Number(activeOrder.shippingCost).toFixed(2)}`
+                          )}
+                        </span>
                       </div>
                       <div className="flex justify-between py-1 text-[#687163]">
                         <span>Estimated Taxes</span>
-                        <span className="font-mono text-[#1D241C]">₹0 (Inclusive)</span>
+                        <span className="font-mono text-[#1D241C]">₹0.00 (Inclusive)</span>
                       </div>
                       <div className="flex justify-between pt-3 font-bold text-sm text-[#1D241C]">
-                        <span>Total Paid</span>
+                        <span>Total {activeOrder.paymentStatus === 'paid' ? 'Amount Paid' : 'Payable'}</span>
                         <span className="font-mono text-base text-[#1D241C]">
-                          ₹{Number(activeOrder.total || 0).toLocaleString('en-IN')}
+                          ₹{Number(activeOrder.total || 0).toFixed(2)}
                         </span>
                       </div>
                     </div>
+
+                    {activeOrder.razorpay?.paymentId && (
+                      <div className="pt-2 border-t border-[#E8E4DC] text-[11px] text-[#687163] flex justify-between items-center">
+                        <span>Transaction ID:</span>
+                        <span className="font-mono font-bold text-[#1D241C]">{activeOrder.razorpay.paymentId}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             )}
 
             {/* ============================================================
-                TAB 3: ADDRESS BOOK
+                TAB 3: PAYMENT HISTORY
+            ============================================================ */}
+            {activeTab === 'payments' && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between pb-3 border-b border-[#E8E3DE]">
+                  <div>
+                    <h2 className="font-serif text-xl font-bold text-[#1D241C]">Payment History</h2>
+                    <p className="text-xs text-[#687163] mt-0.5">
+                      Verified records of your UPI transfers, COD orders, and Razorpay transactions.
+                    </p>
+                  </div>
+                </div>
+
+                {payments.length === 0 ? (
+                  <div className="bg-white rounded-[4px] border border-[#E8E3DE] p-12 text-center text-[#687163] text-xs space-y-3">
+                    <CreditCard className="w-10 h-10 text-[#C8A87C] mx-auto opacity-50" />
+                    <h3 className="font-serif text-base font-bold text-[#1D241C]">No Payment Records Found</h3>
+                    <p>Once you complete a UPI or COD purchase, transaction receipts will appear here.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {payments.map((p) => (
+                      <div
+                        key={p.id || p.transactionId}
+                        className="bg-white rounded-[4px] border border-[#E8E3DE] p-5 shadow-2xs hover:shadow-xs transition-shadow flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-sm text-[#1D241C]">
+                              {p.transactionId}
+                            </span>
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold tracking-wider border ${p.status === 'Settled' || p.paymentStatus === 'paid'
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                  : p.status === 'Refunded' || p.paymentStatus === 'refunded'
+                                    ? 'bg-purple-50 text-purple-800 border-purple-200'
+                                    : p.status === 'Failed' || p.paymentStatus === 'failed'
+                                      ? 'bg-rose-50 text-rose-800 border-rose-200'
+                                      : 'bg-amber-50 text-amber-800 border-amber-200'
+                                }`}
+                            >
+                              {p.status || p.paymentStatus}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-[#687163] flex items-center gap-3">
+                            <span>Order #{p.orderNumber}</span>
+                            <span>•</span>
+                            <span>{p.method}</span>
+                            <span>•</span>
+                            <span>{p.date ? new Date(p.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}</span>
+                          </div>
+                          {p.razorpayPaymentId && (
+                            <div className="text-[10px] font-mono text-[#A68758]">
+                              Razorpay ID: {p.razorpayPaymentId}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-[#F2EFE9]">
+                          <div className="text-left sm:text-right">
+                            <div className="text-[10px] uppercase tracking-wider text-[#687163]">Amount Paid</div>
+                            <div className="font-mono font-bold text-base text-[#1D241C]">
+                              ₹{Number(p.amount || 0).toFixed(2)}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => {
+                              setSelectedOrderId(p.orderId || p.orderNumber);
+                              setActiveTab('order-detail');
+                            }}
+                            className="px-3.5 py-1.5 bg-white border border-[#E8E3DE] hover:border-[#C8A87C] text-[#1D241C] text-xs font-semibold rounded-xs transition-colors cursor-pointer"
+                          >
+                            View Order
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ============================================================
+                TAB 4: ADDRESS BOOK
             ============================================================ */}
             {activeTab === 'addresses' && (
               <div className="space-y-6">
@@ -703,11 +811,10 @@ export const AccountPage = ({
                     {addresses.map((addr) => (
                       <div
                         key={addr.id || addr._id}
-                        className={`bg-white rounded-2xl border p-6 shadow-2xs relative flex flex-col justify-between ${
-                          addr.isDefault
+                        className={`bg-white rounded-2xl border p-6 shadow-2xs relative flex flex-col justify-between ${addr.isDefault
                             ? 'border-[#506040] ring-1 ring-[#506040]/30'
                             : 'border-[#E8E4DC]'
-                        }`}
+                          }`}
                       >
                         <div>
                           <div className="flex items-center justify-between mb-3">
@@ -901,11 +1008,10 @@ export const AccountPage = ({
                       key={type}
                       type="button"
                       onClick={() => setAddressForm({ ...addressForm, addressType: type })}
-                      className={`py-2 px-3 rounded-xl border text-xs font-semibold capitalize transition-colors cursor-pointer ${
-                        addressForm.addressType === type
+                      className={`py-2 px-3 rounded-xl border text-xs font-semibold capitalize transition-colors cursor-pointer ${addressForm.addressType === type
                           ? 'bg-[#1D241C] text-white border-[#1D241C]'
                           : 'bg-[#FAF8F5] text-[#687163] border-[#E8E4DC] hover:text-[#1D241C]'
-                      }`}
+                        }`}
                     >
                       {type}
                     </button>

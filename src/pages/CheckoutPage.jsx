@@ -19,13 +19,16 @@ import {
   Building,
   UserCheck,
   Plus,
-  Edit2
+  Edit2,
+  Smartphone,
+  QrCode
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { resolveImageUrl } from '../utils/productAdapter';
+import api from '../context/api';
 
 export const CheckoutPage = ({
-  items,
+  items = [],
   onClearCart,
   promoCode: propPromoCode,
   onApplyPromoCode,
@@ -71,8 +74,8 @@ export const CheckoutPage = ({
     country: defaultAddr?.country || 'India'
   });
 
-  // Payment Method
-  const [paymentMethodTab, setPaymentMethodTab] = useState('cod'); // 'cod' | 'online'
+  // Payment Method: 'upi' | 'cod'
+  const [paymentMethodTab, setPaymentMethodTab] = useState('upi');
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
 
   // Promo Code State
@@ -82,6 +85,7 @@ export const CheckoutPage = ({
 
   // Processing & Confirmation State
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [confirmedOrder, setConfirmedOrder] = useState(null);
 
   // If user selects a saved address, update fields
@@ -159,8 +163,10 @@ export const CheckoutPage = ({
     }
   };
 
-  const handleCompleteOrder = (e) => {
+  const handleCompleteOrder = async (e) => {
     e.preventDefault();
+    setErrorMessage('');
+
     if (hasOOS) {
       alert('Some items in your cart are currently out of stock. Please return to the bag and remove unavailable items before placing an order.');
       return;
@@ -172,45 +178,176 @@ export const CheckoutPage = ({
 
     setIsProcessing(true);
 
-    setTimeout(() => {
-      let paymentLabel = paymentMethodTab === 'cod'
-        ? 'Cash on Delivery (COD)'
-        : 'Online Payment (UPI, Cards & Net Banking)';
+    const orderPayload = {
+      items: items.map((item) => ({
+        id: item.product?._id || item.product?.id || item.id,
+        quantity: item.quantity,
+        selectedSize: item.selectedSize || 'Standard',
+        selectedColor: item.selectedColor || { name: 'Standard', hex: '#1D241C' },
+        price: item.product?.price,
+        name: item.product?.name,
+        image: item.product?.image || item.product?.images?.[0],
+      })),
+      shippingAddress: {
+        fullName: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim() || currentUser?.name || 'Customer',
+        phone: phone || currentUser?.phone || '',
+        street: shippingAddress.apartment
+          ? `${shippingAddress.street}, ${shippingAddress.apartment}`
+          : shippingAddress.street,
+        apartment: shippingAddress.apartment || '',
+        city: shippingAddress.city,
+        state: shippingAddress.state || '',
+        postalCode: shippingAddress.postalCode,
+        country: shippingAddress.country || 'India',
+        addressType: 'home'
+      },
+      promoCode: activePromoCode || '',
+    };
 
-      const orderPayload = {
-        shippingAddress: {
-          name: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim() || currentUser?.name || 'Customer',
-          street: shippingAddress.apartment
-            ? `${shippingAddress.street}, ${shippingAddress.apartment}`
-            : shippingAddress.street,
-          city: shippingAddress.city,
-          state: shippingAddress.state,
-          postalCode: shippingAddress.postalCode,
-          country: shippingAddress.country || 'India',
-          phone: phone || currentUser?.phone || ''
+    try {
+      // 1. CASH ON DELIVERY FLOW
+      if (paymentMethodTab === 'cod') {
+        const response = await api.post('/api/orders/cod', orderPayload);
+        if (response.data?.status && response.data?.data) {
+          if (onClearCart) onClearCart();
+          setConfirmedOrder(response.data.data);
+          setIsProcessing(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        } else {
+          throw new Error(response.data?.message || 'Failed to place COD order');
+        }
+      }
+
+      // 2. RAZORPAY UPI ONLINE PAYMENT FLOW
+      const orderRes = await api.post('/api/orders/create-razorpay-order', orderPayload);
+      if (!orderRes.data?.status || !orderRes.data?.data) {
+        throw new Error(orderRes.data?.message || 'Failed to initiate Razorpay order');
+      }
+
+      const { razorpayOrderId, amount, key_id, currency, orderNumber, orderId } = orderRes.data.data;
+
+      // Check if Razorpay script is loaded
+      if (typeof window.Razorpay !== 'function') {
+        // Fallback or script load retry
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        document.body.appendChild(script);
+        await new Promise((resolve) => { script.onload = resolve; });
+      }
+
+      const rzpOptions = {
+        key: key_id,
+        amount: amount,
+        currency: currency || 'INR',
+        name: "Murari's Glam & Glow",
+        description: `Order #${orderNumber}`,
+        image: '/assets/images/Logo.png',
+        order_id: razorpayOrderId,
+        prefill: {
+          name: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim() || currentUser?.name || '',
+          email: email || currentUser?.email || '',
+          contact: phone || currentUser?.phone || '',
         },
-        paymentMethod: paymentLabel,
-        items: items,
-        total: total,
-        shippingMethod: 'Standard Express Courier'
+        theme: {
+          color: '#C69E58',
+          backdrop_color: '#FAF8F5',
+        },
+        config: {
+          display: {
+            blocks: {
+              upi: {
+                name: 'Pay via UPI',
+                instruments: [
+                  {
+                    method: 'upi',
+                    flows: ['collect', 'intent', 'qr'],
+                    apps: ['google_pay', 'phonepe', 'paytm', 'bhim'],
+                  },
+                ],
+              },
+            },
+            sequence: ['block.upi'],
+            preferences: {
+              show_default_blocks: false,
+            },
+          },
+        },
+        handler: async function (response) {
+          try {
+            const verifyRes = await api.post('/api/orders/verify-payment', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              orderNumber: orderNumber,
+              items: items,
+              shippingAddress: shippingAddress,
+              promoCode: appliedPromo?.code || '',
+              notes: orderNotes,
+            });
+
+            if (verifyRes.data?.status && verifyRes.data?.data) {
+              if (onClearCart) onClearCart();
+              setConfirmedOrder(verifyRes.data.data);
+              setIsProcessing(false);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+              setErrorMessage(verifyRes.data?.message || 'Payment signature verification failed');
+              setIsProcessing(false);
+            }
+          } catch (verifyErr) {
+            console.error('Payment verification error:', verifyErr);
+            setErrorMessage(verifyErr.response?.data?.message || 'Payment verification failed');
+            setIsProcessing(false);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setIsProcessing(false);
+          },
+        },
       };
 
-      const placedOrderNumber = onPlaceOrder ? onPlaceOrder(orderPayload) : `SMLX-${Math.floor(100000 + Math.random() * 900000)}`;
+      const isPlaceholderKey = !key_id || key_id.includes('placeholder');
 
-      setConfirmedOrder({
-        orderNumber: placedOrderNumber || `SMLX-${Math.floor(100000 + Math.random() * 900000)}`,
-        date: new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }),
-        email: email,
-        shippingAddress: orderPayload.shippingAddress,
-        items: [...items],
-        total: total,
-        shippingMethod: 'Standard Express Courier',
-        paymentMethod: paymentLabel
-      });
+      if (!isPlaceholderKey && typeof window.Razorpay === 'function') {
+        const rzp = new window.Razorpay(rzpOptions);
+        rzp.on('payment.failed', function (response) {
+          console.error('Razorpay Payment Failed:', response.error);
+          setErrorMessage(`Payment failed: ${response.error?.description || response.error?.reason || 'Transaction could not be processed'}. Please try again.`);
+          setIsProcessing(false);
+        });
+        rzp.open();
+      } else {
+        // Dev Sandbox Simulation when real Razorpay API key is not yet set in backend/.env
+        console.info('[Development Sandbox] Razorpay Key ID is placeholder. Simulating verified UPI payment...');
+        const verifyRes = await api.post('/api/orders/verify-payment', {
+          razorpay_order_id: razorpayOrderId,
+          razorpay_payment_id: `pay_upi_sim_${Date.now()}`,
+          razorpay_signature: 'simulated_valid_signature',
+          orderNumber: orderNumber,
+          items: items,
+          shippingAddress: shippingAddress,
+          promoCode: appliedPromo?.code || '',
+          notes: orderNotes,
+        });
 
+        if (verifyRes.data?.status && verifyRes.data?.data) {
+          if (onClearCart) onClearCart();
+          setConfirmedOrder(verifyRes.data.data);
+          setIsProcessing(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          setErrorMessage(verifyRes.data?.message || 'Development simulation error');
+          setIsProcessing(false);
+        }
+      }
+    } catch (err) {
+      console.error('Order placement failed:', err);
+      setErrorMessage(err.response?.data?.message || err.message || 'Failed to place order. Please try again.');
       setIsProcessing(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 1000);
+    }
   };
 
   // 1. ORDER CONFIRMATION SCREEN (WHEN ORDER IS PLACED)
@@ -233,7 +370,7 @@ export const CheckoutPage = ({
               </h1>
               <p className="text-xs sm:text-sm text-[#6B6B6B] max-w-lg mx-auto leading-relaxed">
                 We have received your order and sent a confirmation email to{' '}
-                <strong className="text-[#1A1A1A]">{confirmedOrder.email}</strong>. We are preparing your items for delivery.
+                <strong className="text-[#1A1A1A]">{confirmedOrder.email || currentUser?.email || 'your email'}</strong>. We are preparing your items for delivery.
               </p>
             </div>
 
@@ -244,57 +381,72 @@ export const CheckoutPage = ({
                 <div className="font-bold text-[#1A1A1A] mt-0.5">
                   2 – 4 Business Days (Express)
                 </div>
-                <div className="text-[10px] text-emerald-700 font-medium mt-0.5">Tracking Active</div>
+                <div className="text-[10px] text-emerald-700 font-medium mt-0.5">
+                  {confirmedOrder.trackingNumber ? `Tracking: ${confirmedOrder.trackingNumber}` : 'Tracking Active'}
+                </div>
               </div>
 
               <div>
                 <div className="text-[#6B6B6B] text-[11px]">Delivery Address</div>
-                <div className="font-bold text-[#1A1A1A] mt-0.5 truncate">{confirmedOrder.shippingAddress.name}</div>
+                <div className="font-bold text-[#1A1A1A] mt-0.5 truncate">
+                  {confirmedOrder.shippingAddress?.fullName || confirmedOrder.shippingAddress?.name || currentUser?.name || 'Customer'}
+                </div>
                 <div className="text-[11px] text-[#6B6B6B] truncate">
-                  {confirmedOrder.shippingAddress.street}, {confirmedOrder.shippingAddress.city}
+                  {confirmedOrder.shippingAddress?.street || ''}{confirmedOrder.shippingAddress?.city ? `, ${confirmedOrder.shippingAddress.city}` : ''}
                 </div>
               </div>
 
               <div>
                 <div className="text-[#6B6B6B] text-[11px]">Payment Method</div>
-                <div className="font-bold text-[#1A1A1A] mt-0.5">{confirmedOrder.paymentMethod}</div>
-                <div className="text-sm font-bold font-mono text-[#1A1A1A] mt-0.5">₹{confirmedOrder.total.toFixed(2)}</div>
+                <div className="font-bold text-[#1A1A1A] mt-0.5">
+                  {confirmedOrder.paymentMethod === 'upi' ? 'UPI (Instant Transfer)' : confirmedOrder.paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : confirmedOrder.paymentMethod || 'Pay via UPI'}
+                </div>
+                <div className="text-sm font-bold font-mono text-[#1A1A1A] mt-0.5">₹{Number(confirmedOrder.total || 0).toFixed(2)}</div>
               </div>
             </div>
 
             {/* Purchased Items Recap */}
             <div className="border-t border-[#E8E3DE] pt-6 text-left space-y-4">
               <h3 className="font-serif text-base font-bold text-[#1A1A1A]">
-                Your Items ({confirmedOrder.items.reduce((acc, i) => acc + i.quantity, 0)})
+                Your Items ({Array.isArray(confirmedOrder.items) ? confirmedOrder.items.reduce((acc, i) => acc + (Number(i.quantity) || 1), 0) : 0})
               </h3>
               <div className="divide-y divide-[#F2EFE9] border border-[#E8E3DE] rounded-[4px] overflow-hidden bg-white">
-                {confirmedOrder.items.map((item, idx) => (
-                  <div key={idx} className="p-4 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        src={resolveImageUrl(item.product?.image || item.product?.images?.[0] || item.image)}
-                        alt={item.product?.name || item.name || 'Product'}
-                        onError={(e) => {
-                          e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
-                        }}
-                        className="w-14 h-16 object-cover rounded-xs border border-[#E8E3DE] shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <div className="font-semibold text-xs text-[#1A1A1A] truncate">{item.product.name}</div>
-                        <div className="text-[11px] text-[#6B6B6B] flex items-center gap-2 mt-0.5">
-                          <span>Size: {item.selectedSize}</span>
-                          <span>•</span>
-                          <span>Color: {item.selectedColor?.name || 'Standard'}</span>
-                          <span>•</span>
-                          <span>Qty: {item.quantity}</span>
+                {(confirmedOrder.items || []).map((item, idx) => {
+                  const itemImg = item.image || item.product?.image || (Array.isArray(item.product?.images) && item.product.images[0]) || '';
+                  const itemName = item.name || item.product?.name || 'Garment Piece';
+                  const itemSize = item.selectedSize || item.size || 'Standard';
+                  const itemColor = typeof item.selectedColor === 'object' ? item.selectedColor?.name : (item.selectedColor || item.color || 'Standard');
+                  const itemPrice = Number(item.price !== undefined ? item.price : (item.product?.price || 0));
+                  const itemQty = Number(item.quantity || 1);
+
+                  return (
+                    <div key={idx} className="p-4 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <img
+                          src={resolveImageUrl(itemImg)}
+                          alt={itemName}
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+                          }}
+                          className="w-14 h-16 object-cover rounded-xs border border-[#E8E3DE] shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <div className="font-semibold text-xs text-[#1A1A1A] truncate">{itemName}</div>
+                          <div className="text-[11px] text-[#6B6B6B] flex items-center gap-2 mt-0.5">
+                            <span>Size: {itemSize}</span>
+                            <span>•</span>
+                            <span>Color: {itemColor}</span>
+                            <span>•</span>
+                            <span>Qty: {itemQty}</span>
+                          </div>
                         </div>
                       </div>
+                      <div className="text-right font-mono font-semibold text-xs text-[#1A1A1A]">
+                        ₹{(itemPrice * itemQty).toFixed(2)}
+                      </div>
                     </div>
-                    <div className="text-right font-mono font-semibold text-xs text-[#1A1A1A]">
-                      ₹{(item.product.price * item.quantity).toFixed(2)}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -440,8 +592,8 @@ export const CheckoutPage = ({
                           key={addr.id || addr._id}
                           onClick={() => handleSelectSavedAddress(addr)}
                           className={`p-4 rounded-xl border transition-all cursor-pointer text-xs space-y-1.5 relative ${isSelected
-                              ? 'border-[#506040] bg-[#FAF8F5] ring-2 ring-[#506040]/30 shadow-xs'
-                              : 'border-[#E8E4DC] bg-white hover:border-[#C69E58]'
+                            ? 'border-[#506040] bg-[#FAF8F5] ring-2 ring-[#506040]/30 shadow-xs'
+                            : 'border-[#E8E4DC] bg-white hover:border-[#C69E58]'
                             }`}
                         >
                           <div className="flex items-center justify-between font-bold text-[#1D241C]">
@@ -632,12 +784,46 @@ export const CheckoutPage = ({
 
               {/* Payment Method Choices */}
               <div className="space-y-3 text-xs">
+                {/* Pay via UPI (Primary) */}
+                <label
+                  onClick={() => setPaymentMethodTab('upi')}
+                  className={`p-4 rounded-xl border flex items-center justify-between gap-4 cursor-pointer transition-all ${paymentMethodTab === 'upi'
+                    ? 'border-[#506040] bg-[#FAF8F5] ring-2 ring-[#506040]/20'
+                    : 'border-[#E8E4DC] hover:border-[#C69E58] bg-white'
+                    }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="radio"
+                      name="payment_choice"
+                      checked={paymentMethodTab === 'upi'}
+                      onChange={() => setPaymentMethodTab('upi')}
+                      className="text-[#506040] focus:ring-[#506040]"
+                    />
+                    <div>
+                      <div className="font-bold text-[#1A1A1A] flex items-center gap-2">
+                        <span>Pay via UPI (Instant &amp; Zero Fee)</span>
+                        <span className="text-[9px] font-mono uppercase bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">
+                          Recommended
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-[#6B6B6B] mt-0.5">
+                        Google Pay, PhonePe, Paytm, BHIM, UPI QR &amp; Any UPI App
+                      </div>
+                    </div>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-1.5 text-neutral-400 font-mono text-[10px]">
+                    <Smartphone className="w-4 h-4 text-[#C8A87C]" />
+                    <span>UPI APP / QR</span>
+                  </div>
+                </label>
+
                 {/* Cash on Delivery */}
                 <label
                   onClick={() => setPaymentMethodTab('cod')}
                   className={`p-4 rounded-xl border flex items-center justify-between gap-4 cursor-pointer transition-all ${paymentMethodTab === 'cod'
-                      ? 'border-[#506040] bg-[#FAF8F5] ring-2 ring-[#506040]/20'
-                      : 'border-[#E8E4DC] hover:border-[#C69E58] bg-white'
+                    ? 'border-[#506040] bg-[#FAF8F5] ring-2 ring-[#506040]/20'
+                    : 'border-[#E8E4DC] hover:border-[#C69E58] bg-white'
                     }`}
                 >
                   <div className="flex items-center gap-3">
@@ -651,42 +837,22 @@ export const CheckoutPage = ({
                     <div>
                       <div className="font-bold text-[#1A1A1A] flex items-center gap-2">
                         <span>Cash on Delivery (COD)</span>
-                        <span className="text-[9px] font-mono uppercase bg-[#506040]/10 text-[#506040] px-1.5 py-0.2 rounded font-bold">
-                          Popular
-                        </span>
                       </div>
-                      <div className="text-[11px] text-[#6B6B6B]">
-                        Pay via Cash or QR scan / UPI when your package arrives
-                      </div>
-                    </div>
-                  </div>
-                </label>
-
-                {/* Online Payment / UPI */}
-                <label
-                  onClick={() => setPaymentMethodTab('online')}
-                  className={`p-4 rounded-xl border flex items-center justify-between gap-4 cursor-pointer transition-all ${paymentMethodTab === 'online'
-                      ? 'border-[#506040] bg-[#FAF8F5] ring-2 ring-[#506040]/20'
-                      : 'border-[#E8E4DC] hover:border-[#C69E58] bg-white'
-                    }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="payment_choice"
-                      checked={paymentMethodTab === 'online'}
-                      onChange={() => setPaymentMethodTab('online')}
-                      className="text-[#506040] focus:ring-[#506040]"
-                    />
-                    <div>
-                      <div className="font-bold text-[#1A1A1A]">Online Payment (UPI, Cards & Net Banking)</div>
-                      <div className="text-[11px] text-[#6B6B6B]">
-                        Instant secure checkout via Google Pay, PhonePe, Cards & Netbanking
+                      <div className="text-[11px] text-[#6B6B6B] mt-0.5">
+                        Pay in cash or scan delivery partner's QR upon doorstep delivery
                       </div>
                     </div>
                   </div>
                 </label>
               </div>
+
+              {/* Error Banner if payment fails */}
+              {errorMessage && (
+                <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xs flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
             </div>
 
             {/* Submit Action */}
@@ -695,17 +861,22 @@ export const CheckoutPage = ({
                 type="submit"
                 disabled={isProcessing || hasOOS}
                 className={`w-full py-4 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 rounded-xs shadow-lg transition-all ${hasOOS || isProcessing
-                    ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed shadow-none'
-                    : 'bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] cursor-pointer'
+                  ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed shadow-none'
+                  : 'bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] cursor-pointer'
                   }`}
               >
                 {isProcessing ? (
-                  <span>Securing Order & Processing Payment...</span>
+                  <span>Securing Order &amp; Connecting UPI Gateway...</span>
                 ) : hasOOS ? (
                   <span>Unavailable Items in Cart</span>
+                ) : paymentMethodTab === 'upi' ? (
+                  <>
+                    <span>Proceed to UPI Payment • ₹{total.toFixed(2)}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
                 ) : (
                   <>
-                    <span>Place Order • ₹{total.toFixed(2)}</span>
+                    <span>Confirm COD Order • ₹{total.toFixed(2)}</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -716,7 +887,7 @@ export const CheckoutPage = ({
                   <Truck className="w-3.5 h-3.5 text-[#C8A87C]" /> Express Courier Delivery
                 </span>
                 <span className="flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" /> Complimentary 14-Day Returns
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" /> Razorpay 256-Bit SSL Protection
                 </span>
               </div>
             </div>

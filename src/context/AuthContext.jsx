@@ -75,31 +75,13 @@ export const AuthProvider = ({ children }) => {
     return [];
   });
 
-  // User Order History State (initialized to empty without dummy fallbacks)
-  const [userOrders, setUserOrders] = useState(() => {
-    const saved = localStorage.getItem('sumilux_orders');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return [];
-      }
-    }
-    return [];
-  });
+  // User Order History State from Backend API
+  const [userOrders, setUserOrders] = useState([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
 
-  // User Payment History State
-  const [userPayments, setUserPayments] = useState(() => {
-    const saved = localStorage.getItem('sumilux_payments');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return [];
-      }
-    }
-    return [];
-  });
+  // User Payment History State from Backend API
+  const [userPayments, setUserPayments] = useState([]);
+  const [isLoadingPayments, setIsLoadingPayments] = useState(false);
 
   // Fetch addresses from backend
   const fetchAddresses = useCallback(async () => {
@@ -132,14 +114,105 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Fetch addresses whenever user logs in or token is available
+  // Fetch user orders from backend
+  const fetchOrders = useCallback(async () => {
+    const storedToken = localStorage.getItem('sumilux_token');
+    if (!storedToken) {
+      setUserOrders([]);
+      return;
+    }
+    setIsLoadingOrders(true);
+    try {
+      const response = await api.get('/api/orders/my-orders');
+      if (response.data?.status) {
+        const rawOrders = response.data.data || [];
+        const normalized = rawOrders.map((o) => ({
+          ...o,
+          id: o._id || o.id,
+          orderNumber: o.orderNumber,
+          status: o.orderStatus || o.status || 'confirmed',
+          orderStatus: o.orderStatus || o.status || 'confirmed',
+          paymentStatus: o.paymentStatus || 'paid',
+          paymentMethod: o.paymentMethod || 'upi',
+          total: Number(o.total || 0),
+          subtotal: Number(o.subtotal !== undefined ? o.subtotal : o.total || 0),
+          shippingCost: Number(o.shippingCost || 0),
+          discount: Number(o.discount || 0),
+          date: o.createdAt
+            ? new Date(o.createdAt).toLocaleDateString('en-IN', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })
+            : 'Recent',
+          createdAt: o.createdAt || new Date().toISOString(),
+          items: (o.items || []).map((i) => ({
+            ...i,
+            id: i._id || i.product?._id || i.id,
+            name: i.name || i.product?.name || 'Garment Piece',
+            price: Number(i.price !== undefined ? i.price : (i.product?.price || 0)),
+            quantity: Number(i.quantity || 1),
+            size: i.selectedSize || i.size || 'Standard',
+            color: typeof i.selectedColor === 'object' ? i.selectedColor?.name : (i.selectedColor || i.color || 'Standard'),
+            image: i.image || i.product?.image || (Array.isArray(i.product?.images) && i.product.images[0]) || '',
+          })),
+        }));
+        setUserOrders(normalized);
+      }
+    } catch (err) {
+      console.error('Failed to fetch orders from backend:', err.message);
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  }, []);
+
+  // Fetch user payment records from backend
+  const fetchPayments = useCallback(async () => {
+    const storedToken = localStorage.getItem('sumilux_token');
+    if (!storedToken) {
+      setUserPayments([]);
+      return;
+    }
+    setIsLoadingPayments(true);
+    try {
+      const response = await api.get('/api/payments/my-payments');
+      if (response.data?.status) {
+        setUserPayments(response.data.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch payments from backend:', err.message);
+    } finally {
+      setIsLoadingPayments(false);
+    }
+  }, []);
+
+  // Cancel order customer action
+  const cancelOrder = useCallback(async (orderId) => {
+    try {
+      const response = await api.patch(`/api/orders/${orderId}/cancel`);
+      if (response.data?.status) {
+        await fetchOrders();
+        await fetchPayments();
+        return response.data;
+      }
+    } catch (err) {
+      console.error('Failed to cancel order:', err.message);
+      throw err;
+    }
+  }, [fetchOrders, fetchPayments]);
+
+  // Fetch data whenever user logs in or token is available
   useEffect(() => {
     if (token) {
       fetchAddresses();
+      fetchOrders();
+      fetchPayments();
     } else {
       setUserAddresses([]);
+      setUserOrders([]);
+      setUserPayments([]);
     }
-  }, [token, fetchAddresses]);
+  }, [token, fetchAddresses, fetchOrders, fetchPayments]);
 
   // Local Storage Synchronization
   useEffect(() => {
@@ -162,20 +235,14 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('sumilux_addresses', JSON.stringify(userAddresses));
   }, [userAddresses]);
 
-  useEffect(() => {
-    localStorage.setItem('sumilux_orders', JSON.stringify(userOrders));
-  }, [userOrders]);
-
-  useEffect(() => {
-    localStorage.setItem('sumilux_payments', JSON.stringify(userPayments));
-  }, [userPayments]);
-
   // Global Auth Expiration Listener
   useEffect(() => {
     const handleAuthExpired = () => {
       setCurrentUser(null);
       setToken(null);
       setUserAddresses([]);
+      setUserOrders([]);
+      setUserPayments([]);
     };
     window.addEventListener('auth-expired', handleAuthExpired);
     return () => window.removeEventListener('auth-expired', handleAuthExpired);
@@ -414,53 +481,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Order Placement Action
-  const recordOrder = (orderData) => {
-    const generatedOrderNumber = `SMLX-${Math.floor(100000 + Math.random() * 900000)}`;
-    const newOrder = {
-      id: `ord-${Date.now()}`,
-      orderNumber: generatedOrderNumber,
-      date: 'Today, ' + new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }),
-      status: 'processing',
-      trackingNumber: `EXP-${Math.floor(100000000 + Math.random() * 900000000)}`,
-      paymentMethod: orderData.paymentMethod || 'Online Payment',
-      shippingAddress: orderData.shippingAddress || userAddresses[0] || {
-        name: currentUser?.name || 'Customer',
-        phone: currentUser?.phone || '',
-        street: '',
-        city: '',
-        state: '',
-        postalCode: '',
-        country: 'India',
-      },
-      items: (orderData.items || []).map((item) => ({
-        id: item.product?.id || item.product?._id || item.id,
-        name: item.product?.name || item.name,
-        size: item.selectedSize,
-        color: item.selectedColor?.name || 'Standard',
-        price: item.product?.price || item.price,
-        quantity: item.quantity,
-        image: item.product?.image || item.product?.images?.[0] || item.image,
-      })),
-      total: orderData.total || 0,
-    };
-
-    const newPayment = {
-      id: `pay-${Date.now()}`,
-      transactionId: `TXN-${Math.floor(10000 + Math.random() * 90000)}-INR`,
-      date: 'Today',
-      method: orderData.paymentMethod || 'Online Payment',
-      orderNumber: generatedOrderNumber,
-      amount: orderData.total || 0,
-      status: 'Settled',
-    };
-
-    setUserOrders((prev) => [newOrder, ...prev]);
-    setUserPayments((prev) => [newPayment, ...prev]);
-
-    return generatedOrderNumber;
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -482,8 +502,12 @@ export const AuthProvider = ({ children }) => {
         deleteAddress,
         setDefaultAddress,
         orders: userOrders,
+        isLoadingOrders,
+        fetchOrders,
         payments: userPayments,
-        recordOrder,
+        isLoadingPayments,
+        fetchPayments,
+        cancelOrder,
         isAuthModalOpen,
         authModalConfig,
         openAuthModal,
