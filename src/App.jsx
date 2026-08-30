@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { RootProvider, useAuth, useStore } from './context/RootContext';
 
@@ -11,6 +11,7 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { SearchModal } from './components/SearchModal';
 import { AuthModal } from './components/AuthModal';
+import { LogoutConfirmModal } from './components/LogoutConfirmModal';
 import { Toast } from './components/Toast';
 
 // Storefront Pages
@@ -138,6 +139,32 @@ const AppContent = () => {
     return orderNumber;
   };
 
+  // Logout confirmation modal state
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
+  const handleRequestLogout = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const handleConfirmLogout = () => {
+    logout();
+    setIsLogoutModalOpen(false);
+    showToast({
+      type: 'info',
+      title: 'Signed Out',
+      message: 'You have been successfully signed out.'
+    });
+    // If currently on an account/auth-protected route, navigate back to home
+    if (
+      location.pathname.startsWith('/account') ||
+      location.pathname.startsWith('/orders') ||
+      location.pathname.startsWith('/addresses') ||
+      location.pathname.startsWith('/payments')
+    ) {
+      navigate('/');
+    }
+  };
+
   const handleLoginSuccess = async (userData) => {
     await login(userData.email || 'eleanor.vance@sumilux.com', 'demo');
     showToast({
@@ -171,7 +198,7 @@ const AppContent = () => {
         currency={currency}
         onSelectCurrency={setCurrency}
         currentUser={currentUser}
-        onLogout={logout}
+        onLogout={handleRequestLogout}
       />
 
       <main className="flex-1">
@@ -314,7 +341,7 @@ const AppContent = () => {
             element={
               <AccountPage
                 currentUser={currentUser}
-                onLogout={logout}
+                onLogout={handleRequestLogout}
                 orders={orders}
                 addresses={addresses}
                 onAddAddress={addAddress}
@@ -331,7 +358,7 @@ const AppContent = () => {
             element={
               <AccountPage
                 currentUser={currentUser}
-                onLogout={logout}
+                onLogout={handleRequestLogout}
                 orders={orders}
                 addresses={addresses}
                 onAddAddress={addAddress}
@@ -348,7 +375,7 @@ const AppContent = () => {
             element={
               <AccountPage
                 currentUser={currentUser}
-                onLogout={logout}
+                onLogout={handleRequestLogout}
                 orders={orders}
                 addresses={addresses}
                 onAddAddress={addAddress}
@@ -365,7 +392,7 @@ const AppContent = () => {
             element={
               <AccountPage
                 currentUser={currentUser}
-                onLogout={logout}
+                onLogout={handleRequestLogout}
                 orders={orders}
                 addresses={addresses}
                 onAddAddress={addAddress}
@@ -382,7 +409,7 @@ const AppContent = () => {
             element={
               <AccountPage
                 currentUser={currentUser}
-                onLogout={logout}
+                onLogout={handleRequestLogout}
                 orders={orders}
                 addresses={addresses}
                 onAddAddress={addAddress}
@@ -399,7 +426,7 @@ const AppContent = () => {
             element={
               <AccountPage
                 currentUser={currentUser}
-                onLogout={logout}
+                onLogout={handleRequestLogout}
                 orders={orders}
                 addresses={addresses}
                 onAddAddress={addAddress}
@@ -416,7 +443,7 @@ const AppContent = () => {
             element={
               <AccountPage
                 currentUser={currentUser}
-                onLogout={logout}
+                onLogout={handleRequestLogout}
                 orders={orders}
                 addresses={addresses}
                 onAddAddress={addAddress}
@@ -459,6 +486,8 @@ const AppContent = () => {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
+
+      {/* Footer */}
       <Footer onSelectCategory={setActiveCategory} />
 
       <SearchModal
@@ -477,6 +506,15 @@ const AppContent = () => {
 
       <AuthModal />
 
+      {/* Sign Out Confirmation Modal */}
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleConfirmLogout}
+        userName={currentUser?.name}
+      />
+
+      {/* Global Toast Notifications */}
       <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   );

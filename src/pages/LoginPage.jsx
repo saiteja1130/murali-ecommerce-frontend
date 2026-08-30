@@ -462,7 +462,7 @@ export const LoginPage = () => {
         <div className="pt-4 border-t border-[#E8E4DC] text-center text-xs text-[#687163]">
           Don't have an account yet?{' '}
           <Link to="/signup" className="font-bold text-[#1D241C] hover:text-[#506040] transition-colors underline ml-1">
-            Create an Account
+            Sign Up
           </Link>
         </div>
       </div>

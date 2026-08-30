@@ -1,9 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Star, Heart, ShoppingBag, Truck, ShieldCheck, RotateCcw, Ruler, ChevronDown, ChevronUp, Share2, Check, ArrowRight, Plus, Minus, MessageSquare } from 'lucide-react';
+import {
+  Star,
+  Heart,
+  ShoppingBag,
+  Truck,
+  ShieldCheck,
+  RotateCcw,
+  Ruler,
+  ChevronDown,
+  ChevronUp,
+  Share2,
+  Check,
+  ArrowRight,
+  Plus,
+  Minus,
+  AlertCircle
+} from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
-import { normalizeProduct } from '../utils/productAdapter';
+import { normalizeProduct, resolveImageUrl, FALLBACK_PRODUCT_IMAGE } from '../utils/productAdapter';
 import { useAuth } from '../context/AuthContext';
+import api from '../context/api';
 
 export const ProductDetailPage = ({
   product: initialProduct,
@@ -18,65 +35,81 @@ export const ProductDetailPage = ({
   const navigate = useNavigate();
   const { token, isAuthenticated } = useAuth();
 
-  // Find and normalize the active product safely
-  const rawProduct = (id ? allProducts.find((p) => p.id === id || p._id === id || p.slug === id) : null) ||
-    initialProduct ||
-    allProducts[0] ||
+  const [fetchedProduct, setFetchedProduct] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isNotFound, setIsNotFound] = useState(false);
+
+  // Sync / Fetch product data
+  useEffect(() => {
+    // 1. Try finding in current allProducts list
+    const foundInList = id ? allProducts.find((p) => p.id === id || p._id === id || p.slug === id) : null;
+    if (foundInList) {
+      setFetchedProduct(normalizeProduct(foundInList));
+      setIsLoading(false);
+      setIsNotFound(false);
+      return;
+    }
+
+    // 2. If not found in list but initialProduct matches
+    if (initialProduct && (!id || initialProduct.id === id || initialProduct._id === id || initialProduct.slug === id)) {
+      setFetchedProduct(normalizeProduct(initialProduct));
+      setIsLoading(false);
+      setIsNotFound(false);
+      return;
+    }
+
+    // 3. If we have an ID from URL and it's not yet found in local memory, fetch directly from backend API
+    if (id) {
+      setIsLoading(true);
+      api
+        .get(`/api/products/${id}`)
+        .then((res) => {
+          if (res.data?.data) {
+            setFetchedProduct(normalizeProduct(res.data.data));
+            setIsNotFound(false);
+          } else {
+            setIsNotFound(true);
+          }
+        })
+        .catch((err) => {
+          console.warn('Could not load product by id:', err.message);
+          // If allProducts is still empty (fetching in background), don't immediately fail
+          if (allProducts.length === 0) {
+            setIsLoading(true);
+          } else {
+            setIsNotFound(true);
+          }
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+  }, [id, allProducts, initialProduct]);
+
+  const product =
+    fetchedProduct ||
+    (id ? normalizeProduct(allProducts.find((p) => p.id === id || p._id === id || p.slug === id)) : null) ||
+    normalizeProduct(initialProduct) ||
     null;
 
-  const product = normalizeProduct(rawProduct) || {
-    id: 'placeholder',
-    name: 'Featured Product',
-    price: 0,
-    originalPrice: null,
-    badge: null,
-    image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900',
-    galleryImages: ['https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900'],
-    colors: [{ name: 'Standard', hex: '#1D241C' }],
-    sizes: ['One Size'],
-    rating: 5.0,
-    reviews: 12,
-    category: 'Collection',
-    description: 'High quality product made with durable and comfortable materials for everyday use.',
-    composition: '100% Premium Quality Materials',
-    sustainability: 'Eco-friendly & Durable Design',
-    careInstructions: 'Hand wash or gentle machine wash in cold water'
-  };
-
-  const isCurrentWishlisted = wishlistIds.includes(product.id);
+  const isCurrentWishlisted = product ? wishlistIds.includes(product.id) : false;
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
 
-  const colors = Array.isArray(product.colors) && product.colors.length > 0
-    ? product.colors
-    : [{ name: 'Standard', hex: '#1D241C' }];
-  const sizes = Array.isArray(product.sizes) && product.sizes.length > 0
-    ? product.sizes
-    : ['One Size'];
+  const colors =
+    product && Array.isArray(product.colors) && product.colors.length > 0
+      ? product.colors
+      : [{ name: 'Standard', hex: '#1D241C' }];
+  const sizes =
+    product && Array.isArray(product.sizes) && product.sizes.length > 0
+      ? product.sizes
+      : ['One Size'];
 
   const [selectedSize, setSelectedSize] = useState(sizes[0] || 'One Size');
   const [selectedColor, setSelectedColor] = useState(colors[0] || { name: 'Standard', hex: '#1D241C' });
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [addedSuccess, setAddedSuccess] = useState(false);
-  const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [isCopiedLink, setIsCopiedLink] = useState(false);
-
-  // Details & Fabric Care in simple, natural English
-  const detailsList = Array.isArray(product.details) && product.details.length > 0
-    ? product.details
-    : [
-      product.composition || '100% Premium Quality Materials',
-      product.sustainability || 'Durable build for long-lasting everyday use',
-      'Neat and strong finish for a clean look'
-    ];
-
-  const fabricCareList = Array.isArray(product.fabricCare) && product.fabricCare.length > 0
-    ? product.fabricCare
-    : [
-      product.careInstructions || 'Hand wash or gentle machine wash in cold water',
-      'Dry in shade and keep away from direct heat',
-      'Iron on low temperature if needed'
-    ];
 
   // Accordion state
   const [openAccordions, setOpenAccordions] = useState({
@@ -86,33 +119,109 @@ export const ProductDetailPage = ({
     shipping: false
   });
 
-  // Reset when product changes
+  // Reset variant selections when product changes
   useEffect(() => {
-    setSelectedImageIdx(0);
-    setSelectedSize(sizes[0] || 'One Size');
-    setSelectedColor(colors[0] || { name: 'Standard', hex: '#1D241C' });
-    setQuantity(1);
-    setAddedSuccess(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [product.id]);
+    if (product) {
+      setSelectedImageIdx(0);
+      setSelectedSize(sizes[0] || 'One Size');
+      setSelectedColor(colors[0] || { name: 'Standard', hex: '#1D241C' });
+      setQuantity(1);
+      setAddedSuccess(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [product?.id]);
 
   const toggleAccordion = (section) => {
     setOpenAccordions((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const images = Array.isArray(product.galleryImages) && product.galleryImages.length > 0
-    ? product.galleryImages
-    : [product.image, product.hoverImage].filter(Boolean);
+  // Loading Skeleton State
+  if (isLoading && !product) {
+    return (
+      <div className="min-h-screen bg-[#FAF8F5] py-8 lg:py-12 animate-pulse text-[#1D241C]">
+        <div className="max-w-7xl mx-auto px-5">
+          <div className="h-4 w-44 bg-[#E8E4DC] rounded-xs mb-8" />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 pb-16">
+            <div className="lg:col-span-7 aspect-[3/4] bg-[#E8E4DC] rounded-[4px]" />
+            <div className="lg:col-span-5 space-y-6">
+              <div className="h-4 w-28 bg-[#E8E4DC] rounded-xs" />
+              <div className="h-10 w-3/4 bg-[#E8E4DC] rounded-xs" />
+              <div className="h-8 w-32 bg-[#E8E4DC] rounded-xs" />
+              <div className="h-20 w-full bg-[#E8E4DC] rounded-xs" />
+              <div className="h-12 w-full bg-[#E8E4DC] rounded-xs" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Not Found State
+  if (isNotFound && !product) {
+    return (
+      <div className="min-h-[60vh] bg-[#FAF8F5] flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mb-4 border border-rose-200">
+          <AlertCircle className="w-8 h-8" />
+        </div>
+        <h2 className="font-serif text-2xl font-bold text-[#1D241C] mb-2">Product Not Found</h2>
+        <p className="text-sm text-[#687163] max-w-md mb-6">
+          The luxury piece you are looking for may have been retired or is temporarily unavailable.
+        </p>
+        <button
+          onClick={() => navigate('/products')}
+          className="px-6 py-3 bg-[#1D241C] text-white hover:bg-[#C69E58] hover:text-[#1D241C] text-xs font-bold uppercase tracking-widest rounded-xs transition-colors cursor-pointer"
+        >
+          Explore All Products
+        </button>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return null;
+  }
+
+  // Extract Gallery Images
+  const rawGallery =
+    Array.isArray(product.galleryImages) && product.galleryImages.length > 0
+      ? product.galleryImages
+      : [product.image, product.hoverImage].filter(Boolean);
+
+  const images = rawGallery.map(resolveImageUrl).filter(Boolean);
+  if (images.length === 0) {
+    images.push(FALLBACK_PRODUCT_IMAGE);
+  }
+
+  const activeMainImage = images[selectedImageIdx] || images[0] || FALLBACK_PRODUCT_IMAGE;
 
   const price = typeof product.price === 'number' ? product.price : Number(product.price) || 0;
   const originalPrice = product.originalPrice ? Number(product.originalPrice) : null;
-  const discountPercent = originalPrice && originalPrice > price
-    ? Math.round(((originalPrice - price) / originalPrice) * 100)
-    : null;
+  const discountPercent =
+    originalPrice && originalPrice > price
+      ? Math.round(((originalPrice - price) / originalPrice) * 100)
+      : null;
 
-  // Filter similar products (same category, excluding current product)
+  const detailsList =
+    Array.isArray(product.details) && product.details.length > 0
+      ? product.details
+      : [
+          product.composition || '100% Premium Quality Materials',
+          product.sustainability || 'Durable build for long-lasting everyday use',
+          'Neat and strong finish for a clean look'
+        ];
+
+  const fabricCareList =
+    Array.isArray(product.fabricCare) && product.fabricCare.length > 0
+      ? product.fabricCare
+      : [
+          product.careInstructions || 'Hand wash or gentle machine wash in cold water',
+          'Dry in shade and keep away from direct heat',
+          'Iron on low temperature if needed'
+        ];
+
+  // Similar Products
   const similarProducts = allProducts
-    .filter((p) => p.id !== product.id && (p.category === product.category || p.isFeatured))
+    .filter((p) => (p.id || p._id) !== product.id && (p.category === product.category || p.isFeatured))
     .slice(0, 4);
 
   const handleAddToCartClick = () => {
@@ -158,7 +267,7 @@ export const ProductDetailPage = ({
     if (onNavigateToCategory) {
       onNavigateToCategory(cat);
     }
-    navigate(`/products/${(cat || '').toLowerCase()}`);
+    navigate(`/products/${(cat || '').toLowerCase().replace(/ /g, '-')}`);
   };
 
   return (
@@ -170,7 +279,10 @@ export const ProductDetailPage = ({
             Home
           </button>
           <span>/</span>
-          <button onClick={() => handleCategoryClick(product.category)} className="hover:text-[#1D241C] transition-colors cursor-pointer">
+          <button
+            onClick={() => handleCategoryClick(product.category)}
+            className="hover:text-[#1D241C] transition-colors cursor-pointer"
+          >
             {product.category}
           </button>
           <span>/</span>
@@ -179,7 +291,7 @@ export const ProductDetailPage = ({
           </span>
         </nav>
 
-        {/* Product Hero Section (2-Column Grid) */}
+        {/* Product Hero Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 pb-16 border-b border-[#E8E4DC]">
           {/* Left Column: Image Gallery (7 cols) */}
           <div className="lg:col-span-7 flex flex-col-reverse md:flex-row gap-4">
@@ -190,12 +302,22 @@ export const ProductDetailPage = ({
                   <button
                     key={idx}
                     onClick={() => setSelectedImageIdx(idx)}
-                    className={`relative w-16 h-20 md:w-20 md:h-26 rounded-[3px] overflow-hidden border-2 transition-all flex-shrink-0 bg-[#FAF8F5] cursor-pointer ${selectedImageIdx === idx
+                    className={`relative w-16 h-20 md:w-20 md:h-26 rounded-[3px] overflow-hidden border-2 transition-all flex-shrink-0 bg-[#FAF8F5] cursor-pointer ${
+                      selectedImageIdx === idx
                         ? 'border-[#C69E58] shadow-xs'
                         : 'border-[#E8E4DC] hover:border-neutral-400 opacity-70 hover:opacity-100'
-                      }`}
+                    }`}
                   >
-                    <img src={img} alt={`${product.name} angle ${idx + 1}`} className="w-full h-full object-cover object-center" />
+                    <img
+                      src={img}
+                      alt={`${product.name} angle ${idx + 1}`}
+                      onError={(e) => {
+                        if (e.currentTarget.src !== FALLBACK_PRODUCT_IMAGE) {
+                          e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                        }
+                      }}
+                      className="w-full h-full object-cover object-center"
+                    />
                   </button>
                 ))}
               </div>
@@ -204,8 +326,13 @@ export const ProductDetailPage = ({
             {/* Main Stage Image */}
             <div className="relative flex-1 aspect-[3/4] bg-[#FAF8F5] rounded-[4px] border border-[#E8E4DC] overflow-hidden group shadow-xs">
               <img
-                src={images[selectedImageIdx] || product.image}
+                src={activeMainImage}
                 alt={product.name}
+                onError={(e) => {
+                  if (e.currentTarget.src !== FALLBACK_PRODUCT_IMAGE) {
+                    e.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                  }
+                }}
                 className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
               />
 
@@ -218,14 +345,17 @@ export const ProductDetailPage = ({
                 </div>
               ) : product.badge ? (
                 <div className="absolute top-4 left-4 z-10">
-                  <span className={`px-3 py-1.5 text-[11px] font-bold tracking-widest uppercase rounded-xs shadow-xs ${product.badge === 'SALE'
-                      ? 'bg-[#C69E58] text-[#1D241C]'
-                      : product.badge === 'BESTSELLER'
+                  <span
+                    className={`px-3 py-1.5 text-[11px] font-bold tracking-widest uppercase rounded-xs shadow-xs ${
+                      product.badge === 'SALE'
+                        ? 'bg-[#C69E58] text-[#1D241C]'
+                        : product.badge === 'BESTSELLER'
                         ? 'bg-[#1D241C] text-white'
                         : product.badge === 'NEW'
-                          ? 'bg-[#506040] text-white'
-                          : 'bg-[#E5ECE0] text-[#1D241C]'
-                    }`}>
+                        ? 'bg-[#506040] text-white'
+                        : 'bg-[#E5ECE0] text-[#1D241C]'
+                    }`}
+                  >
                     {product.badge === 'SALE' && discountPercent ? `-${discountPercent}%` : product.badge}
                   </span>
                 </div>
@@ -235,8 +365,9 @@ export const ProductDetailPage = ({
               <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
                 <button
                   onClick={() => onToggleWishlist && onToggleWishlist(product)}
-                  className={`w-10 h-10 rounded-full bg-white/90 hover:bg-white backdrop-blur-xs flex items-center justify-center transition-all shadow-md hover:scale-110 cursor-pointer ${isCurrentWishlisted ? 'text-[#C69E58]' : 'text-neutral-600 hover:text-black'
-                    }`}
+                  className={`w-10 h-10 rounded-full bg-white/90 hover:bg-white backdrop-blur-xs flex items-center justify-center transition-all shadow-md hover:scale-110 cursor-pointer ${
+                    isCurrentWishlisted ? 'text-[#C69E58]' : 'text-neutral-600 hover:text-black'
+                  }`}
                   aria-label="Wishlist"
                 >
                   <Heart className={`w-5 h-5 ${isCurrentWishlisted ? 'fill-[#C69E58]' : ''}`} />
@@ -304,7 +435,7 @@ export const ProductDetailPage = ({
                 <div className="pt-2">
                   <div className="flex items-center justify-between text-xs mb-2">
                     <span className="font-medium text-[#1D241C]">
-                      Color: <strong className="text-[#1D241C]">{selectedColor.name}</strong>
+                      Color: <strong className="text-[#1D241C]">{selectedColor?.name || 'Standard'}</strong>
                     </span>
                   </div>
 
@@ -313,13 +444,17 @@ export const ProductDetailPage = ({
                       <button
                         key={idx}
                         onClick={() => setSelectedColor(color)}
-                        className={`w-8 h-8 rounded-full border-2 transition-all p-0.5 flex items-center justify-center cursor-pointer ${selectedColor.name === color.name
+                        className={`w-8 h-8 rounded-full border-2 transition-all p-0.5 flex items-center justify-center cursor-pointer ${
+                          selectedColor?.name === color.name
                             ? 'border-[#C69E58] scale-110 shadow-xs'
                             : 'border-transparent hover:scale-105'
-                          }`}
+                        }`}
                         title={color.name}
                       >
-                        <span className="w-full h-full rounded-full border border-neutral-300 block" style={{ backgroundColor: color.hex || '#1D241C' }} />
+                        <span
+                          className="w-full h-full rounded-full border border-neutral-300 block"
+                          style={{ backgroundColor: color.hex || '#1D241C' }}
+                        />
                       </button>
                     ))}
                   </div>
@@ -333,14 +468,6 @@ export const ProductDetailPage = ({
                     <span className="font-medium text-[#1D241C]">
                       Select Size: <strong className="text-[#1D241C]">{selectedSize}</strong>
                     </span>
-
-                    {/* <button
-                      onClick={() => setShowSizeGuide(true)}
-                      className="text-xs text-[#C69E58] hover:underline flex items-center gap-1 font-medium cursor-pointer"
-                    >
-                      <Ruler className="w-3.5 h-3.5" />
-                      <span>Size Guide</span>
-                    </button> */}
                   </div>
 
                   <div className="flex flex-wrap gap-2">
@@ -348,10 +475,11 @@ export const ProductDetailPage = ({
                       <button
                         key={size}
                         onClick={() => setSelectedSize(size)}
-                        className={`min-w-[48px] h-10 px-3.5 text-xs font-semibold uppercase tracking-wider rounded-xs border transition-all cursor-pointer ${selectedSize === size
+                        className={`min-w-[48px] h-10 px-3.5 text-xs font-semibold uppercase tracking-wider rounded-xs border transition-all cursor-pointer ${
+                          selectedSize === size
                             ? 'bg-[#1D241C] text-white border-[#1D241C] shadow-xs'
                             : 'bg-white text-[#1D241C] border-[#E8E4DC] hover:border-[#C69E58]'
-                          }`}
+                        }`}
                       >
                         {size}
                       </button>
@@ -382,8 +510,11 @@ export const ProductDetailPage = ({
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
                       disabled={product.isStockAvailable === false}
-                      className={`w-10 h-11 flex items-center justify-center text-neutral-600 transition-colors ${product.isStockAvailable === false ? 'opacity-40 cursor-not-allowed' : 'hover:text-black hover:bg-[#FAF8F5] cursor-pointer'
-                        }`}
+                      className={`w-10 h-11 flex items-center justify-center text-neutral-600 transition-colors ${
+                        product.isStockAvailable === false
+                          ? 'opacity-40 cursor-not-allowed'
+                          : 'hover:text-black hover:bg-[#FAF8F5] cursor-pointer'
+                      }`}
                       aria-label="Decrease quantity"
                     >
                       <Minus className="w-3.5 h-3.5" />
@@ -394,8 +525,11 @@ export const ProductDetailPage = ({
                     <button
                       onClick={() => setQuantity(quantity + 1)}
                       disabled={product.isStockAvailable === false}
-                      className={`w-10 h-11 flex items-center justify-center text-neutral-600 transition-colors ${product.isStockAvailable === false ? 'opacity-40 cursor-not-allowed' : 'hover:text-black hover:bg-[#FAF8F5] cursor-pointer'
-                        }`}
+                      className={`w-10 h-11 flex items-center justify-center text-neutral-600 transition-colors ${
+                        product.isStockAvailable === false
+                          ? 'opacity-40 cursor-not-allowed'
+                          : 'hover:text-black hover:bg-[#FAF8F5] cursor-pointer'
+                      }`}
                       aria-label="Increase quantity"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -407,12 +541,13 @@ export const ProductDetailPage = ({
                     id="pdp-add-to-bag-btn"
                     onClick={handleAddToCartClick}
                     disabled={isAdding || product.isStockAvailable === false}
-                    className={`flex-1 h-11 px-6 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 rounded-xs transition-all shadow-md ${product.isStockAvailable === false
+                    className={`flex-1 h-11 px-6 text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 rounded-xs transition-all shadow-md ${
+                      product.isStockAvailable === false
                         ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed shadow-none'
                         : addedSuccess
-                          ? 'bg-[#506040] text-white cursor-pointer'
-                          : 'bg-[#1D241C] hover:bg-[#C69E58] text-white hover:text-[#1D241C] cursor-pointer'
-                      }`}
+                        ? 'bg-[#506040] text-white cursor-pointer'
+                        : 'bg-[#1D241C] hover:bg-[#C69E58] text-white hover:text-[#1D241C] cursor-pointer'
+                    }`}
                   >
                     {product.isStockAvailable === false ? (
                       <span>Sold Out</span>
@@ -436,10 +571,11 @@ export const ProductDetailPage = ({
                 id="pdp-buy-now-btn"
                 onClick={handleBuyNow}
                 disabled={product.isStockAvailable === false}
-                className={`w-full py-3.5 text-xs font-bold uppercase tracking-widest rounded-xs transition-colors shadow-xs flex items-center justify-center gap-2 ${product.isStockAvailable === false
+                className={`w-full py-3.5 text-xs font-bold uppercase tracking-widest rounded-xs transition-colors shadow-xs flex items-center justify-center gap-2 ${
+                  product.isStockAvailable === false
                     ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed shadow-none'
                     : 'bg-[#C69E58] hover:bg-[#A87C38] text-[#1D241C] cursor-pointer'
-                  }`}
+                }`}
               >
                 <span>{product.isStockAvailable === false ? 'Currently Unavailable' : 'Buy Now'}</span>
                 {product.isStockAvailable !== false && <ArrowRight className="w-4 h-4" />}
@@ -540,7 +676,7 @@ export const ProductDetailPage = ({
           </div>
         </div>
 
-        {/* Similar Products / "You May Also Like" */}
+        {/* Similar Products */}
         {similarProducts.length > 0 && (
           <section id="similar-products-section" className="pt-16">
             <div className="flex items-end justify-between mb-8">
@@ -577,8 +713,6 @@ export const ProductDetailPage = ({
           </section>
         )}
       </div>
-
-
     </div>
   );
 };

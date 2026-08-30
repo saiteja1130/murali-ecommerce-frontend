@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { normalizeProduct, normalizeCategory, normalizeMainCategory } from '../utils/productAdapter';
+import { normalizeProduct, normalizeCategory, normalizeMainCategory, resolveImageUrl, FALLBACK_PRODUCT_IMAGE } from '../utils/productAdapter';
 import api from './api';
 import { useAuth } from './AuthContext';
 import { useCart } from './CartContext';
@@ -97,11 +97,11 @@ export const StoreProvider = ({ children }) => {
 
   const showToast = useCallback(
     (toast) => {
-      const id = Date.now().toString();
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       setToasts((prev) => [...prev, { ...toast, id }]);
       setTimeout(() => {
         dismissToast(id);
-      }, 3500);
+      }, 4000);
     },
     [dismissToast]
   );
@@ -127,38 +127,41 @@ export const StoreProvider = ({ children }) => {
 
   // Unified bridge for add to cart with toast
   const addToCartWithFeedback = useCallback(
-    async (product, selectedSize, selectedColor, quantity) => {
+    (product, selectedSize, selectedColor, quantity = 1) => {
       if (!product) return;
-
-      // If not authenticated, let cartContext handle login redirection without triggering toast
-      if (!token || !isAuthenticated) {
-        await cartContext.addToCart(product, selectedSize, selectedColor, quantity);
-        return;
-      }
 
       if (product.isStockAvailable === false) {
         showToast({
           type: 'error',
           title: 'Out of Stock',
-          message: `${product.name} is currently out of stock and cannot be added.`,
+          message: `${product.name || 'Product'} is currently out of stock and cannot be added.`,
         });
         return;
       }
 
-      const res = await cartContext.addToCart(product, selectedSize, selectedColor, quantity);
-      if (res === false) return;
-
-      const size = selectedSize || product.sizes?.[0] || 'Standard';
+      const qty = typeof quantity === 'number' && quantity > 0 ? quantity : 1;
+      const size = typeof selectedSize === 'string' && selectedSize ? selectedSize : (selectedSize?.name || product.sizes?.[0] || 'Standard');
       const color = selectedColor || product.colors?.[0] || { name: 'Standard', hex: '#1D241C' };
+      const colorName = typeof color === 'object' ? (color.name || color.label || 'Standard') : (color || 'Standard');
 
+      const imgUrl = resolveImageUrl(product.image || product.images?.[0]);
+
+      // 1. Immediately fire the visual toast popup notification
       showToast({
         type: 'cart',
         title: 'Added to Bag',
-        message: `${quantity}× ${product.name} (${size} / ${color.name || color})`,
-        image: product.image || product.images?.[0],
+        message: `${qty}× ${product.name || 'Item'} (${size} / ${colorName})`,
+        image: imgUrl,
       });
+
+      // 2. Perform cart state updates and backend sync
+      try {
+        cartContext.addToCart(product, size, color, qty);
+      } catch (err) {
+        console.warn('CartContext addToCart error:', err);
+      }
     },
-    [cartContext, showToast, token, isAuthenticated]
+    [cartContext, showToast]
   );
 
   // Unified bridge for wishlist toggle with toast
@@ -184,11 +187,12 @@ export const StoreProvider = ({ children }) => {
           message: product.name,
         });
       } else {
+        const imgUrl = resolveImageUrl(product.image || product.images?.[0]);
         showToast({
           type: 'wishlist',
           title: 'Saved to Wishlist',
           message: product.name,
-          image: product.image || product.images?.[0],
+          image: imgUrl,
         });
       }
     },

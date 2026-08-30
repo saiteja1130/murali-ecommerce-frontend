@@ -3,11 +3,23 @@
  * Bridges MongoDB database models with Storefront UI contracts
  */
 
+export const FALLBACK_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+
 export const resolveImageUrl = (img) => {
-  if (!img) return 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+  if (!img) return FALLBACK_PRODUCT_IMAGE;
+  if (typeof img === 'object') {
+    img = img.url || img.src || img.image || '';
+  }
+  if (typeof img !== 'string' || !img.trim()) {
+    return FALLBACK_PRODUCT_IMAGE;
+  }
+  img = img.trim();
   if (img.startsWith('http://') || img.startsWith('https://')) return img;
   if (img.startsWith('/uploads')) return `http://localhost:5000${img}`;
-  return img;
+  if (img.startsWith('uploads/')) return `http://localhost:5000/${img}`;
+  if (img.startsWith('/assets') || img.startsWith('assets/')) return img.startsWith('/') ? img : `/${img}`;
+  if (img.startsWith('/')) return `http://localhost:5000${img}`;
+  return `http://localhost:5000/${img}`;
 };
 
 export const normalizeProduct = (item) => {
@@ -18,10 +30,10 @@ export const normalizeProduct = (item) => {
     ? item.images
     : (Array.isArray(item.galleryImages) && item.galleryImages.length > 0
       ? item.galleryImages
-      : [item.image || item.hoverImage || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900']);
+      : [item.image || item.hoverImage || FALLBACK_PRODUCT_IMAGE]);
 
-  const images = rawImages.map(resolveImageUrl);
-  const primaryImage = images[0] || resolveImageUrl(item.image);
+  const images = rawImages.map(resolveImageUrl).filter(Boolean);
+  const primaryImage = images[0] || resolveImageUrl(item.image) || FALLBACK_PRODUCT_IMAGE;
   const hoverImage = images[1] || resolveImageUrl(item.hoverImage) || primaryImage;
 
   // 2. Variant, Color & Size Matrix Extraction
@@ -122,7 +134,7 @@ export const normalizeProduct = (item) => {
     badge,
     image: primaryImage,
     hoverImage,
-    galleryImages: images,
+    galleryImages: images.length > 0 ? images : [primaryImage],
     colors,
     sizes,
     variants: item.variants || [],

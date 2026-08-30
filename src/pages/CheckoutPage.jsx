@@ -1006,8 +1006,8 @@ export const CheckoutPage = ({
                 <div className="flex justify-between items-baseline pt-4 border-t-2 border-[#1A1A1A] text-[#1A1A1A]">
                   <span className="font-bold text-sm">Total </span>
                   <div className="text-right">
-                    <span className="font-sans text-2xl font-bold">₹{total.toFixed(2)}</span>
-                    <span className="text-[10px] text-[#6B6B6B] block font-mono">Inclusive of all taxes</span>
+                    <span className="font-serif text-2xl font-bold">₹{total.toFixed(2)}</span>
+                    <span className="text-[10px] text-[#6B6B6B] block font-mono">INR inclusive of all taxes</span>
                   </div>
                 </div>
               </div>
