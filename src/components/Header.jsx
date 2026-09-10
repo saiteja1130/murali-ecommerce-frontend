@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Search, Heart, ShoppingBag, Menu, X, ChevronDown, Sparkles, ArrowRight, User as UserIcon, LogOut } from 'lucide-react';
+import { ConfirmModal } from './ConfirmModal';
 
 export const Header = ({
   currentPage,
@@ -24,6 +25,7 @@ export const Header = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -54,10 +56,7 @@ export const Header = ({
   }, [mainCategories]);
 
   const currencies = [
-    { code: 'USD', symbol: '$', label: 'INR (₹)' },
-    { code: 'EUR', symbol: '€', label: 'EUR (€)' },
-    { code: 'GBP', symbol: '£', label: 'GBP (£)' },
-    { code: 'CAD', symbol: 'CA$', label: 'CAD ($)' }
+    { code: 'INR', symbol: '₹', label: 'INR (₹)' }
   ];
 
   const handleCategoryClick = (cat) => {
@@ -259,7 +258,7 @@ export const Header = ({
                         <button
                           onClick={() => {
                             setUserDropdownOpen(false);
-                            onLogout();
+                            setShowLogoutModal(true);
                           }}
                           className="w-full text-left px-4 py-2 text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors font-medium cursor-pointer"
                         >
@@ -334,9 +333,9 @@ export const Header = ({
                   </span>
                 )}
               </div>
-              <span className="inline-block text-xs font-semibold tracking-wider uppercase">
-                {cartCount > 0 ? `$${cartTotal.toFixed(2)}` : 'Bag'}
-              </span>
+              {/* <span className="inline-block text-xs font-semibold tracking-wider uppercase">
+                {cartCount > 0 ? `₹${cartTotal.toFixed(2)}` : 'Bag'}
+              </span> */}
             </button>
           </div>
         </div>
@@ -415,7 +414,7 @@ export const Header = ({
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      onLogout();
+                      setShowLogoutModal(true);
                     }}
                     className="w-full py-2.5 text-center text-rose-600 bg-rose-50 rounded-xs font-semibold uppercase tracking-wider text-xs cursor-pointer"
                   >
@@ -438,6 +437,21 @@ export const Header = ({
           </div>
         </div>
       )}
+
+      {/* Header Sign Out Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={() => {
+          setShowLogoutModal(false);
+          onLogout();
+        }}
+        variant="logout"
+        title="Confirm Sign Out?"
+        message="Are you sure you want to sign out of your Sumilux account? Your bag and saved wishlist will remain secure for your next visit."
+        confirmText="Sign Out"
+        cancelText="Stay Signed In"
+      />
     </>
   );
 };

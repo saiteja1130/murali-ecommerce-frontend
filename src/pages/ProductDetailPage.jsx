@@ -431,7 +431,8 @@ export const ProductDetailPage = ({
                 </div>
               </div>
 
-              {/* Buy It Now CTA */}
+              {/* Buy It Now CTA - Commented out to pause direct payment gateway checkout */}
+              {/*
               <button
                 id="pdp-buy-now-btn"
                 onClick={handleBuyNow}
@@ -444,6 +445,7 @@ export const ProductDetailPage = ({
                 <span>{product.isStockAvailable === false ? 'Currently Unavailable' : 'Buy Now'}</span>
                 {product.isStockAvailable !== false && <ArrowRight className="w-4 h-4" />}
               </button>
+              */}
 
               {/* Assurance Badges */}
               <div className="p-4 bg-white rounded-xs border border-[#E8E4DC] grid grid-cols-3 gap-2 text-center text-[11px] text-[#687163]">

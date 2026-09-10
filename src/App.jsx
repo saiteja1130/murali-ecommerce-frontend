@@ -120,7 +120,7 @@ const AppContent = () => {
 
   const handleDirectCheckout = (product, selectedSize, selectedColor, quantity) => {
     addToCart(product, selectedSize, selectedColor, quantity);
-    navigate('/checkout');
+    navigate('/cart');
   };
 
   const handlePlaceOrderFlow = (orderData) => {
@@ -287,7 +287,6 @@ const AppContent = () => {
                 discountRate={discountRate}
                 onPlaceOrder={handlePlaceOrderFlow}
                 currentUser={currentUser}
-                addresses={addresses}
               />
             }
           />

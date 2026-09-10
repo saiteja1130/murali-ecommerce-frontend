@@ -1,11 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, ShieldCheck, ChevronRight, Truck, RotateCcw, CreditCard, Headphones, Lock } from 'lucide-react';
-import { useCart } from '../context/CartContext';
+import { FileText, ChevronRight, Truck, RotateCcw, CreditCard, ShoppingBag, Headphones } from 'lucide-react';
 
 export const TermsPage = () => {
-  const { freeShippingThreshold, shippingFee } = useCart();
-
   return (
     <div className="min-h-screen bg-[#FAF8F5] py-8 lg:py-16 animate-fade-in font-sans text-[#1D241C]">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -20,37 +17,32 @@ export const TermsPage = () => {
 
         {/* Header Hero Card */}
         <div className="bg-white rounded-2xl border border-[#E8E4DC] p-8 sm:p-12 shadow-2xs space-y-4">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#506040]/15 text-[#506040] text-[10px] font-mono font-bold tracking-widest uppercase rounded-lg border border-[#506040]/30">
-            <FileText className="w-3.5 h-3.5 text-[#506040]" />
-            Official Terms of Service
-          </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#506040]/15 text-[#506040] text-[10px] font-mono font-bold tracking-widest uppercase rounded-lg border border-[#506040]/30">
+              <FileText className="w-3.5 h-3.5 text-[#506040]" />
+              Terms of Service
+            </span>
+            <span className="text-[11px] text-[#687163] font-mono">
+              Last Updated: September 1, 2026
+            </span>
+          </div>
           <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-[#1D241C]">
             Terms &amp; Conditions
           </h1>
           <p className="text-xs sm:text-sm text-[#687163] max-w-2xl leading-relaxed">
-            Welcome to Murari&apos;s Glam &amp; Glow. By accessing our platform, creating an account, or placing an order, you agree to the following terms and commercial policies.
+            By using our website or mobile application and placing an order, you agree to these Terms &amp; Conditions.
           </p>
         </div>
 
-        {/* Highlight Summary Badges */}
+        {/* Highlight Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 bg-white rounded-xl border border-[#E8E4DC] shadow-2xs flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-[#506040]/10 flex items-center justify-center text-[#506040] shrink-0">
-              <Truck className="w-4 h-4" />
+              <ShoppingBag className="w-4 h-4" />
             </div>
             <div>
-              <div className="font-bold text-xs text-[#1D241C]">₹{shippingFee} Flat Shipping</div>
-              <div className="text-[11px] text-[#687163]">Free &gt; ₹{freeShippingThreshold.toLocaleString('en-IN')}</div>
-            </div>
-          </div>
-
-          <div className="p-4 bg-white rounded-xl border border-[#E8E4DC] shadow-2xs flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-[#506040]/10 flex items-center justify-center text-[#506040] shrink-0">
-              <RotateCcw className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="font-bold text-xs text-[#1D241C]">7-Day Returns</div>
-              <div className="text-[11px] text-[#687163]">Hassle-free pickups</div>
+              <div className="font-bold text-xs text-[#1D241C]">Orders</div>
+              <div className="text-[11px] text-[#687163]">Accurate details required</div>
             </div>
           </div>
 
@@ -59,82 +51,170 @@ export const TermsPage = () => {
               <CreditCard className="w-4 h-4" />
             </div>
             <div>
-              <div className="font-bold text-xs text-[#1D241C]">UPI &amp; COD Accepted</div>
-              <div className="text-[11px] text-[#687163]">100% secure checkout</div>
+              <div className="font-bold text-xs text-[#1D241C]">Payments</div>
+              <div className="text-[11px] text-[#687163]">Available checkout options</div>
             </div>
           </div>
 
           <div className="p-4 bg-white rounded-xl border border-[#E8E4DC] shadow-2xs flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-[#506040]/10 flex items-center justify-center text-[#506040] shrink-0">
-              <Lock className="w-4 h-4" />
+              <Truck className="w-4 h-4" />
             </div>
             <div>
-              <div className="font-bold text-xs text-[#1D241C]">Verified Privacy</div>
-              <div className="text-[11px] text-[#687163]">Protected data &amp; auth</div>
+              <div className="font-bold text-xs text-[#1D241C]">Shipping</div>
+              <div className="text-[11px] text-[#687163]">Charges shown at checkout</div>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white rounded-xl border border-[#E8E4DC] shadow-2xs flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-[#506040]/10 flex items-center justify-center text-[#506040] shrink-0">
+              <RotateCcw className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="font-bold text-xs text-[#1D241C]">Returns</div>
+              <div className="text-[11px] text-[#687163]">Per return policy terms</div>
             </div>
           </div>
         </div>
 
         {/* Terms Content Body */}
         <div className="bg-white rounded-2xl border border-[#E8E4DC] p-8 sm:p-12 shadow-2xs space-y-8 text-xs sm:text-sm text-[#687163] leading-relaxed">
-          <section className="space-y-3">
-            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">1. Account Registration &amp; Security</h2>
+          {/* 1. Account */}
+          <section className="space-y-2 border-b border-[#E8E4DC] pb-6">
+            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">
+              1. Account
+            </h2>
             <p>
-              To add items to your shopping cart, save favorite pieces to your wishlist, or complete a purchase, customers must register for a verified account. You agree to provide accurate, up-to-date contact information and are responsible for safeguarding your login credentials.
+              Customers are responsible for providing accurate information when creating an account and for keeping their login details secure.
             </p>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">2. Product Catalog, Availability &amp; Pricing</h2>
+          {/* 2. Products & Pricing */}
+          <section className="space-y-2 border-b border-[#E8E4DC] pb-6">
+            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">
+              2. Products &amp; Pricing
+            </h2>
             <p>
-              We curate premium women&apos;s and kids&apos; apparel, footwear, and lifestyle accessories. While we strive to display fabrics, cuts, and color shades with complete fidelity, actual fabric hues may vary slightly across different device displays.
+              Product information, images, availability, and prices are provided as accurately as possible. Prices and product availability may change when necessary.
             </p>
             <p>
-              All prices are listed in Indian Rupees (₹ INR) and include all applicable Goods and Services Taxes (GST). We reserve the right to revise pricing, promotional discounts, and inventory availability without prior notice.
-            </p>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">3. Order Confirmation &amp; Payment Processing</h2>
-            <p>
-              Upon placing an order, you will receive an immediate digital order summary and confirmation email. We support all major payment gateways including UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards, Net Banking, and Cash on Delivery (COD) across verified postal zones.
-            </p>
-            <p>
-              If an item becomes out of stock after order submission due to simultaneous demand, our fulfillment team will notify you promptly and initiate a 100% refund immediately.
+              Product colors may appear slightly different depending on the customer&apos;s device or screen.
             </p>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">4. Shipping, Transit &amp; Delivery</h2>
+          {/* 3. Orders & Payments */}
+          <section className="space-y-2 border-b border-[#E8E4DC] pb-6">
+            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">
+              3. Orders &amp; Payments
+            </h2>
             <p>
-              Orders are dispatched from our warehouse within 24 to 48 hours. Standard pan-India delivery typically takes 2 to 5 business days. A nominal flat shipping charge of ₹{shippingFee} applies for orders under ₹{freeShippingThreshold.toLocaleString('en-IN')}, and free shipping applies automatically to all orders above ₹{freeShippingThreshold.toLocaleString('en-IN')}.
+              After placing an order, you will receive order information or confirmation where applicable.
+            </p>
+            <p>
+              We may cancel or decline an order if there is an issue with product availability, pricing, order information, or payment.
             </p>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">5. 7-Day Returns, Exchanges &amp; Refunds</h2>
+          {/* 4. Shipping & Delivery */}
+          <section className="space-y-2 border-b border-[#E8E4DC] pb-6">
+            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">
+              4. Shipping &amp; Delivery
+            </h2>
             <p>
-              If you need a different size or are not completely satisfied with your order, you can initiate a return or exchange request within 7 days of receiving your package. Returned garments must remain unused, unwashed, with all original price tags and packaging intact.
+              Orders are processed and delivered according to the shipping information provided at checkout.
+            </p>
+            <p>
+              Delivery times may vary depending on location, product availability, and other delivery conditions.
+            </p>
+            <p>
+              For more information, customers can refer to our{' '}
+              <Link to="/shipping-policy" className="text-[#506040] font-semibold underline hover:text-[#1D241C]">
+                Shipping Policy
+              </Link>.
             </p>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">6. Intellectual Property &amp; Brand Rights</h2>
+          {/* 5. Returns, Exchanges & Refunds */}
+          <section className="space-y-2 border-b border-[#E8E4DC] pb-6">
+            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">
+              5. Returns, Exchanges &amp; Refunds
+            </h2>
             <p>
-              All trademarks, product photography, editorial copy, design graphics, and digital assets featured on this platform are the exclusive intellectual property of Murari&apos;s Glam &amp; Glow and may not be reproduced without written authorization.
+              Returns, exchanges, cancellations, and refunds are handled according to our applicable policies.
+            </p>
+            <p>
+              Customers should review our{' '}
+              <Link to="/returns-policy" className="text-[#506040] font-semibold underline hover:text-[#1D241C]">
+                Returns &amp; Refund Policy
+              </Link>{' '}
+              and{' '}
+              <Link to="/cancellation-policy" className="text-[#506040] font-semibold underline hover:text-[#1D241C]">
+                Cancellation Policy
+              </Link>{' '}
+              before placing an order.
             </p>
           </section>
 
-          <section className="space-y-3">
-            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">7. Customer Care &amp; Grievances</h2>
+          {/* 6. User Responsibilities */}
+          <section className="space-y-2 border-b border-[#E8E4DC] pb-6">
+            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">
+              6. User Responsibilities
+            </h2>
             <p>
-              For questions regarding your order status, terms, or returns, please reach out to our dedicated support team at{' '}
-              <a href="mailto:support@murarisglamglow.com" className="text-[#506040] font-semibold underline">
-                support@murarisglamglow.com
+              Customers should use the website and mobile application only for lawful purposes and should not attempt to misuse, damage, or interfere with the service.
+            </p>
+          </section>
+
+          {/* 7. Intellectual Property */}
+          <section className="space-y-2 border-b border-[#E8E4DC] pb-6">
+            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">
+              7. Intellectual Property
+            </h2>
+            <p>
+              Website content, product images, logos, designs, and other materials belong to the business or its respective owners and should not be copied or used without permission.
+            </p>
+          </section>
+
+          {/* 8. Contact Us */}
+          <section className="space-y-2">
+            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">
+              8. Contact Us
+            </h2>
+            <p>
+              For questions about these Terms &amp; Conditions or your order, please contact our support team at{' '}
+              <a href="mailto:murariglamandglow@gmail.com" className="text-[#506040] font-semibold underline hover:text-[#1D241C]">
+                murariglamandglow@gmail.com
               </a>{' '}
-              or visit our <Link to="/contact" className="text-[#506040] font-semibold underline">Contact Support Page</Link>.
+              or through our{' '}
+              <Link to="/contact" className="text-[#506040] font-semibold underline hover:text-[#1D241C]">
+                Contact Page
+              </Link>.
             </p>
           </section>
+        </div>
+
+        {/* Contact Support Help Box */}
+        <div className="bg-white rounded-2xl border border-[#E8E4DC] p-8 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4 text-left">
+            <div className="w-12 h-12 rounded-xl bg-[#506040]/10 flex items-center justify-center text-[#506040] shrink-0">
+              <Headphones className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-serif text-base font-bold text-[#1D241C]">
+                Questions About Our Terms?
+              </h3>
+              <p className="text-xs text-[#687163] mt-0.5">
+                Our support team is happy to assist you with any questions.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/contact"
+            className="inline-flex items-center gap-2 px-6 py-3.5 bg-[#1D241C] hover:bg-[#506040] text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-colors shrink-0 shadow-xs cursor-pointer"
+          >
+            <Headphones className="w-3.5 h-3.5" />
+            <span>Contact Support</span>
+          </Link>
         </div>
       </div>
     </div>

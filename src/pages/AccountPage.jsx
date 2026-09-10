@@ -26,6 +26,7 @@ import {
 import { resolveImageUrl } from '../utils/productAdapter';
 import api from '../context/api';
 import { useAuth } from '../context/AuthContext';
+import { ConfirmModal } from '../components/ConfirmModal';
 
 export const AccountPage = ({
   currentUser,
@@ -70,6 +71,11 @@ export const AccountPage = ({
   const [profileName, setProfileName] = useState(currentUser?.name || '');
   const [profilePhone, setProfilePhone] = useState(currentUser?.phone || '');
   const [profileMessage, setProfileMessage] = useState('');
+
+  // Confirmation Modals State
+  const [logoutModal, setLogoutModal] = useState({ isOpen: false });
+  const [deleteAddressModal, setDeleteAddressModal] = useState({ isOpen: false, address: null, isLoading: false });
+  const [cancelOrderModal, setCancelOrderModal] = useState({ isOpen: false, order: null, isLoading: false });
 
   // Active selected order object
   const activeOrder = orders.find((o) => o.id === selectedOrderId || o.orderNumber === selectedOrderId) || orders[0] || null;
@@ -219,7 +225,7 @@ export const AccountPage = ({
               <div className="font-mono text-xl font-bold text-[#1A1A1A]">{addresses.length}</div>
             </div>
             <button
-              onClick={onLogout}
+              onClick={() => setLogoutModal({ isOpen: true })}
               className="px-4 py-2 text-xs font-semibold text-[#A5432F] bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xs transition-colors cursor-pointer"
             >
               Sign Out
@@ -491,6 +497,15 @@ export const AccountPage = ({
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {['pending', 'processing'].includes(activeOrder.status?.toLowerCase()) && (
+                      <button
+                        onClick={() => setCancelOrderModal({ isOpen: true, order: activeOrder, isLoading: false })}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-rose-200 hover:bg-rose-50 text-xs font-semibold text-rose-700 rounded-xs transition-colors cursor-pointer shadow-2xs"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5 text-rose-600" />
+                        <span>Cancel Order</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => window.print()}
                       className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-[#E8E3DE] hover:border-[#C8A87C] text-xs font-semibold text-[#1A1A1A] rounded-xs transition-colors cursor-pointer shadow-2xs"
@@ -856,7 +871,7 @@ export const AccountPage = ({
                               <span>Edit</span>
                             </button>
                             <button
-                              onClick={() => onDeleteAddress(addr.id || addr._id)}
+                              onClick={() => setDeleteAddressModal({ isOpen: true, address: addr, isLoading: false })}
                               className="text-red-700 hover:underline flex items-center gap-1 transition-colors cursor-pointer"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1123,6 +1138,70 @@ export const AccountPage = ({
           </div>
         </div>
       )}
+
+      {/* Sign Out Confirmation Modal */}
+      <ConfirmModal
+        isOpen={logoutModal.isOpen}
+        onClose={() => setLogoutModal({ isOpen: false })}
+        onConfirm={() => {
+          setLogoutModal({ isOpen: false });
+          onLogout();
+        }}
+        variant="logout"
+        title="Confirm Sign Out?"
+        message="Are you sure you want to sign out of your Sumilux account? You will need to sign in again to access your saved orders and bag."
+        confirmText="Sign Out"
+        cancelText="Stay Signed In"
+      />
+
+      {/* Delete Address Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteAddressModal.isOpen}
+        onClose={() => !deleteAddressModal.isLoading && setDeleteAddressModal({ isOpen: false, address: null, isLoading: false })}
+        onConfirm={async () => {
+          if (!deleteAddressModal.address) return;
+          setDeleteAddressModal((prev) => ({ ...prev, isLoading: true }));
+          try {
+            await onDeleteAddress(deleteAddressModal.address.id || deleteAddressModal.address._id);
+            setDeleteAddressModal({ isOpen: false, address: null, isLoading: false });
+          } catch (err) {
+            setDeleteAddressModal((prev) => ({ ...prev, isLoading: false }));
+          }
+        }}
+        isLoading={deleteAddressModal.isLoading}
+        variant="danger"
+        title="Delete Saved Address?"
+        message={`Are you sure you want to delete the delivery address for "${deleteAddressModal.address?.fullName || deleteAddressModal.address?.name || 'this recipient'}"?`}
+        confirmText="Delete Address"
+        cancelText="Keep Address"
+      />
+
+      {/* Cancel Order Confirmation Modal */}
+      <ConfirmModal
+        isOpen={cancelOrderModal.isOpen}
+        onClose={() => !cancelOrderModal.isLoading && setCancelOrderModal({ isOpen: false, order: null, isLoading: false })}
+        onConfirm={async () => {
+          if (!cancelOrderModal.order) return;
+          setCancelOrderModal((prev) => ({ ...prev, isLoading: true }));
+          try {
+            if (cancelOrder) {
+              await cancelOrder(cancelOrderModal.order.id || cancelOrderModal.order._id);
+            }
+            if (fetchOrders) {
+              await fetchOrders();
+            }
+            setCancelOrderModal({ isOpen: false, order: null, isLoading: false });
+          } catch (err) {
+            setCancelOrderModal((prev) => ({ ...prev, isLoading: false }));
+          }
+        }}
+        isLoading={cancelOrderModal.isLoading}
+        variant="danger"
+        title="Cancel Order?"
+        message={`Are you sure you want to cancel Order #${cancelOrderModal.order?.orderNumber}? This will immediately halt fulfillment and cancel the order.`}
+        confirmText="Cancel Order"
+        cancelText="Keep Order"
+      />
     </div>
   );
 };

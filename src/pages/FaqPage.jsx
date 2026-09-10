@@ -44,17 +44,17 @@ export const FaqPage = () => {
     },
     {
       id: 'faq-5',
-      category: 'Payments & COD',
+      category: 'Payments & Security',
       question: 'What payment methods do you accept?',
       answer:
-        'We support all leading Indian payment options: UPI (Google Pay, PhonePe, Paytm, BHIM), Credit/Debit Cards (Visa, Mastercard, RuPay), Net Banking, and Cash on Delivery (COD) at your doorstep.'
+        'We support all leading secure Indian digital payment options: UPI (Google Pay, PhonePe, Paytm, BHIM, UPI QR), Credit/Debit Cards (Visa, Mastercard, RuPay), and Net Banking powered by 256-bit SSL encrypted Razorpay.'
     },
     {
       id: 'faq-6',
-      category: 'Payments & COD',
-      question: 'Is Cash on Delivery (COD) available in my area?',
+      category: 'Payments & Security',
+      question: 'Is Cash on Delivery (COD) available?',
       answer:
-        'Yes, COD is available across most serviceable PIN codes in India. You can inspect your sealed package and pay cash or scan the courier\'s dynamic UPI QR code upon delivery.'
+        'To ensure rapid, contactless fulfillment and instant order confirmation, all orders are processed via 100% secure online payments (UPI, Cards, Net Banking). Cash on Delivery is currently not offered.'
     },
     {
       id: 'faq-7',
@@ -68,25 +68,25 @@ export const FaqPage = () => {
       category: 'Returns & Exchanges',
       question: 'When will I receive my refund for returned items?',
       answer:
-        'Once our quality team receives and inspects the returned garment (unworn, unwashed with original tags intact), your refund is initiated within 24 to 48 hours back to your original payment method or UPI ID.'
+        'Once your returned item is received and inspected at our fulfillment hub (usually within 48 hours of pickup), your refund will be processed back to your original payment method within 3 to 5 business days.'
     },
     {
       id: 'faq-9',
       category: 'Sizing & Garment Care',
-      question: 'How do I choose the right size for Women and Kids?',
+      question: 'How do I choose the correct size?',
       answer:
-        'Every product detail page includes an accurate Size Guide with chest, waist, and length measurements in both inches and centimeters. For kids\' apparel, sizes correspond to age brackets (e.g., 2Y to 14Y).'
+        'Each product page includes an interactive Size Guide with detailed bust, waist, and hip measurements in both inches and centimeters. If you fall between sizes, we recommend sizing up for a relaxed fit or contacting our styling concierge for tailored sizing advice.'
     },
     {
       id: 'faq-10',
       category: 'Sizing & Garment Care',
-      question: 'How should I care for and wash delicate fabrics?',
+      question: 'How should I care for my Sumilux garments?',
       answer:
         'For pure cottons and everyday casuals, machine wash cold on a gentle cycle with like colors. For silks, embroideries, and outerwear, we recommend gentle hand washing or professional dry cleaning to maintain fabric luster.'
     }
   ];
 
-  const categories = ['All', 'Orders & Tracking', 'Shipping & Delivery', 'Payments & COD', 'Returns & Exchanges', 'Sizing & Garment Care'];
+  const categories = ['All', 'Orders & Tracking', 'Shipping & Delivery', 'Payments & Security', 'Returns & Exchanges', 'Sizing & Garment Care'];
 
   const filteredFaqs = faqData.filter((item) => {
     const matchesCategory = activeCategory === 'All' || item.category === activeCategory;
@@ -117,7 +117,7 @@ export const FaqPage = () => {
             Frequently Asked Questions
           </h1>
           <p className="text-xs sm:text-sm text-[#687163] max-w-xl mx-auto leading-relaxed">
-            Find quick answers about orders, pan-India shipping, UPI &amp; COD payments, sizing, and 7-day returns.
+            Find quick answers about orders, pan-India shipping, UPI &amp; online payments, sizing, and 7-day returns.
           </p>
 
           {/* Search Box */}
@@ -125,7 +125,7 @@ export const FaqPage = () => {
             <Search className="w-4 h-4 text-neutral-400 absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search topics (e.g. shipping fees, COD, return window, tracking)..."
+              placeholder="Search topics (e.g. shipping fees, UPI, payment methods, return window, tracking)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-11 pr-4 py-3 bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl text-xs text-[#1D241C] placeholder-neutral-400 focus:outline-none focus:border-[#506040] shadow-2xs"

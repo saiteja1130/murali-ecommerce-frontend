@@ -4,7 +4,6 @@ import {
   Lock,
   Truck,
   ShieldCheck,
-  CreditCard,
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
@@ -16,10 +15,6 @@ import {
   Globe,
   MapPin,
   Check,
-  Building,
-  UserCheck,
-  Plus,
-  Edit2,
   Smartphone,
   QrCode
 } from 'lucide-react';
@@ -34,8 +29,7 @@ export const CheckoutPage = ({
   onApplyPromoCode,
   discountRate: propDiscountRate,
   onPlaceOrder,
-  currentUser,
-  addresses = []
+  currentUser
 }) => {
   const navigate = useNavigate();
   const {
@@ -50,32 +44,24 @@ export const CheckoutPage = ({
     storeSettings
   } = useCart();
 
-  // Active saved address or default
-  const defaultAddr = addresses.find((a) => a.isDefault) || addresses[0];
-
   // Form State
   const [email, setEmail] = useState(currentUser?.email || '');
-  const [phone, setPhone] = useState(defaultAddr?.phone || currentUser?.phone || '');
+  const [phone, setPhone] = useState(currentUser?.phone || '');
   const [saveInfo, setSaveInfo] = useState(true);
   const [newsletter, setNewsletter] = useState(false);
 
-  // Selected Saved Address & Mode
-  const [selectedAddressId, setSelectedAddressId] = useState(defaultAddr ? (defaultAddr.id || defaultAddr._id) : 'new');
-  const [isAddingNewAddress, setIsAddingNewAddress] = useState(!defaultAddr);
-
+  // Direct manual shipping address state for each order
   const [shippingAddress, setShippingAddress] = useState({
-    firstName: defaultAddr?.fullName?.split(' ')[0] || defaultAddr?.name?.split(' ')[0] || currentUser?.name?.split(' ')[0] || '',
-    lastName: defaultAddr?.fullName?.split(' ').slice(1).join(' ') || defaultAddr?.name?.split(' ').slice(1).join(' ') || currentUser?.name?.split(' ').slice(1).join(' ') || '',
-    street: defaultAddr?.street || '',
-    apartment: defaultAddr?.apartment || '',
-    city: defaultAddr?.city || '',
-    state: defaultAddr?.state || '',
-    postalCode: defaultAddr?.postalCode || '',
-    country: defaultAddr?.country || 'India'
+    firstName: currentUser?.name?.split(' ')[0] || '',
+    lastName: currentUser?.name?.split(' ').slice(1).join(' ') || '',
+    street: '',
+    apartment: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    country: 'India'
   });
 
-  // Payment Method: 'upi' | 'cod'
-  const [paymentMethodTab, setPaymentMethodTab] = useState('upi');
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
 
   // Promo Code State
@@ -88,39 +74,18 @@ export const CheckoutPage = ({
   const [errorMessage, setErrorMessage] = useState('');
   const [confirmedOrder, setConfirmedOrder] = useState(null);
 
-  // If user selects a saved address, update fields
-  const handleSelectSavedAddress = (addr) => {
-    setSelectedAddressId(addr.id || addr._id);
-    setIsAddingNewAddress(false);
-    const fullNameStr = addr.fullName || addr.name || '';
-    const parts = fullNameStr.split(' ');
-    setShippingAddress({
-      firstName: parts[0] || '',
-      lastName: parts.slice(1).join(' ') || '',
-      street: addr.street || '',
-      apartment: addr.apartment || '',
-      city: addr.city || '',
-      state: addr.state || '',
-      postalCode: addr.postalCode || '',
-      country: addr.country || 'India'
-    });
-    if (addr.phone) setPhone(addr.phone);
-  };
-
-  const handleAddNewAddressClick = () => {
-    setSelectedAddressId('new');
-    setIsAddingNewAddress(true);
-    setShippingAddress({
-      firstName: currentUser?.name?.split(' ')[0] || '',
-      lastName: currentUser?.name?.split(' ').slice(1).join(' ') || '',
-      street: '',
-      apartment: '',
-      city: '',
-      state: '',
-      postalCode: '',
-      country: 'India'
-    });
-  };
+  // Sync profile details if available
+  useEffect(() => {
+    if (currentUser) {
+      if (!email && currentUser.email) setEmail(currentUser.email);
+      if (!phone && currentUser.phone) setPhone(currentUser.phone);
+      setShippingAddress((prev) => ({
+        ...prev,
+        firstName: prev.firstName || currentUser.name?.split(' ')[0] || '',
+        lastName: prev.lastName || currentUser.name?.split(' ').slice(1).join(' ') || ''
+      }));
+    }
+  }, [currentUser]);
 
   // Calculations
   const hasOOS = items.some((item) => item.product?.isStockAvailable === false);
@@ -205,21 +170,7 @@ export const CheckoutPage = ({
     };
 
     try {
-      // 1. CASH ON DELIVERY FLOW
-      if (paymentMethodTab === 'cod') {
-        const response = await api.post('/api/orders/cod', orderPayload);
-        if (response.data?.status && response.data?.data) {
-          if (onClearCart) onClearCart();
-          setConfirmedOrder(response.data.data);
-          setIsProcessing(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          return;
-        } else {
-          throw new Error(response.data?.message || 'Failed to place COD order');
-        }
-      }
-
-      // 2. RAZORPAY UPI ONLINE PAYMENT FLOW
+      // RAZORPAY UPI & SECURE ONLINE PAYMENT GATEWAY
       const orderRes = await api.post('/api/orders/create-razorpay-order', orderPayload);
       if (!orderRes.data?.status || !orderRes.data?.data) {
         throw new Error(orderRes.data?.message || 'Failed to initiate Razorpay order');
@@ -281,10 +232,10 @@ export const CheckoutPage = ({
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               orderNumber: orderNumber,
-              items: items,
-              shippingAddress: shippingAddress,
-              promoCode: appliedPromo?.code || '',
-              notes: orderNotes,
+              items: orderPayload.items,
+              shippingAddress: orderPayload.shippingAddress,
+              promoCode: activePromoCode || '',
+              notes: '',
             });
 
             if (verifyRes.data?.status && verifyRes.data?.data) {
@@ -309,40 +260,17 @@ export const CheckoutPage = ({
         },
       };
 
-      const isPlaceholderKey = !key_id || key_id.includes('placeholder');
-
-      if (!isPlaceholderKey && typeof window.Razorpay === 'function') {
-        const rzp = new window.Razorpay(rzpOptions);
-        rzp.on('payment.failed', function (response) {
-          console.error('Razorpay Payment Failed:', response.error);
-          setErrorMessage(`Payment failed: ${response.error?.description || response.error?.reason || 'Transaction could not be processed'}. Please try again.`);
-          setIsProcessing(false);
-        });
-        rzp.open();
-      } else {
-        // Dev Sandbox Simulation when real Razorpay API key is not yet set in backend/.env
-        console.info('[Development Sandbox] Razorpay Key ID is placeholder. Simulating verified UPI payment...');
-        const verifyRes = await api.post('/api/orders/verify-payment', {
-          razorpay_order_id: razorpayOrderId,
-          razorpay_payment_id: `pay_upi_sim_${Date.now()}`,
-          razorpay_signature: 'simulated_valid_signature',
-          orderNumber: orderNumber,
-          items: items,
-          shippingAddress: shippingAddress,
-          promoCode: appliedPromo?.code || '',
-          notes: orderNotes,
-        });
-
-        if (verifyRes.data?.status && verifyRes.data?.data) {
-          if (onClearCart) onClearCart();
-          setConfirmedOrder(verifyRes.data.data);
-          setIsProcessing(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        } else {
-          setErrorMessage(verifyRes.data?.message || 'Development simulation error');
-          setIsProcessing(false);
-        }
+      if (typeof window.Razorpay !== 'function') {
+        throw new Error('Razorpay checkout script failed to load. Please refresh the page and try again.');
       }
+
+      const rzp = new window.Razorpay(rzpOptions);
+      rzp.on('payment.failed', function (response) {
+        console.error('Razorpay Payment Failed:', response.error);
+        setErrorMessage(`Payment failed: ${response.error?.description || response.error?.reason || 'Transaction could not be processed'}. Please try again.`);
+        setIsProcessing(false);
+      });
+      rzp.open();
     } catch (err) {
       console.error('Order placement failed:', err);
       setErrorMessage(err.response?.data?.message || err.message || 'Failed to place order. Please try again.');
@@ -566,205 +494,128 @@ export const CheckoutPage = ({
                   <span>Shipping Address</span>
                 </h2>
 
-                {addresses && addresses.length > 0 && !isAddingNewAddress && (
-                  <button
-                    type="button"
-                    onClick={handleAddNewAddressClick}
-                    className="text-xs font-semibold text-[#C8A87C] hover:text-[#1A1A1A] transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add New Address</span>
-                  </button>
-                )}
               </div>
 
-              {/* Saved Address Quick Selector (If User has saved addresses) */}
-              {addresses && addresses.length > 0 && (
-                <div className="space-y-3">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#1D241C] block">
-                    Saved Delivery Addresses
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {addresses.map((addr) => {
-                      const isSelected = selectedAddressId === (addr.id || addr._id) && !isAddingNewAddress;
-                      return (
-                        <div
-                          key={addr.id || addr._id}
-                          onClick={() => handleSelectSavedAddress(addr)}
-                          className={`p-4 rounded-xl border transition-all cursor-pointer text-xs space-y-1.5 relative ${isSelected
-                            ? 'border-[#506040] bg-[#FAF8F5] ring-2 ring-[#506040]/30 shadow-xs'
-                            : 'border-[#E8E4DC] bg-white hover:border-[#C69E58]'
-                            }`}
-                        >
-                          <div className="flex items-center justify-between font-bold text-[#1D241C]">
-                            <span className="truncate">{addr.fullName || addr.name}</span>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[9px] font-mono uppercase bg-[#FAF8F5] border border-[#E8E4DC] text-[#687163] px-2 py-0.5 rounded">
-                                {addr.addressType || 'Home'}
-                              </span>
-                              {addr.isDefault && (
-                                <span className="text-[9px] font-mono uppercase bg-[#506040] text-white px-2 py-0.5 rounded">
-                                  Default
-                                </span>
-                              )}
-                              {isSelected && (
-                                <span className="w-4 h-4 rounded-full bg-[#506040] text-white flex items-center justify-center text-[10px]">
-                                  ✓
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="text-[#687163] text-[11px] truncate">
-                            {addr.street} {addr.apartment ? `, ${addr.apartment}` : ''}
-                          </div>
-                          <div className="text-[#687163] text-[11px]">
-                            {addr.city}, {addr.state} {addr.postalCode}
-                          </div>
-                          {addr.phone && (
-                            <div className="text-[#1D241C] text-[10px] font-mono pt-0.5">
-                              📞 {addr.phone}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Show Form when Adding New Address or when user has no saved addresses */}
-              {(isAddingNewAddress || !addresses || addresses.length === 0) ? (
-                <div className="space-y-4 text-xs pt-2 border-t border-[#E8E3DE]">
-                  {addresses && addresses.length > 0 && (
-                    <div className="flex items-center justify-between pb-1">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A]">
-                        Enter New Shipping Details
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectSavedAddress(defaultAddr)}
-                        className="text-xs text-[#6B6B6B] hover:text-[#1A1A1A] underline cursor-pointer"
-                      >
-                        Cancel / Use Saved Address
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                        First Name *
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        value={shippingAddress.firstName}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, firstName: e.target.value })}
-                        className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                        Last Name *
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        value={shippingAddress.lastName}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, lastName: e.target.value })}
-                        className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
-                      />
-                    </div>
-                  </div>
-
+              {/* Direct Manual Shipping Address Form */}
+              <div className="space-y-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                      Street Address *
+                      First Name *
                     </label>
                     <input
                       required
                       type="text"
-                      value={shippingAddress.street}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
-                      placeholder="742 Montgomery Street"
+                      value={shippingAddress.firstName}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, firstName: e.target.value })}
+                      placeholder="First Name"
                       className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
                     />
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                        Apartment / Suite
-                      </label>
-                      <input
-                        type="text"
-                        value={shippingAddress.apartment}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, apartment: e.target.value })}
-                        placeholder="Suite 1400 (Optional)"
-                        className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                        City *
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        value={shippingAddress.city}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
-                        className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                        State / Province *
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        value={shippingAddress.state}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
-                        className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                        PIN Code *
-                      </label>
-                      <input
-                        required
-                        type="text"
-                        placeholder="e.g. 400050"
-                        pattern="[0-9]{6}"
-                        value={shippingAddress.postalCode}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, postalCode: e.target.value })}
-                        className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C] font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                        Country *
-                      </label>
-                      <select
-                        value={shippingAddress.country}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
-                        className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
-                      >
-                        <option>India</option>
-                        <option>United States</option>
-                        <option>United Kingdom</option>
-                        <option>United Arab Emirates</option>
-                        <option>Singapore</option>
-                        <option>Australia</option>
-                      </select>
-                    </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
+                      Last Name *
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      value={shippingAddress.lastName}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, lastName: e.target.value })}
+                      placeholder="Last Name"
+                      className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
+                    />
                   </div>
                 </div>
-              ) : null}
+
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
+                    Street Address *
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    value={shippingAddress.street}
+                    onChange={(e) => setShippingAddress({ ...shippingAddress, street: e.target.value })}
+                    placeholder="Flat / House No., Building Name, Street / Locality"
+                    className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
+                      Apartment / Suite / Landmark
+                    </label>
+                    <input
+                      type="text"
+                      value={shippingAddress.apartment}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, apartment: e.target.value })}
+                      placeholder="Suite / Landmark (Optional)"
+                      className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
+                      City *
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      value={shippingAddress.city}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
+                      placeholder="e.g. Mumbai"
+                      className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
+                      State / Province *
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      value={shippingAddress.state}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
+                      placeholder="e.g. Maharashtra"
+                      className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
+                      PIN Code *
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="e.g. 400050"
+                      pattern="[0-9]{6}"
+                      value={shippingAddress.postalCode}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, postalCode: e.target.value })}
+                      className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C] font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
+                      Country *
+                    </label>
+                    <select
+                      value={shippingAddress.country}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
+                      className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
+                    >
+                      <option>India</option>
+                      <option>United States</option>
+                      <option>United Kingdom</option>
+                      <option>United Arab Emirates</option>
+                      <option>Singapore</option>
+                      <option>Australia</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Step 3: Payment Method */}
@@ -782,68 +633,32 @@ export const CheckoutPage = ({
                 </span>
               </div>
 
-              {/* Payment Method Choices */}
+              {/* Instant UPI & Online Payment Card */}
               <div className="space-y-3 text-xs">
-                {/* Pay via UPI (Primary) */}
-                <label
-                  onClick={() => setPaymentMethodTab('upi')}
-                  className={`p-4 rounded-xl border flex items-center justify-between gap-4 cursor-pointer transition-all ${paymentMethodTab === 'upi'
-                    ? 'border-[#506040] bg-[#FAF8F5] ring-2 ring-[#506040]/20'
-                    : 'border-[#E8E4DC] hover:border-[#C69E58] bg-white'
-                    }`}
+                <div
+                  className="p-4 rounded-xl border border-[#506040] bg-[#FAF8F5] ring-2 ring-[#506040]/20 flex items-center justify-between gap-4"
                 >
                   <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="payment_choice"
-                      checked={paymentMethodTab === 'upi'}
-                      onChange={() => setPaymentMethodTab('upi')}
-                      className="text-[#506040] focus:ring-[#506040]"
-                    />
+                    <div className="w-5 h-5 rounded-full bg-[#506040] text-white flex items-center justify-center text-xs shrink-0">
+                      <Check className="w-3 h-3 stroke-[3]" />
+                    </div>
                     <div>
                       <div className="font-bold text-[#1A1A1A] flex items-center gap-2">
-                        <span>Pay via UPI (Instant &amp; Zero Fee)</span>
+                        <span>Instant UPI &amp; Online Payment</span>
                         <span className="text-[9px] font-mono uppercase bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">
-                          Recommended
+                          100% Secure
                         </span>
                       </div>
                       <div className="text-[11px] text-[#6B6B6B] mt-0.5">
-                        Google Pay, PhonePe, Paytm, BHIM, UPI QR &amp; Any UPI App
+                        Google Pay, PhonePe, Paytm, BHIM, UPI QR, Debit/Credit Cards &amp; Net Banking via Razorpay
                       </div>
                     </div>
                   </div>
                   <div className="hidden sm:flex items-center gap-1.5 text-neutral-400 font-mono text-[10px]">
                     <Smartphone className="w-4 h-4 text-[#C8A87C]" />
-                    <span>UPI APP / QR</span>
+                    <span>UPI / CARDS / QR</span>
                   </div>
-                </label>
-
-                {/* Cash on Delivery */}
-                <label
-                  onClick={() => setPaymentMethodTab('cod')}
-                  className={`p-4 rounded-xl border flex items-center justify-between gap-4 cursor-pointer transition-all ${paymentMethodTab === 'cod'
-                    ? 'border-[#506040] bg-[#FAF8F5] ring-2 ring-[#506040]/20'
-                    : 'border-[#E8E4DC] hover:border-[#C69E58] bg-white'
-                    }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="radio"
-                      name="payment_choice"
-                      checked={paymentMethodTab === 'cod'}
-                      onChange={() => setPaymentMethodTab('cod')}
-                      className="text-[#506040] focus:ring-[#506040]"
-                    />
-                    <div>
-                      <div className="font-bold text-[#1A1A1A] flex items-center gap-2">
-                        <span>Cash on Delivery (COD)</span>
-                      </div>
-                      <div className="text-[11px] text-[#6B6B6B] mt-0.5">
-                        Pay in cash or scan delivery partner's QR upon doorstep delivery
-                      </div>
-                    </div>
-                  </div>
-                </label>
+                </div>
               </div>
 
               {/* Error Banner if payment fails */}
@@ -866,17 +681,12 @@ export const CheckoutPage = ({
                   }`}
               >
                 {isProcessing ? (
-                  <span>Securing Order &amp; Connecting UPI Gateway...</span>
+                  <span>Securing Order &amp; Connecting Gateway...</span>
                 ) : hasOOS ? (
                   <span>Unavailable Items in Cart</span>
-                ) : paymentMethodTab === 'upi' ? (
-                  <>
-                    <span>Proceed to UPI Payment • ₹{total.toFixed(2)}</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
                 ) : (
                   <>
-                    <span>Confirm COD Order • ₹{total.toFixed(2)}</span>
+                    <span>Proceed to Online Payment • ₹{total.toFixed(2)}</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}

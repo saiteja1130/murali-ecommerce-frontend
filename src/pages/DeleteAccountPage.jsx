@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { UserX, ShieldAlert, CheckCircle2, ChevronRight, AlertTriangle, Trash2, Mail, Lock, Clock, ArrowRight } from 'lucide-react';
+import { UserX, CheckCircle2, ChevronRight, AlertTriangle, Trash2, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const DeleteAccountPage = () => {
-  const { currentUser, isAuthenticated } = useAuth();
+  const { currentUser } = useAuth();
   const [email, setEmail] = useState(currentUser?.email || '');
-  const [reason, setReason] = useState('No longer using the service');
+  const [reason, setReason] = useState('');
   const [confirmText, setConfirmText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -19,74 +19,64 @@ export const DeleteAccountPage = () => {
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSuccess(true);
-    }, 800);
+    }, 600);
   };
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] py-8 lg:py-16 animate-fade-in font-sans text-[#1D241C]">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-[#687163]">
           <Link to="/" className="hover:text-[#1D241C] transition-colors">Home</Link>
           <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
           <Link to="/privacy-policy" className="hover:text-[#1D241C] transition-colors">Privacy Policy</Link>
           <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-          <span className="text-[#1D241C] font-semibold">Account &amp; Data Deletion Request</span>
+          <span className="text-[#1D241C] font-semibold">Account Deletion</span>
         </nav>
 
         {/* Header Hero Card */}
-        <div className="bg-white rounded-2xl border border-[#E8E4DC] p-8 sm:p-12 shadow-2xs space-y-4">
+        <div className="bg-white rounded-2xl border border-[#E8E4DC] p-8 sm:p-10 shadow-2xs space-y-4">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-700 text-[10px] font-mono font-bold tracking-widest uppercase rounded-lg border border-rose-200">
             <UserX className="w-3.5 h-3.5 text-rose-700" />
-            Google Play Data Safety Mandate
+            Account &amp; Data Privacy
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-[#1D241C]">
-            Request Account &amp; Personal Data Deletion
+            Request Account Deletion
           </h1>
           <p className="text-xs sm:text-sm text-[#687163] max-w-2xl leading-relaxed">
-            In compliance with Google Play Store Developer Policies and the Digital Personal Data Protection Act, you can request permanent deletion of your Murari&apos;s Glam &amp; Glow account and associated data.
+            You can request deletion of your account and associated personal information. Please provide the email address linked to your account.
           </p>
         </div>
 
-        {/* Data Erasure Breakdown Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl border border-[#E8E4DC] p-6 shadow-2xs space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-rose-700">
-              <Trash2 className="w-4 h-4 text-rose-700" />
-              <span>Data That Will Be Permanently Deleted</span>
-            </div>
-            <ul className="text-xs text-[#687163] space-y-2 list-disc list-inside leading-relaxed">
-              <li>Profile information (Full name, email address, mobile phone number).</li>
-              <li>Saved shipping addresses and apartment details.</li>
-              <li>Authentication tokens and account login credentials.</li>
-              <li>Saved items in your Wishlist and active Shopping Bag.</li>
-              <li>Customer service tickets and support chat histories.</li>
-            </ul>
+        {/* Information That May Be Deleted Card */}
+        <div className="bg-white rounded-2xl border border-[#E8E4DC] p-6 sm:p-8 shadow-2xs space-y-4">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-rose-700">
+            <Trash2 className="w-4 h-4 text-rose-700" />
+            <span>Information That May Be Deleted</span>
           </div>
-
-          <div className="bg-white rounded-2xl border border-[#E8E4DC] p-6 shadow-2xs space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#506040]">
-              <Clock className="w-4 h-4 text-[#506040]" />
-              <span>Statutory Retained Records (If Any)</span>
-            </div>
-            <p className="text-xs text-[#687163] leading-relaxed">
-              In accordance with Indian tax regulations (GST and commercial audit laws), past financial tax invoices for completed orders are archived in a secure, pseudonymized ledger for the statutory accounting duration, after which they are automatically purged.
-            </p>
-          </div>
+          <ul className="text-xs sm:text-sm text-[#687163] space-y-2 list-disc list-inside leading-relaxed pl-1">
+            <li>Account/profile information</li>
+            <li>Saved addresses</li>
+            <li>Wishlist and cart information</li>
+            <li>Other personal information associated with the account</li>
+          </ul>
+          <p className="text-xs text-[#687163] pt-2 border-t border-[#E8E4DC] leading-relaxed">
+            Some information may need to be retained when required for order records, refunds, disputes, or other legitimate business requirements.
+          </p>
         </div>
 
-        {/* Deletion Form */}
-        <div className="bg-white rounded-2xl border border-[#E8E4DC] p-8 sm:p-12 shadow-2xs space-y-6">
+        {/* Deletion Form / Success State */}
+        <div className="bg-white rounded-2xl border border-[#E8E4DC] p-8 sm:p-10 shadow-2xs space-y-6">
           {isSuccess ? (
-            <div className="text-center py-10 space-y-4">
+            <div className="text-center py-8 space-y-4">
               <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <h2 className="font-serif text-2xl font-bold text-[#1D241C]">
-                Account Deletion Request Submitted
+                Deletion Request Submitted
               </h2>
               <p className="text-xs sm:text-sm text-[#687163] max-w-md mx-auto leading-relaxed">
-                Your request has been received. A verification confirmation has been sent to <strong>{email}</strong>. Your personal data and profile will be permanently wiped within 48 to 72 hours.
+                Your account deletion request has been received. We will process your request using the email address provided.
               </p>
               <div className="pt-4">
                 <Link
@@ -101,9 +91,11 @@ export const DeleteAccountPage = () => {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="border-b border-[#E8E4DC] pb-4">
-                <h2 className="font-serif text-xl font-bold text-[#1D241C]">Submit Deletion Request</h2>
+                <h2 className="font-serif text-xl font-bold text-[#1D241C]">
+                  Submit Deletion Request
+                </h2>
                 <p className="text-xs text-[#687163] mt-1">
-                  Please enter the email address linked to your account.
+                  Please enter the email address linked to your account and confirm below.
                 </p>
               </div>
 
@@ -131,6 +123,7 @@ export const DeleteAccountPage = () => {
                     onChange={(e) => setReason(e.target.value)}
                     className="w-full px-4 py-3 bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl text-xs text-[#1D241C] focus:outline-none focus:border-[#1D241C]"
                   >
+                    <option value="">Select a reason (optional)</option>
                     <option value="No longer using the service">No longer using the service</option>
                     <option value="Privacy concerns">Privacy concerns</option>
                     <option value="Created duplicate account">Created duplicate account</option>
@@ -141,10 +134,10 @@ export const DeleteAccountPage = () => {
                 <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl space-y-2">
                   <div className="flex items-center gap-2 font-bold text-rose-900">
                     <AlertTriangle className="w-4 h-4 text-rose-700" />
-                    <span>Irreversible Action Warning</span>
+                    <span>Account deletion is permanent and cannot be undone.</span>
                   </div>
                   <p className="text-[11px] text-rose-800 leading-relaxed">
-                    Once deleted, your account cannot be recovered. Type the word <strong>DELETE</strong> in capital letters below to confirm.
+                    Type <strong>DELETE</strong> in capital letters below to confirm your request.
                   </p>
                   <input
                     type="text"
@@ -166,11 +159,19 @@ export const DeleteAccountPage = () => {
                   disabled={confirmText !== 'DELETE' || isSubmitting || !email}
                   className="px-6 py-3.5 bg-rose-700 hover:bg-rose-800 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-colors cursor-pointer shadow-xs"
                 >
-                  {isSubmitting ? 'Processing Request...' : 'Permanently Delete Account'}
+                  {isSubmitting ? 'Processing...' : 'Delete My Account'}
                 </button>
               </div>
             </form>
           )}
+        </div>
+
+        {/* Contact Option Note */}
+        <div className="text-center text-xs text-[#687163] pb-4">
+          Need help? Contact us at{' '}
+          <a href="mailto:murariglamandglow@gmail.com" className="font-semibold text-[#1D241C] underline hover:text-[#506040]">
+            murariglamandglow@gmail.com
+          </a>.
         </div>
       </div>
     </div>

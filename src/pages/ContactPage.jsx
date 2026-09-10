@@ -217,8 +217,8 @@ export const ContactPage = () => {
                   <Mail className="w-4 h-4 text-[#506040] shrink-0 mt-0.5" />
                   <div>
                     <div className="font-semibold text-[#1D241C]">Customer Care Email</div>
-                    <a href="mailto:support@murarisglamglow.com" className="text-[#506040] hover:underline font-bold">
-                      support@murarisglamglow.com
+                    <a href="mailto:murariglamandglow@gmail.com" className="text-[#506040] hover:underline font-bold">
+                      murariglamandglow@gmail.com
                     </a>
                     <div className="text-[11px] text-[#687163] mt-0.5">Formal response within 24 hours</div>
                   </div>

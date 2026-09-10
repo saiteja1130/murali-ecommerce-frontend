@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Trash2, ArrowRight, Sparkles, ShieldCheck, Tag, ArrowLeft, Truck, RotateCcw, AlertCircle } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { useCart } from '../context/CartContext';
 import { resolveImageUrl } from '../utils/productAdapter';
 
@@ -37,6 +38,10 @@ export const CartPage = ({
   const [promoMessage, setPromoMessage] = useState(null);
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const [orderNote, setOrderNote] = useState('');
+
+  // Confirmation modal states
+  const [removeItemModal, setRemoveItemModal] = useState({ isOpen: false, item: null });
+  const [clearCartModal, setClearCartModal] = useState({ isOpen: false });
 
   const activePromoCode = propPromoCode || ctxPromoCode;
   const activeDiscountRate = propDiscountRate || ctxDiscountRate || 0;
@@ -246,7 +251,7 @@ export const CartPage = ({
 
                       {/* Delete */}
                       <button
-                        onClick={() => onRemoveItem(item.id)}
+                        onClick={() => setRemoveItemModal({ isOpen: true, item })}
                         className="text-[#687163] hover:text-rose-600 p-1.5 transition-colors cursor-pointer"
                         title="Remove piece"
                       >
@@ -259,7 +264,7 @@ export const CartPage = ({
                 {/* Cart Action Buttons */}
                 <div className="p-4 bg-[#FAF8F5] flex items-center justify-between">
                   <button
-                    onClick={onClearCart}
+                    onClick={() => setClearCartModal({ isOpen: true })}
                     className="text-xs font-semibold uppercase tracking-wider text-rose-700 hover:text-rose-900 transition-colors cursor-pointer"
                   >
                     Clear Shopping Bag
@@ -436,6 +441,38 @@ export const CartPage = ({
           </div>
         )}
       </div>
+
+      {/* Remove Single Piece Confirmation Modal */}
+      <ConfirmModal
+        isOpen={removeItemModal.isOpen}
+        onClose={() => setRemoveItemModal({ isOpen: false, item: null })}
+        onConfirm={() => {
+          if (removeItemModal.item) {
+            onRemoveItem(removeItemModal.item.id);
+            setRemoveItemModal({ isOpen: false, item: null });
+          }
+        }}
+        variant="danger"
+        title="Remove Piece from Bag?"
+        message={`Are you sure you want to remove "${removeItemModal.item?.product?.name || 'this item'}" (${removeItemModal.item?.selectedSize || 'Standard'}) from your shopping bag?`}
+        confirmText="Remove Piece"
+        cancelText="Keep Piece"
+      />
+
+      {/* Clear Entire Bag Confirmation Modal */}
+      <ConfirmModal
+        isOpen={clearCartModal.isOpen}
+        onClose={() => setClearCartModal({ isOpen: false })}
+        onConfirm={() => {
+          onClearCart();
+          setClearCartModal({ isOpen: false });
+        }}
+        variant="danger"
+        title="Clear Shopping Bag?"
+        message="Are you sure you want to remove all pieces from your shopping bag? This will empty your cart completely."
+        confirmText="Clear Bag"
+        cancelText="Keep Pieces"
+      />
     </div>
   );
 };

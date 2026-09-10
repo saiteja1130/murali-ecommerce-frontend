@@ -1,25 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ArrowRight, Sparkles } from 'lucide-react';
+import { FALLBACK_HERO_SLIDES } from '../context/HeroContext';
+
 export const HeroCarousel = ({ slides = [], onSelectCategory }) => {
   const navigate = useNavigate();
+  const effectiveSlides = Array.isArray(slides) && slides.length > 0 ? slides : FALLBACK_HERO_SLIDES;
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const timerRef = useRef(null);
   const duration = 6000; // 6 seconds per slide
+
   const handleNext = () => {
     if (isAnimating)
       return;
     setIsAnimating(true);
-    setCurrentIdx((prev) => (prev + 1) % slides.length);
+    setCurrentIdx((prev) => (prev + 1) % effectiveSlides.length);
     setTimeout(() => setIsAnimating(false), 600);
   };
   const handlePrev = () => {
     if (isAnimating)
       return;
     setIsAnimating(true);
-    setCurrentIdx((prev) => (prev - 1 + slides.length) % slides.length);
+    setCurrentIdx((prev) => (prev - 1 + effectiveSlides.length) % effectiveSlides.length);
     setTimeout(() => setIsAnimating(false), 600);
   };
   const goToSlide = (idx) => {
@@ -39,12 +43,13 @@ export const HeroCarousel = ({ slides = [], onSelectCategory }) => {
       if (timerRef.current)
         clearInterval(timerRef.current);
     };
-  }, [currentIdx, isPaused, isAnimating]);
-  if (!slides || slides.length === 0) {
+  }, [currentIdx, isPaused, isAnimating, effectiveSlides.length]);
+
+  if (!effectiveSlides || effectiveSlides.length === 0) {
     return null;
   }
 
-  const activeSlide = slides[currentIdx] || slides[0];
+  const activeSlide = effectiveSlides[currentIdx] || effectiveSlides[0];
 
   const handleCtaClick = () => {
     const destination = activeSlide.ctaLink || (activeSlide.categorySlug ? `/products/${activeSlide.categorySlug}` : '/products');
@@ -64,10 +69,10 @@ export const HeroCarousel = ({ slides = [], onSelectCategory }) => {
   };
   return (<section id="hero-banner-carousel" className="relative w-full h-[70vh] md:h-[82vh] lg:h-[88vh] overflow-hidden bg-[#1A1A1A] select-none" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)} aria-label="Hero Carousel Banner">
     {/* Slides Background Images with Smooth Crossfade */}
-    {slides.map((slide, idx) => {
+    {effectiveSlides.map((slide, idx) => {
       const isCurrent = idx === currentIdx;
-      return (<div key={slide.id} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${isCurrent ? 'opacity-100 z-10 scale-100' : 'opacity-0 z-0 scale-105 pointer-events-none'}`} style={{ transition: 'opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 8s ease-out' }}>
-        {/* Image with Lazy Loading Optimization */}
+      return (<div key={slide.id || idx} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${isCurrent ? 'opacity-100 z-10 scale-100' : 'opacity-0 z-0 scale-105 pointer-events-none'}`} style={{ transition: 'opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 8s ease-out' }}>
+        {/* Image with Lazy Loading Optimization & Error Fallback */}
         <img
           src={slide.image}
           alt={slide.title || slide.heading || 'Storefront Editorial'}
@@ -75,6 +80,9 @@ export const HeroCarousel = ({ slides = [], onSelectCategory }) => {
           loading={idx === 0 ? 'eager' : 'lazy'}
           decoding={idx === 0 ? 'sync' : 'async'}
           fetchPriority={idx === 0 ? 'high' : 'low'}
+          onError={(e) => {
+            e.currentTarget.src = 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=1920&auto=format&fit=crop';
+          }}
         />
 
         {/* Cinematic Gradient Overlays */}

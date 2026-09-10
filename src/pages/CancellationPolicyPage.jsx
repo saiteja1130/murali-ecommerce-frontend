@@ -1,11 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { RotateCcw, Clock, ShieldCheck, CheckCircle2, AlertCircle, ChevronRight, CreditCard, Headphones, ArrowRight, Package } from 'lucide-react';
-import { useCart } from '../context/CartContext';
+import { RotateCcw, Clock, CheckCircle2, ChevronRight, CreditCard, Headphones, ArrowRight, Package, AlertCircle } from 'lucide-react';
 
 export const CancellationPolicyPage = () => {
-  const { freeShippingThreshold, shippingFee } = useCart();
-
   return (
     <div className="min-h-screen bg-[#FAF8F5] py-8 lg:py-16 animate-fade-in font-sans text-[#1D241C]">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -15,20 +12,25 @@ export const CancellationPolicyPage = () => {
             Home
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
-          <span className="text-[#1D241C] font-semibold">Cancellation &amp; Refund Policy</span>
+          <span className="text-[#1D241C] font-semibold">Cancellation, Return &amp; Refund Policy</span>
         </nav>
 
         {/* Header Hero Card */}
         <div className="bg-white rounded-2xl border border-[#E8E4DC] p-8 sm:p-12 shadow-2xs space-y-4">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#506040]/15 text-[#506040] text-[10px] font-mono font-bold tracking-widest uppercase rounded-lg border border-[#506040]/30">
-            <RotateCcw className="w-3.5 h-3.5 text-[#506040]" />
-            Razorpay Merchant &amp; Consumer Protection Policy
-          </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#506040]/15 text-[#506040] text-[10px] font-mono font-bold tracking-widest uppercase rounded-lg border border-[#506040]/30">
+              <RotateCcw className="w-3.5 h-3.5 text-[#506040]" />
+              Customer-Friendly Policy
+            </span>
+            <span className="text-[11px] text-[#687163] font-mono">
+              Last Updated: September 1, 2026
+            </span>
+          </div>
           <h1 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-[#1D241C]">
             Cancellation, Return &amp; Refund Policy
           </h1>
           <p className="text-xs sm:text-sm text-[#687163] max-w-2xl leading-relaxed">
-            At Murari&apos;s Glam &amp; Glow, we stand behind the craftsmanship of every garment and accessory. Below is our transparent, customer-first policy regarding cancellations, returns, and refund processing.
+            At <strong>Murari&apos;s Glam &amp; Glow</strong>, we want you to have a smooth shopping experience. This policy explains how cancellations, returns, exchanges, and refunds are handled.
           </p>
         </div>
 
@@ -36,100 +38,99 @@ export const CancellationPolicyPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="p-6 bg-white rounded-2xl border border-[#E8E4DC] shadow-2xs space-y-2">
             <Clock className="w-5 h-5 text-[#506040]" />
-            <h3 className="font-serif text-base font-bold text-[#1D241C]">60-Minute Cancellation</h3>
+            <h3 className="font-serif text-base font-bold text-[#1D241C]">Cancellation</h3>
             <p className="text-xs text-[#687163] leading-relaxed">
-              Orders can be cancelled or edited free of charge within 60 minutes of placement before dispatch.
+              Orders may be cancelled before they are processed or dispatched.
             </p>
           </div>
 
           <div className="p-6 bg-white rounded-2xl border border-[#E8E4DC] shadow-2xs space-y-2">
             <RotateCcw className="w-5 h-5 text-[#506040]" />
-            <h3 className="font-serif text-base font-bold text-[#1D241C]">7-Day Easy Returns</h3>
+            <h3 className="font-serif text-base font-bold text-[#1D241C]">Returns</h3>
             <p className="text-xs text-[#687163] leading-relaxed">
-              Request a return or size exchange within 7 days of receiving your package with doorstep courier pickup.
+              Eligible products may be returned within the applicable return period.
             </p>
           </div>
 
           <div className="p-6 bg-white rounded-2xl border border-[#E8E4DC] shadow-2xs space-y-2">
             <CreditCard className="w-5 h-5 text-[#506040]" />
-            <h3 className="font-serif text-base font-bold text-[#1D241C]">24–48 Hr Refund Release</h3>
+            <h3 className="font-serif text-base font-bold text-[#1D241C]">Refunds</h3>
             <p className="text-xs text-[#687163] leading-relaxed">
-              Refunds are initiated back to your original payment source (UPI, Card, Bank) as soon as returned items are verified.
+              Approved refunds are processed to the original payment method where applicable.
             </p>
           </div>
         </div>
 
-        {/* Detailed Sections */}
+        {/* Detailed Policy Content */}
         <div className="bg-white rounded-2xl border border-[#E8E4DC] p-8 sm:p-12 shadow-2xs space-y-8 text-xs sm:text-sm text-[#687163] leading-relaxed">
-          {/* Section 1 */}
+          {/* Section 1: Order Cancellation */}
           <section className="space-y-3 border-b border-[#E8E4DC] pb-6">
-            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">1. Order Cancellation Terms</h2>
+            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">
+              1. Order Cancellation
+            </h2>
             <p>
-              <strong>Before Dispatch:</strong> Customers may cancel an order within <strong>60 minutes</strong> of placing it on our website. To cancel, visit your Account &gt; My Orders or contact customer support. A 100% full refund will be processed immediately.
+              Customers can request cancellation before the order is processed or dispatched. Once an order has been dispatched, cancellation may no longer be possible.
             </p>
             <p>
-              <strong>After Dispatch:</strong> Once an order is processed, packed, and handed over to our courier partner (BlueDart, Delhivery, DTDC), it cannot be cancelled in transit. In such cases, customers may refuse delivery at doorstep or initiate a 7-day return upon arrival.
+              To request cancellation, contact customer support or use the cancellation option available in your account, if provided.
+            </p>
+            <p>
+              Any eligible refund will be processed after cancellation is confirmed.
             </p>
           </section>
 
-          {/* Section 2 */}
+          {/* Section 2: Returns & Exchanges */}
           <section className="space-y-3 border-b border-[#E8E4DC] pb-6">
-            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">2. Return &amp; Exchange Eligibility</h2>
-            <p>We accept returns and size exchanges under the following conditions:</p>
+            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">
+              2. Returns &amp; Exchanges
+            </h2>
+            <p>
+              Eligible products may be returned or exchanged according to our return conditions:
+            </p>
             <ul className="list-disc list-inside space-y-2 pl-2">
-              <li>Return request must be initiated within <strong>7 days</strong> from the date of package delivery.</li>
-              <li>Garments and accessories must remain <strong>unworn, unwashed, and undamaged</strong> with all original brand tags, security loops, and packaging intact.</li>
-              <li>Free doorstep pickup will be arranged by our logistics partner across India.</li>
+              <li>Product should generally be unused and in acceptable condition.</li>
+              <li>Original tags and packaging should be retained where applicable.</li>
+              <li>Return requests must be made within the applicable return period.</li>
+              <li>Certain products may not be eligible for return or exchange.</li>
             </ul>
-          </section>
-
-          {/* Section 3: Refund Timeline & Payment Gateway Method */}
-          <section className="space-y-3 border-b border-[#E8E4DC] pb-6">
-            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">3. Refund Timelines &amp; Mode of Settlement</h2>
-            <p>
-              Once your returned item arrives at our fulfillment facility, our quality team inspects the piece within 24 hours. Upon approval, your refund will be disbursed as follows:
+            <p className="pt-1">
+              Return eligibility may vary depending on the product.
             </p>
-
-            <div className="overflow-x-auto pt-2">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-[#E8E4DC] bg-[#FAF8F5] text-[10px] uppercase tracking-wider text-[#687163]">
-                    <th className="py-3 px-4 font-semibold">Payment Method</th>
-                    <th className="py-3 px-4 font-semibold">Refund Settlement Mode</th>
-                    <th className="py-3 px-4 font-semibold text-right">Settlement TAT</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E8E4DC]">
-                  <tr>
-                    <td className="py-3.5 px-4 font-semibold text-[#1D241C]">UPI (Google Pay, PhonePe, Paytm)</td>
-                    <td className="py-3.5 px-4">Direct Credit to Original VPA / UPI Account</td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-[#506040]">Instant to 24 Hours</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3.5 px-4 font-semibold text-[#1D241C]">Debit &amp; Credit Cards</td>
-                    <td className="py-3.5 px-4">Reversal via Razorpay Gateway to Issuing Bank</td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-[#506040]">3 – 5 Business Days</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3.5 px-4 font-semibold text-[#1D241C]">Net Banking</td>
-                    <td className="py-3.5 px-4">Direct Bank Account Credit</td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-[#506040]">2 – 4 Business Days</td>
-                  </tr>
-                  <tr>
-                    <td className="py-3.5 px-4 font-semibold text-[#1D241C]">Cash on Delivery (COD)</td>
-                    <td className="py-3.5 px-4">Direct Bank Transfer (NEFT/IMPS) or UPI Transfer</td>
-                    <td className="py-3.5 px-4 text-right font-mono font-bold text-[#506040]">1 – 2 Business Days</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
           </section>
 
-          {/* Section 4 */}
-          <section className="space-y-3">
-            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">4. Damaged or Defective Items</h2>
+          {/* Section 3: Refunds */}
+          <section className="space-y-3 border-b border-[#E8E4DC] pb-6">
+            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">
+              3. Refunds
+            </h2>
             <p>
-              In the rare event that an item arrives damaged, defective, or incorrect, please notify us within <strong>48 hours</strong> of delivery with a photo of the defect. We will immediately dispatch a free replacement or issue a 100% full refund without requiring return shipping costs.
+              Once a return or cancellation is approved, the applicable refund will be processed using the original payment method where possible.
+            </p>
+            <p>
+              Refund processing time may vary depending on the payment method and financial institution.
+            </p>
+          </section>
+
+          {/* Section 4: Damaged, Defective or Incorrect Products */}
+          <section className="space-y-3 border-b border-[#E8E4DC] pb-6">
+            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">
+              4. Damaged, Defective or Incorrect Products
+            </h2>
+            <p>
+              If you receive a damaged, defective, or incorrect product, please contact us as soon as possible after delivery with the relevant order details and, where helpful, photographs of the issue.
+            </p>
+            <p>
+              We will review the issue and provide an appropriate resolution based on the circumstances and applicable return conditions.
+            </p>
+          </section>
+
+          {/* Section 5: Non-Returnable Products */}
+          <section className="space-y-3">
+            <h2 className="font-serif text-lg sm:text-xl font-bold text-[#1D241C]">
+              5. Non-Returnable Products
+            </h2>
+            <p>
+              Some products may not be eligible for return or exchange due to their nature, hygiene considerations, customization, or other applicable conditions. Any such restrictions will be communicated on the relevant product page where applicable.
             </p>
           </section>
         </div>
@@ -141,15 +142,17 @@ export const CancellationPolicyPage = () => {
               <Headphones className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-serif text-base font-bold text-[#1D241C]">Need Help with a Cancellation or Return?</h3>
-              <p className="text-xs text-[#687163]">
-                Our dedicated support desk is available Monday to Saturday, 9:00 AM – 8:00 PM IST.
+              <h3 className="font-serif text-base font-bold text-[#1D241C]">
+                Need Help With Your Order?
+              </h3>
+              <p className="text-xs text-[#687163] mt-0.5">
+                If you have questions about cancellation, returns, exchanges, or refunds, please contact our customer support team.
               </p>
             </div>
           </div>
           <Link
             to="/contact"
-            className="inline-flex items-center gap-2 px-6 py-3.5 bg-[#1D241C] hover:bg-[#506040] text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-colors shrink-0 shadow-xs"
+            className="inline-flex items-center gap-2 px-6 py-3.5 bg-[#1D241C] hover:bg-[#506040] text-white text-xs font-semibold uppercase tracking-wider rounded-xl transition-colors shrink-0 shadow-xs cursor-pointer"
           >
             <Headphones className="w-3.5 h-3.5" />
             <span>Contact Support</span>

@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag, Trash2, Share2, Check } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
+import { ConfirmModal } from '../components/ConfirmModal';
 import { resolveImageUrl } from '../utils/productAdapter';
 export const WishlistPage = ({ wishlistProducts, onRemoveFromWishlist, onClearWishlist, onAddToCart, allProducts, onToggleWishlist, wishlistIds }) => {
   const navigate = useNavigate();
   const [selectedSizes, setSelectedSizes] = useState({});
   const [isCopiedShare, setIsCopiedShare] = useState(false);
   const [addedItems, setAddedItems] = useState({});
+  const [removeWishlistModal, setRemoveWishlistModal] = useState({ isOpen: false, product: null });
   const handleSizeSelect = (productId, size) => {
     setSelectedSizes((prev) => ({ ...prev, [productId]: size }));
   };
@@ -91,7 +93,12 @@ export const WishlistPage = ({ wishlistProducts, onRemoveFromWishlist, onClearWi
               </span>)}
 
               {/* Delete button */}
-              <button onClick={() => onRemoveFromWishlist(product.id)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-neutral-500 hover:text-rose-600 flex items-center justify-center transition-colors shadow-xs" aria-label="Remove from wishlist">
+              <button
+                onClick={() => setRemoveWishlistModal({ isOpen: true, product })}
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-neutral-500 hover:text-rose-600 flex items-center justify-center transition-colors shadow-xs cursor-pointer"
+                aria-label="Remove from wishlist"
+                title="Remove from wishlist"
+              >
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
@@ -187,5 +194,24 @@ export const WishlistPage = ({ wishlistProducts, onRemoveFromWishlist, onClearWi
         </div>
       </section>
     </div>
+
+    {/* Remove from Wishlist Confirmation Modal */}
+    <ConfirmModal
+      isOpen={removeWishlistModal.isOpen}
+      onClose={() => setRemoveWishlistModal({ isOpen: false, product: null })}
+      onConfirm={() => {
+        if (removeWishlistModal.product) {
+          onRemoveFromWishlist(removeWishlistModal.product.id);
+          setRemoveWishlistModal({ isOpen: false, product: null });
+        }
+      }}
+      variant="danger"
+      title="Remove from Wishlist?"
+      message={`Are you sure you want to remove "${removeWishlistModal.product?.name || 'this item'}" from your saved wishlist?`}
+      confirmText="Remove"
+      cancelText="Keep in Wishlist"
+    />
   </div>);
 };
+
+export default WishlistPage;
