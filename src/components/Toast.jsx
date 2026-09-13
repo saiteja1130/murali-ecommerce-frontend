@@ -3,7 +3,7 @@ import { CheckCircle2, Heart, ShoppingBag, X } from 'lucide-react';
 export const Toast = ({ toasts, onDismiss }) => {
     if (toasts.length === 0)
         return null;
-    return (<div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+    return (<div className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
       {toasts.map((toast) => (<div key={toast.id} id={`toast-${toast.id}`} className="pointer-events-auto bg-[#1A1A1A] text-white p-4 shadow-xl border border-[#C8A87C]/30 flex items-start gap-3 transition-all duration-300 animate-slide-in-up" style={{ borderRadius: '4px' }}>
           {toast.image ? (<img src={toast.image} alt={toast.title} className="w-12 h-14 object-cover flex-shrink-0 bg-neutral-800" style={{ borderRadius: '2px' }}/>) : (<div className="w-9 h-9 flex-shrink-0 bg-[#C8A87C]/20 text-[#C8A87C] flex items-center justify-center rounded-sm">
               {toast.type === 'cart' && <ShoppingBag className="w-5 h-5"/>}

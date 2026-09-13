@@ -643,11 +643,11 @@ export const ProductsPage = ({
       <div id="catalog-content-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
 
         {/* Department Switcher Tabs (All, Women, Kids) */}
-        <div className="flex items-center justify-between flex-wrap gap-3 pb-5 mb-5 border-b border-[#E8E4DC]">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none w-full sm:w-auto">
+        <div className="flex items-center justify-between flex-wrap gap-2 sm:gap-3 pb-4 mb-4 border-b border-[#E8E4DC]">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none w-full">
             <button
               onClick={() => handleDepartmentSwitch('all')}
-              className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-full transition-all cursor-pointer ${!activeMainCatObj && activeCategory === 'All'
+              className={`flex-shrink-0 px-3.5 sm:px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-full transition-all cursor-pointer whitespace-nowrap ${!activeMainCatObj && activeCategory === 'All'
                 ? 'bg-[#1D241C] text-white shadow-xs'
                 : 'bg-white text-[#687163] border border-[#E8E4DC] hover:border-[#1D241C] hover:text-[#1D241C]'
                 }`}
@@ -663,7 +663,7 @@ export const ProductsPage = ({
                 <button
                   key={mCat.id || mCat.slug}
                   onClick={() => handleDepartmentSwitch(mCat.slug)}
-                  className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-full transition-all cursor-pointer whitespace-nowrap ${isActive
+                  className={`flex-shrink-0 px-3.5 sm:px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-full transition-all cursor-pointer whitespace-nowrap ${isActive
                     ? 'bg-[#1D241C] text-white shadow-xs'
                     : 'bg-white text-[#687163] border border-[#E8E4DC] hover:border-[#1D241C] hover:text-[#1D241C]'
                     }`}
@@ -677,13 +677,13 @@ export const ProductsPage = ({
 
         {/* Dynamic Subcategory Filter Chips / Pills */}
         {relevantSubcategories.length > 0 && (
-          <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#687163] whitespace-nowrap mr-1">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2.5 mb-5 scrollbar-none">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#687163] whitespace-nowrap mr-1 flex-shrink-0">
               Categories:
             </span>
             <button
               onClick={() => handleSubcategoryChipClick('all')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer whitespace-nowrap ${selectedSubcategory === 'all'
+              className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-sm transition-all cursor-pointer whitespace-nowrap ${selectedSubcategory === 'all'
                 ? 'bg-[#C69E58] text-[#1D241C] font-semibold shadow-2xs'
                 : 'bg-white text-[#687163] border border-[#E8E4DC] hover:border-[#C69E58] hover:text-[#1D241C]'
                 }`}
@@ -702,7 +702,7 @@ export const ProductsPage = ({
                 <button
                   key={sub.id || sub.slug}
                   onClick={() => handleSubcategoryChipClick(sub.slug || sub.name)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${isSelected
+                  className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-sm transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${isSelected
                     ? 'bg-[#1D241C] text-white font-semibold shadow-2xs'
                     : 'bg-white text-[#687163] border border-[#E8E4DC] hover:border-[#1D241C] hover:text-[#1D241C]'
                     }`}
@@ -718,26 +718,63 @@ export const ProductsPage = ({
         )}
 
         {/* Top Controls Toolbar: Count, Mobile Filter Trigger, Search, Sort, View Density */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 mb-6 border-b border-[#E8E4DC]">
-          {/* Left: Total Pieces Count & Mobile Filter Button */}
-          <div className="flex items-center justify-between md:justify-start gap-4">
+        <div className="pb-5 mb-6 border-b border-[#E8E4DC] space-y-3 md:space-y-0 md:flex md:items-center md:justify-between md:gap-4">
+          {/* Mobile Search Bar (< md) */}
+          <div className="relative w-full md:hidden">
+            <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-7 py-2 text-xs bg-white border border-[#E8E4DC] rounded-xs focus:outline-none focus:border-[#C69E58] text-[#1D241C] placeholder-neutral-400 shadow-2xs"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-black cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Action Row on Mobile: [ Filters ] and [ Sort ] 50/50 side by side */}
+          <div className="flex items-center gap-2.5 w-full md:w-auto">
+            {/* Mobile Filter Button */}
             <button
               onClick={() => setIsMobileFilterOpen(true)}
-              className="lg:hidden inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#E8E4DC] rounded-xs text-xs font-semibold uppercase tracking-wider text-[#1D241C] hover:border-[#1D241C] shadow-2xs cursor-pointer"
+              className="lg:hidden flex-1 md:flex-initial inline-flex items-center justify-center gap-2 py-2 px-3 bg-white border border-[#E8E4DC] rounded-xs text-xs font-semibold uppercase tracking-wider text-[#1D241C] hover:border-[#1D241C] shadow-2xs cursor-pointer text-center"
             >
-              <Filter className="w-4 h-4 text-[#C69E58]" />
+              <Filter className="w-3.5 h-3.5 text-[#C69E58]" />
               <span>Filters ({activeFiltersCount})</span>
             </button>
 
-            <span className="text-xs font-mono text-[#687163]">
+            {/* Mobile Sort Dropdown */}
+            <div className="relative flex-1 md:hidden flex items-center">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="w-full appearance-none pl-3 pr-8 py-2 text-xs font-semibold uppercase tracking-wider bg-white border border-[#E8E4DC] rounded-xs text-[#1D241C] cursor-pointer focus:outline-none focus:border-[#C69E58] shadow-2xs"
+              >
+                <option value="featured">Featured</option>
+                <option value="newest">Newest First</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-neutral-400 absolute right-2.5 pointer-events-none" />
+            </div>
+
+            {/* Desktop Pieces Count */}
+            <span className="hidden md:inline-block text-xs font-mono text-[#687163]">
               Showing <strong className="text-[#1D241C]">{filteredProducts.length}</strong> piece{filteredProducts.length === 1 ? '' : 's'}
             </span>
           </div>
 
-          {/* Right: Search, Sorting, Grid Density Switches */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Catalog Internal Search Input */}
-            <div className="relative min-w-[200px] flex-1 md:flex-initial">
+          {/* Desktop Controls (Search, Sort, Grid View) */}
+          <div className="hidden md:flex items-center gap-3">
+            {/* Desktop Search Input */}
+            <div className="relative w-56">
               <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -756,7 +793,7 @@ export const ProductsPage = ({
               )}
             </div>
 
-            {/* Sort Dropdown */}
+            {/* Desktop Sort Dropdown */}
             <div className="relative flex items-center">
               <select
                 value={sortBy}
@@ -771,8 +808,8 @@ export const ProductsPage = ({
               <ChevronDown className="w-3.5 h-3.5 text-neutral-400 absolute right-2.5 pointer-events-none" />
             </div>
 
-            {/* Grid Density Switcher (Desktop Only) */}
-            <div className="hidden sm:flex items-center gap-1 bg-white border border-[#E8E4DC] p-1 rounded-xs shadow-2xs">
+            {/* Desktop Grid Density Switcher */}
+            <div className="flex items-center gap-1 bg-white border border-[#E8E4DC] p-1 rounded-xs shadow-2xs">
               <button
                 onClick={() => setGridDensity('2')}
                 title="2 Columns"
@@ -806,6 +843,21 @@ export const ProductsPage = ({
                 <List className="w-3.5 h-3.5" />
               </button>
             </div>
+          </div>
+
+          {/* Mobile Pieces Count & Filter Reset */}
+          <div className="flex md:hidden items-center justify-between text-xs text-[#687163] pt-0.5">
+            <span className="font-mono">
+              Showing <strong className="text-[#1D241C]">{filteredProducts.length}</strong> piece{filteredProducts.length === 1 ? '' : 's'}
+            </span>
+            {activeFiltersCount > 0 && (
+              <button
+                onClick={handleResetAllFilters}
+                className="text-[#C69E58] hover:text-[#1D241C] font-medium transition-colors cursor-pointer"
+              >
+                Reset filters
+              </button>
+            )}
           </div>
         </div>
 
@@ -878,9 +930,9 @@ export const ProductsPage = ({
           <div className="lg:col-span-9">
             {isLoading ? (
               /* Shimmer Loading Skeletons */
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="bg-white border border-[#E8E4DC] rounded-[4px] p-4 space-y-4 animate-pulse">
+                  <div key={i} className="bg-white border border-[#E8E4DC] rounded-[4px] p-3 sm:p-4 space-y-3 animate-pulse">
                     <div className="aspect-[3/4] bg-neutral-200 rounded-xs" />
                     <div className="h-4 bg-neutral-200 rounded-xs w-3/4" />
                     <div className="h-3 bg-neutral-200 rounded-xs w-1/2" />
@@ -892,13 +944,13 @@ export const ProductsPage = ({
               <>
                 {/* Responsive Grid mapping density */}
                 <div
-                  className={`grid gap-6 ${gridDensity === '2'
-                    ? 'grid-cols-1 sm:grid-cols-2'
-                    : gridDensity === '4'
-                      ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
-                      : gridDensity === 'list'
-                        ? 'grid-cols-1'
-                        : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
+                  className={`grid gap-3 sm:gap-6 ${gridDensity === 'list'
+                    ? 'grid-cols-1'
+                    : gridDensity === '2'
+                      ? 'grid-cols-2'
+                      : gridDensity === '4'
+                        ? 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'
+                        : 'grid-cols-2 sm:grid-cols-2 md:grid-cols-3'
                     }`}
                 >
                   {currentProducts.map((product) => (

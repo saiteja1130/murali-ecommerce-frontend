@@ -12,6 +12,7 @@ import { Footer } from './components/Footer';
 import { SearchModal } from './components/SearchModal';
 import { AuthModal } from './components/AuthModal';
 import { Toast } from './components/Toast';
+import { FloatingCart } from './components/FloatingCart';
 
 // Storefront Pages
 import { HomePage } from './pages/HomePage';
@@ -467,6 +468,9 @@ const AppContent = () => {
       />
 
       <AuthModal />
+
+      {/* Universal Floating Cart Action Button (Accessible on Mobile & Desktop) */}
+      <FloatingCart cartCount={cartItemCount} cartTotal={cartSubtotal} />
 
       <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>

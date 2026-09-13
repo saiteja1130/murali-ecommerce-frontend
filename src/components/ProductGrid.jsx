@@ -121,11 +121,11 @@ export const ProductGrid = ({
         </p>
 
         {/* Highlight Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-8 bg-[#F3F0E9] p-1.5 rounded-xs border border-[#E8E4DC]">
+        <div className="w-full sm:w-auto grid grid-cols-2 sm:flex sm:flex-wrap items-center justify-center gap-1.5 sm:gap-2.5 mt-6 sm:mt-8 bg-[#F3F0E9] p-1.5 rounded-sm border border-[#E8E4DC]">
           <button
             id="tab-filter-all"
             onClick={() => setActiveTab('all')}
-            className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all rounded-xs cursor-pointer ${
+            className={`flex items-center justify-center px-3 sm:px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all rounded-xs cursor-pointer text-center ${
               activeTab === 'all'
                 ? 'bg-[#1D241C] text-white shadow-xs'
                 : 'text-[#687163] hover:text-[#1D241C]'
@@ -136,7 +136,7 @@ export const ProductGrid = ({
           <button
             id="tab-filter-bestsellers"
             onClick={() => setActiveTab('bestsellers')}
-            className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all rounded-xs cursor-pointer ${
+            className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all rounded-xs cursor-pointer text-center ${
               activeTab === 'bestsellers'
                 ? 'bg-[#1D241C] text-white shadow-xs'
                 : 'text-[#687163] hover:text-[#1D241C]'
@@ -148,7 +148,7 @@ export const ProductGrid = ({
           <button
             id="tab-filter-new"
             onClick={() => setActiveTab('new')}
-            className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all rounded-xs cursor-pointer ${
+            className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all rounded-xs cursor-pointer text-center ${
               activeTab === 'new'
                 ? 'bg-[#1D241C] text-white shadow-xs'
                 : 'text-[#687163] hover:text-[#1D241C]'
@@ -160,7 +160,7 @@ export const ProductGrid = ({
           <button
             id="tab-filter-sale"
             onClick={() => setActiveTab('sale')}
-            className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all rounded-xs cursor-pointer ${
+            className={`flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-semibold uppercase tracking-wider transition-all rounded-xs cursor-pointer text-center ${
               activeTab === 'sale'
                 ? 'bg-[#1D241C] text-white shadow-xs'
                 : 'text-[#687163] hover:text-[#1D241C]'
@@ -173,9 +173,9 @@ export const ProductGrid = ({
       </div>
 
       {/* Filter and Sort Toolbar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 mb-8 border-b border-[#E8E4DC]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-5 mb-6 sm:mb-8 border-b border-[#E8E4DC]">
         {/* Category Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none w-full sm:w-auto">
           {dynamicCategories.map((cat) => {
             const isSelected = selectedCategory.toLowerCase() === cat.value.toLowerCase();
             return (
@@ -183,9 +183,9 @@ export const ProductGrid = ({
                 key={cat.value}
                 id={`filter-pill-${cat.value.toLowerCase()}`}
                 onClick={() => onSelectCategory && onSelectCategory(cat.value)}
-                className={`px-3.5 py-1.5 text-xs font-medium uppercase tracking-wider whitespace-nowrap transition-all rounded-xs border cursor-pointer ${
+                className={`flex-1 sm:flex-initial px-3.5 py-2 sm:py-1.5 text-xs font-medium uppercase tracking-wider whitespace-nowrap transition-all rounded-xs border text-center cursor-pointer ${
                   isSelected
-                    ? 'bg-[#1D241C] text-white border-[#1D241C]'
+                    ? 'bg-[#1D241C] text-white border-[#1D241C] shadow-2xs'
                     : 'bg-white text-[#687163] border-[#E8E4DC] hover:border-neutral-400 hover:text-[#1D241C]'
                 }`}
               >
@@ -196,9 +196,9 @@ export const ProductGrid = ({
         </div>
 
         {/* Right Controls: Sort & Count */}
-        <div className="flex flex-wrap items-center justify-between lg:justify-end gap-4">
+        <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2.5 sm:pt-0 border-t border-[#E8E4DC]/60 sm:border-0">
           {searchQuery && (
-            <div className="flex items-center gap-2 text-xs bg-[#E8D5D0]/40 px-3 py-1.5 rounded-xs">
+            <div className="flex items-center gap-1.5 text-xs bg-[#E8D5D0]/40 px-2.5 py-1 rounded-xs">
               <span>Search: &ldquo;<strong>{searchQuery}</strong>&rdquo;</span>
               <button onClick={onClearSearch} className="text-neutral-500 hover:text-neutral-900 font-bold ml-1 cursor-pointer">
                 ×
@@ -206,19 +206,19 @@ export const ProductGrid = ({
             </div>
           )}
 
-          <div className="text-xs text-[#687163]">
+          <div className="text-xs text-[#687163] whitespace-nowrap">
             Showing <strong className="text-[#1D241C]">{filteredProducts.length}</strong> items
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-[#687163] flex items-center gap-1 font-medium">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-[#687163] flex items-center gap-1 font-medium whitespace-nowrap">
               <ArrowUpDown className="w-3.5 h-3.5" />
-              Sort by:
+              <span className="hidden xs:inline">Sort by:</span>
             </span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-white border border-[#E8E4DC] text-xs text-[#1D241C] font-medium py-1.5 px-3 rounded-xs focus:outline-none focus:border-[#C69E58] cursor-pointer"
+              className="bg-white border border-[#E8E4DC] text-xs text-[#1D241C] font-medium py-1.5 px-2.5 rounded-xs focus:outline-none focus:border-[#C69E58] cursor-pointer"
             >
               <option value="featured">Featured</option>
               <option value="price-asc">Price: Low to High</option>

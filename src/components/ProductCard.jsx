@@ -215,29 +215,29 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
         </div>
 
         {/* Card Content Details */}
-        <div className="p-4 flex flex-col flex-1 justify-between bg-white">
+        <div className="p-3 sm:p-4 flex flex-col flex-1 justify-between bg-white">
           <div>
             {/* Category */}
-            <div className="flex items-center justify-between text-xs text-[#687163] mb-1.5">
-              <span className="uppercase tracking-widest font-medium text-[11px] truncate">
+            <div className="flex items-center justify-between text-xs text-[#687163] mb-1">
+              <span className="uppercase tracking-widest font-medium text-[10px] sm:text-[11px] truncate">
                 {product?.category || 'Collection'}
               </span>
             </div>
 
             {/* Product Name */}
-            <h3 className="font-sans text-sm font-medium text-[#1D241C] group-hover:text-[#506040] line-clamp-2 leading-snug transition-colors mb-2 min-h-[38px]">
+            <h3 className="font-sans text-xs sm:text-sm font-medium text-[#1D241C] group-hover:text-[#506040] line-clamp-2 leading-snug transition-colors mb-2 min-h-[32px] sm:min-h-[38px]">
               {product?.name}
             </h3>
           </div>
 
           <div>
             {/* Price */}
-            <div className="flex items-baseline gap-2 mb-3">
-              <span className="text-base font-semibold text-[#1D241C]">
+            <div className="flex items-baseline gap-1.5 sm:gap-2">
+              <span className="text-sm sm:text-base font-semibold text-[#1D241C]">
                 ₹{price.toFixed(2)}
               </span>
               {originalPrice && (
-                <span className="text-xs text-[#687163] line-through">
+                <span className="text-[11px] sm:text-xs text-[#687163] line-through">
                   ₹{originalPrice.toFixed(2)}
                 </span>
               )}
@@ -245,7 +245,7 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
 
             {/* Color Swatches */}
             {colors.length > 0 && (
-              <div className="flex items-center gap-1.5 pt-2 border-t border-[#E8E4DC]/60">
+              <div className="hidden sm:flex items-center gap-1.5 pt-2 border-t border-[#E8E4DC]/60">
                 {colors.slice(0, 5).map((color, cIdx) => (
                   <button
                     key={cIdx}

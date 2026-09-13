@@ -21,7 +21,8 @@ import {
   X,
   FileText,
   RotateCcw,
-  Headphones
+  Headphones,
+  LogOut
 } from 'lucide-react';
 import api from '../context/api';
 import { useAuth } from '../context/AuthContext';
@@ -213,42 +214,55 @@ export const AccountPage = ({
         </nav>
 
         {/* Account Header Hero Card */}
-        <div className="bg-white rounded-[4px] border border-[#E8E3DE] p-6 sm:p-8 shadow-2xs mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-[#1A1A1A] text-[#C8A87C] flex items-center justify-center font-serif text-2xl font-bold shadow-sm shrink-0">
-              {currentUser?.name ? currentUser.name.charAt(0) : 'E'}
+        <div className="bg-white rounded-[4px] border border-[#E8E3DE] p-5 sm:p-7 shadow-2xs mb-8 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="flex items-start sm:items-center gap-3.5 sm:gap-4 min-w-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#1A1A1A] text-[#C8A87C] flex items-center justify-center font-serif text-xl sm:text-2xl font-bold shadow-xs shrink-0 mt-0.5 sm:mt-0">
+              {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'S'}
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#1D241C]">
+                <h1 className="font-serif text-xl sm:text-2xl font-bold text-[#1D241C] truncate">
                   {currentUser?.name || 'Customer'}
                 </h1>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono tracking-widest bg-[#506040]/15 text-[#506040] font-bold border border-[#506040]/30">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono tracking-wider bg-[#506040]/10 text-[#506040] font-semibold border border-[#506040]/25 shrink-0">
                   <Sparkles className="w-3 h-3 text-[#506040]" />
                   Verified Account
                 </span>
               </div>
-              <p className="text-xs text-[#687163] mt-1">
-                {currentUser?.email || ''} {currentUser?.phone ? `• ${currentUser.phone}` : ''}
-              </p>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[#687163] mt-1">
+                {currentUser?.email && (
+                  <span className="break-all">{currentUser.email}</span>
+                )}
+                {currentUser?.email && currentUser?.phone && (
+                  <span className="text-[#C8A87C]">•</span>
+                )}
+                {currentUser?.phone && (
+                  <span className="font-mono text-[11px] text-[#4A4A4A] whitespace-nowrap">{currentUser.phone}</span>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Quick Stats & Sign Out */}
-          <div className="flex items-center gap-4 sm:gap-6 border-t md:border-t-0 pt-4 md:pt-0 border-[#E8E3DE]">
-            <div className="text-right">
-              <div className="text-[10px] uppercase tracking-wider text-[#6B6B6B] font-medium">Orders Placed</div>
-              <div className="font-mono text-xl font-bold text-[#1A1A1A]">{orders.length}</div>
+          <div className="flex items-center justify-between border-t md:border-t-0 pt-4 md:pt-0 border-[#E8E3DE] gap-4">
+            <div className="flex items-center gap-5 sm:gap-6">
+              <div className="text-left sm:text-center">
+                <div className="text-[10px] uppercase tracking-wider text-[#6B6B6B] font-semibold">Orders</div>
+                <div className="font-mono text-lg sm:text-xl font-bold text-[#1A1A1A]">{orders.length}</div>
+              </div>
+              <div className="h-7 w-px bg-[#E8E3DE]" />
+              <div className="text-left sm:text-center">
+                <div className="text-[10px] uppercase tracking-wider text-[#6B6B6B] font-semibold">Addresses</div>
+                <div className="font-mono text-lg sm:text-xl font-bold text-[#1A1A1A]">{addresses.length}</div>
+              </div>
             </div>
-            <div className="text-right">
-              <div className="text-[10px] uppercase tracking-wider text-[#6B6B6B] font-medium">Addresses</div>
-              <div className="font-mono text-xl font-bold text-[#1A1A1A]">{addresses.length}</div>
-            </div>
+
             <button
               onClick={() => setLogoutModal({ isOpen: true })}
-              className="px-4 py-2 text-xs font-semibold text-[#A5432F] bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#8C3322] hover:text-white bg-rose-50/80 hover:bg-[#8C3322] border border-rose-200/80 hover:border-[#8C3322] rounded-xs transition-all cursor-pointer shrink-0"
             >
-              Sign Out
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
@@ -409,33 +423,39 @@ export const AccountPage = ({
                           </div>
                         </div>
 
-                        {/* Garments Thumbnails Gallery */}
-                        <div className="mt-4 pt-2 flex items-center justify-between gap-4 flex-wrap">
-                          <div className="flex items-center gap-3 overflow-x-auto pb-1">
-                            {(order.items || []).map((item, idx) => (
-                              <div key={idx} className="flex items-center gap-2 shrink-0">
+                        {/* Garments Items: Displayed vertically one after the other, max 2 items */}
+                        <div className="mt-4 pt-1 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                          <div className="space-y-3 flex-1 min-w-0">
+                            {(order.items || []).slice(0, 2).map((item, idx) => (
+                              <div key={idx} className="flex items-center gap-3">
                                 <img
                                   src={item.image || item.product?.image || (Array.isArray(item.product?.images) && item.product.images[0]) || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900'}
                                   alt={item.name || 'Garment Piece'}
                                   onError={(e) => {
                                     e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
                                   }}
-                                  className="w-14 h-16 object-cover rounded-xs border border-[#E8E3DE] bg-[#F8F6F3]"
+                                  className="w-12 h-14 object-cover rounded-xs border border-[#E8E3DE] bg-[#F8F6F3] shrink-0"
                                 />
-                                <div className="text-xs">
-                                  <p className="font-semibold text-[#1A1A1A] truncate max-w-[140px]">
+                                <div className="text-xs min-w-0 flex-1">
+                                  <p className="font-semibold text-[#1A1A1A] truncate">
                                     {item.name || 'Garment Piece'}
                                   </p>
-                                  <p className="text-[11px] text-[#6B6B6B]">
+                                  <p className="text-[11px] text-[#6B6B6B] mt-0.5">
                                     {item.selectedSize || item.size || 'Standard'} • Qty: {Number(item.quantity || 1)}
                                   </p>
                                 </div>
                               </div>
                             ))}
+
+                            {(order.items?.length || 0) > 2 && (
+                              <p className="text-[11px] text-[#A68758] font-medium pl-1">
+                                +{order.items.length - 2} more item{order.items.length - 2 === 1 ? '' : 's'}
+                              </p>
+                            )}
                           </div>
 
                           {['pending', 'confirmed', 'processing'].includes(order.status?.toLowerCase()) && (
-                            <div className="flex items-center gap-2">
+                            <div className="shrink-0 self-start sm:self-auto">
                               <button
                                 onClick={() => setCancelOrderModal({ isOpen: true, order: order, isLoading: false })}
                                 className="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-neutral-500 hover:text-red-700 border border-[#E8E3DE] hover:border-red-300 rounded-xs transition-colors cursor-pointer bg-white"

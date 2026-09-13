@@ -428,6 +428,128 @@ export const CheckoutPage = ({
     );
   }
 
+  // Helper: Render Order Summary Card
+  const renderOrderSummary = (isMobile = false) => (
+    <div className={`bg-white p-6 sm:p-8 rounded-[4px] border border-[#E8E3DE] shadow-xs space-y-6 ${!isMobile ? 'sticky top-24' : ''}`}>
+      <div className="flex items-center justify-between border-b border-[#E8E3DE] pb-4">
+        <h3 className="font-serif text-lg font-bold text-[#1A1A1A]">Order Summary</h3>
+        <span className="text-xs text-[#6B6B6B] font-mono">
+          {items.reduce((acc, i) => acc + i.quantity, 0)} Items
+        </span>
+      </div>
+
+      {/* Items List */}
+      <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+        {items.map((item) => (
+          <div key={item.id} className="flex gap-3 items-center justify-between text-xs">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="relative shrink-0">
+                <img
+                  src={item.product?.image || item.product?.images?.[0] || item.image || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900'}
+                  alt={item.product?.name || item.name || 'Product'}
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+                  }}
+                  className="w-14 h-16 object-cover rounded-xs border border-[#E8E3DE] bg-[#FAF8F5]"
+                />
+                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1A1A1A] text-white rounded-full text-[9px] font-bold flex items-center justify-center font-mono">
+                  {item.quantity}
+                </span>
+              </div>
+              <div className="min-w-0">
+                <h4 className="font-bold text-[#1A1A1A] truncate">{item.product?.name || item.name}</h4>
+                <div className="text-[11px] text-[#6B6B6B] mt-0.5">
+                  Size: {item.selectedSize} • {item.selectedColor?.name || 'Standard'}
+                </div>
+                {item.product?.isStockAvailable === false && (
+                  <div className="text-[10px] text-rose-700 font-bold mt-0.5">Out of Stock</div>
+                )}
+              </div>
+            </div>
+            <div className="font-mono font-bold text-right text-[#1A1A1A] shrink-0">
+              ₹{(item.product.price * item.quantity).toFixed(2)}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Promo Code Input */}
+      <div className="pt-2 border-t border-[#E8E3DE] space-y-2">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Tag className="w-3.5 h-3.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
+            <input
+              type="text"
+              placeholder={storeSettings?.promoCode || 'SUMI15'}
+              value={promoInput}
+              onChange={(e) => setPromoInput(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C] uppercase font-mono"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleApplyPromo}
+            disabled={isApplyingPromo}
+            className="px-4 py-2 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-semibold uppercase tracking-wider rounded-xs transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {isApplyingPromo ? '...' : 'Apply'}
+          </button>
+        </div>
+
+        {promoMessage && (
+          <p className={`text-[11px] ${promoMessage.isError ? 'text-rose-600' : 'text-emerald-700 font-medium'}`}>
+            {promoMessage.text}
+          </p>
+        )}
+        {activePromoCode && (
+          <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#A68758] font-mono">
+            <Tag className="w-3 h-3" />
+            <span>Active code: <strong>{activePromoCode}</strong> ({(activeDiscountRate * 100).toFixed(0)}% OFF)</span>
+          </div>
+        )}
+      </div>
+
+      {/* Cost Calculations Breakdown */}
+      <div className="space-y-2.5 text-xs pt-3 border-t border-[#E8E3DE]">
+        <div className="flex justify-between text-[#6B6B6B]">
+          <span>Subtotal ({items.reduce((acc, i) => acc + i.quantity, 0)} items)</span>
+          <span className="font-mono text-[#1A1A1A]">₹{subtotal.toFixed(2)}</span>
+        </div>
+
+        {discountAmount > 0 && (
+          <div className="flex justify-between text-emerald-700">
+            <span>Discount ({(activeDiscountRate * 100).toFixed(0)}% OFF)</span>
+            <span className="font-mono">-₹{discountAmount.toFixed(2)}</span>
+          </div>
+        )}
+
+        <div className="flex justify-between text-[#6B6B6B]">
+          <span>Standard Shipping</span>
+          <span className="font-mono text-[#1A1A1A]">
+            {shippingCost === 0 ? (
+              <span className="text-emerald-700 uppercase font-semibold">Free</span>
+            ) : (
+              `₹${Number(shippingCost).toFixed(2)}`
+            )}
+          </span>
+        </div>
+
+        <div className="flex justify-between text-[#6B6B6B]">
+          <span>Import Duties & VAT</span>
+          <span className="font-mono text-[#1A1A1A]">₹0.00 (Inclusive)</span>
+        </div>
+
+        <div className="flex justify-between items-baseline pt-4 border-t-2 border-[#1A1A1A] text-[#1A1A1A]">
+          <span className="font-bold text-sm">Total </span>
+          <div className="text-right">
+            <span className="font-sans text-2xl font-bold">₹{total.toFixed(2)}</span>
+            <span className="text-[10px] text-[#6B6B6B] block font-mono">Inclusive of all taxes</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   // 2. MAIN ACTIVE CHECKOUT WORKSPACE
   return (
     <div className="min-h-screen bg-[#FAF8F5] py-8 lg:py-12 animate-fade-in font-sans text-[#1A1A1A]">
@@ -570,19 +692,7 @@ export const CheckoutPage = ({
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                      Apartment / Suite / Landmark
-                    </label>
-                    <input
-                      type="text"
-                      value={shippingAddress.apartment}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, apartment: e.target.value })}
-                      placeholder="Suite / Landmark (Optional)"
-                      className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
-                    />
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
                       City *
@@ -598,14 +708,14 @@ export const CheckoutPage = ({
                   </div>
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                      State / Province *
+                      Postal Code / PIN *
                     </label>
                     <input
                       required
                       type="text"
-                      value={shippingAddress.state}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
-                      placeholder="e.g. Maharashtra"
+                      value={shippingAddress.postalCode}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, postalCode: e.target.value })}
+                      placeholder="400001"
                       className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
                     />
                   </div>
@@ -614,21 +724,20 @@ export const CheckoutPage = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                      PIN Code *
+                      State / Region *
                     </label>
                     <input
                       required
                       type="text"
-                      placeholder="e.g. 400050"
-                      pattern="[0-9]{6}"
-                      value={shippingAddress.postalCode}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, postalCode: e.target.value })}
-                      className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C] font-mono"
+                      value={shippingAddress.state}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
+                      placeholder="Maharashtra"
+                      className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C]"
                     />
                   </div>
                   <div>
                     <label className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A1A] block mb-1">
-                      Country *
+                      Country
                     </label>
                     <select
                       value={shippingAddress.country}
@@ -645,6 +754,11 @@ export const CheckoutPage = ({
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Mobile Order Summary: Displayed BEFORE Payment Selection on mobile screens (< lg) */}
+            <div className="block lg:hidden">
+              {renderOrderSummary(true)}
             </div>
 
             {/* Step 3: Payment Method */}
@@ -732,125 +846,9 @@ export const CheckoutPage = ({
             </div>
           </form>
 
-          {/* Right Column: Order Summary Sticky Panel (5 cols) */}
-          <div className="lg:col-span-5">
-            <div className="bg-white p-6 sm:p-8 rounded-[4px] border border-[#E8E3DE] shadow-xs space-y-6 sticky top-24">
-              <div className="flex items-center justify-between border-b border-[#E8E3DE] pb-4">
-                <h3 className="font-serif text-lg font-bold text-[#1A1A1A]">Order Summary</h3>
-                <span className="text-xs text-[#6B6B6B] font-mono">
-                  {items.reduce((acc, i) => acc + i.quantity, 0)} Items
-                </span>
-              </div>
-
-              {/* Items List */}
-              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
-                {items.map((item) => (
-                  <div key={item.id} className="flex gap-3 items-center justify-between text-xs">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="relative shrink-0">
-                        <img
-                          src={item.product?.image || item.product?.images?.[0] || item.image || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900'}
-                          alt={item.product?.name || item.name || 'Product'}
-                          onError={(e) => {
-                            e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
-                          }}
-                          className="w-14 h-16 object-cover rounded-xs border border-[#E8E3DE] bg-[#FAF8F5]"
-                        />
-                        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1A1A1A] text-white rounded-full text-[9px] font-bold flex items-center justify-center font-mono">
-                          {item.quantity}
-                        </span>
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="font-bold text-[#1A1A1A] truncate">{item.product.name}</h4>
-                        <div className="text-[11px] text-[#6B6B6B] mt-0.5">
-                          Size: {item.selectedSize} • {item.selectedColor?.name || 'Standard'}
-                        </div>
-                        {item.product?.isStockAvailable === false && (
-                          <div className="text-[10px] text-rose-700 font-bold mt-0.5">Out of Stock</div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="font-mono font-bold text-right text-[#1A1A1A] shrink-0">
-                      ₹{(item.product.price * item.quantity).toFixed(2)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Promo Code Input */}
-              <div className="pt-2 border-t border-[#E8E3DE] space-y-2">
-                <form onSubmit={handleApplyPromo} className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Tag className="w-3.5 h-3.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
-                    <input
-                      type="text"
-                      placeholder={storeSettings?.promoCode || 'SUMI15'}
-                      value={promoInput}
-                      onChange={(e) => setPromoInput(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E3DE] rounded-xs focus:outline-none focus:border-[#C8A87C] uppercase font-mono"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isApplyingPromo}
-                    className="px-4 py-2 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-semibold uppercase tracking-wider rounded-xs transition-colors cursor-pointer disabled:opacity-50"
-                  >
-                    {isApplyingPromo ? '...' : 'Apply'}
-                  </button>
-                </form>
-
-                {promoMessage && (
-                  <p className={`text-[11px] ${promoMessage.isError ? 'text-rose-600' : 'text-emerald-700 font-medium'}`}>
-                    {promoMessage.text}
-                  </p>
-                )}
-                {activePromoCode && (
-                  <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#A68758] font-mono">
-                    <Tag className="w-3 h-3" />
-                    <span>Active code: <strong>{activePromoCode}</strong> ({(activeDiscountRate * 100).toFixed(0)}% OFF)</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Cost Calculations Breakdown */}
-              <div className="space-y-2.5 text-xs pt-3 border-t border-[#E8E3DE]">
-                <div className="flex justify-between text-[#6B6B6B]">
-                  <span>Subtotal ({items.reduce((acc, i) => acc + i.quantity, 0)} items)</span>
-                  <span className="font-mono text-[#1A1A1A]">₹{subtotal.toFixed(2)}</span>
-                </div>
-
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-emerald-700">
-                    <span>Discount ({(activeDiscountRate * 100).toFixed(0)}% OFF)</span>
-                    <span className="font-mono">-₹{discountAmount.toFixed(2)}</span>
-                  </div>
-                )}
-
-                <div className="flex justify-between text-[#6B6B6B]">
-                  <span>Standard Shipping</span>
-                  <span className="font-mono text-[#1A1A1A]">
-                    {shippingCost === 0 ? (
-                      <span className="text-emerald-700 uppercase font-semibold">Free</span>
-                    ) : (
-                      `₹${Number(shippingCost).toFixed(2)}`
-                    )}
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-[#6B6B6B]">
-                  <span>Import Duties & VAT</span>
-                  <span className="font-mono text-[#1A1A1A]">₹0.00 (Inclusive)</span>
-                </div>
-
-                <div className="flex justify-between items-baseline pt-4 border-t-2 border-[#1A1A1A] text-[#1A1A1A]">
-                  <span className="font-bold text-sm">Total </span>
-                  <div className="text-right">
-                    <span className="font-sans text-2xl font-bold">₹{total.toFixed(2)}</span>
-                    <span className="text-[10px] text-[#6B6B6B] block font-mono">Inclusive of all taxes</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {/* Right Column: Order Summary Sticky Panel (Desktop >= lg) */}
+          <div className="hidden lg:block lg:col-span-5">
+            {renderOrderSummary(false)}
           </div>
         </div>
       </div>

@@ -75,7 +75,7 @@ export const HeroCarousel = ({ slides = [], onSelectCategory }) => {
         <img
           src={slide.image}
           alt={slide.title || slide.heading || 'Storefront Editorial'}
-          className="w-full h-full object-cover object-center"
+          className="w-full h-full object-cover object-right"
           loading={idx === 0 ? 'eager' : 'lazy'}
           decoding={idx === 0 ? 'sync' : 'async'}
           fetchPriority={idx === 0 ? 'high' : 'low'}
@@ -124,13 +124,13 @@ export const HeroCarousel = ({ slides = [], onSelectCategory }) => {
     </div>
 
     {/* Navigation Arrow Buttons */}
-    <div className="absolute inset-y-0 left-4 md:left-8 z-30 flex items-center">
+    <div className="absolute inset-y-0 left-4 md:left-8 z-30 hidden md:flex items-center">
       <button id="hero-carousel-prev-btn" onClick={handlePrev} className="w-11 h-11 md:w-13 md:h-13 rounded-full bg-black/30 hover:bg-[#1A1A1A] text-white/80 hover:text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-all duration-200 shadow-lg hover:scale-105 focus:outline-none" aria-label="Previous Slide">
         <ChevronLeft className="w-6 h-6 -ml-0.5" />
       </button>
     </div>
 
-    <div className="absolute inset-y-0 right-4 md:right-8 z-30 flex items-center">
+    <div className="absolute inset-y-0 right-4 md:right-8 z-30 hidden md:flex items-center">
       <button id="hero-carousel-next-btn" onClick={handleNext} className="w-11 h-11 md:w-13 md:h-13 rounded-full bg-black/30 hover:bg-[#1A1A1A] text-white/80 hover:text-white backdrop-blur-md border border-white/20 flex items-center justify-center transition-all duration-200 shadow-lg hover:scale-105 focus:outline-none" aria-label="Next Slide">
         <ChevronRight className="w-6 h-6 -mr-0.5" />
       </button>

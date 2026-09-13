@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Search, Heart, ShoppingBag, Menu, X, ChevronDown, Sparkles, ArrowRight, User as UserIcon, LogOut } from 'lucide-react';
+import { Search, Heart, ShoppingBag, Menu, X, ChevronDown, Sparkles, ArrowRight, User as UserIcon, LogOut, MapPin, HelpCircle } from 'lucide-react';
 import { ConfirmModal } from './ConfirmModal';
 
 export const Header = ({
@@ -103,9 +103,9 @@ export const Header = ({
           : 'bg-[#FAF8F5] border-b border-[#E8E4DC]/60 py-3.5'
           }`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-4">
-          {/* Mobile Hamburger + Search */}
-          <div className="flex items-center gap-1.5 lg:hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-2 sm:gap-4">
+          {/* Left: Mobile Hamburger (< lg) */}
+          <div className="flex items-center lg:hidden">
             <button
               id="mobile-menu-toggle-btn"
               onClick={() => setMobileMenuOpen(true)}
@@ -114,32 +114,16 @@ export const Header = ({
             >
               <Menu className="w-6 h-6" />
             </button>
-            <button
-              id="mobile-search-btn"
-              onClick={onOpenSearch}
-              className="p-2 text-[#1D241C] hover:text-[#C69E58] transition-colors cursor-pointer"
-              aria-label="Search store"
-            >
-              <Search className="w-5 h-5" />
-            </button>
           </div>
 
-          {/* Brand Logo */}
-          <div className="flex items-center shrink-0">
+          {/* Center on mobile, Left on desktop: Brand Logo */}
+          <div className="flex items-center justify-center lg:justify-start flex-1 lg:flex-initial">
             <Link to="/" onClick={handleBrandClick} className="group flex items-center gap-2.5 py-1">
               <img
-                src="/assets/images/Logo.png"
+                src="/assets/images/Logo2.png"
                 alt="Murari's Glam & Glow"
-                className="h-10 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                className="h-10 sm:h-14 w-44 object-full transition-transform duration-300 group-hover:scale-105"
               />
-              <div className="hidden sm:flex flex-col text-left">
-                <span className="font-serif text-lg md:text-xl font-bold tracking-[0.12em] text-[#1D241C] group-hover:text-[#506040] transition-colors leading-tight">
-                  MURARI'S
-                </span>
-                <span className="text-[9px] uppercase tracking-[0.25em] text-[#C69E58] font-semibold leading-none">
-                  GLAM & GLOW
-                </span>
-              </div>
             </Link>
           </div>
 
@@ -165,8 +149,21 @@ export const Header = ({
             })}
           </nav>
 
-          {/* Right Action Controls: Search, User, Wishlist, Cart */}
+          {/* Right Action Controls:
+              On Mobile: ONLY Search is displayed on the right -> [Menu] [Logo] [Search]
+              On Desktop: Search Trigger, User Account, Wishlist, Cart
+          */}
           <div className="flex items-center gap-1.5 sm:gap-2.5">
+            {/* Mobile Search Button (Rightmost element on mobile) */}
+            <button
+              id="mobile-search-btn"
+              onClick={onOpenSearch}
+              className="p-2 -mr-2 text-[#1D241C] hover:text-[#C69E58] transition-colors cursor-pointer lg:hidden"
+              aria-label="Search store"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+
             {/* Desktop Search Trigger */}
             <button
               id="desktop-search-trigger"
@@ -180,8 +177,8 @@ export const Header = ({
               </kbd>
             </button>
 
-            {/* User Account / Login Button */}
-            <div className="relative">
+            {/* User Account / Login Button (Desktop only) */}
+            <div className="relative hidden lg:block">
               {currentUser ? (
                 <div>
                   <button
@@ -201,6 +198,16 @@ export const Header = ({
                         <p className="font-semibold text-[#1A1A1A] truncate">{currentUser.name}</p>
                         <p className="text-[10px] text-[#6B6B6B] font-mono uppercase tracking-wider">My Account</p>
                       </div>
+
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          navigate('/account');
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-[#F8F6F3] text-[#1A1A1A] transition-colors cursor-pointer flex items-center justify-between"
+                      >
+                        <span>My Profile</span>
+                      </button>
 
                       <button
                         onClick={() => {
@@ -288,14 +295,14 @@ export const Header = ({
               )}
             </div>
 
-            {/* Wishlist Button (Navigates to Wishlist Page) */}
+            {/* Wishlist Button (Desktop only) */}
             <button
               id="header-wishlist-btn"
               onClick={() => {
                 if (onNavigateToPage) onNavigateToPage('wishlist');
                 navigate('/wishlist');
               }}
-              className={`relative p-2 transition-colors rounded-full hover:bg-white/80 cursor-pointer flex items-center justify-center ${isCurrentPath('/wishlist') ? 'text-[#C8A87C]' : 'text-[#1A1A1A] hover:text-[#C8A87C]'
+              className={`relative p-2 transition-colors rounded-full hover:bg-white/80 cursor-pointer items-center justify-center hidden lg:flex ${isCurrentPath('/wishlist') ? 'text-[#C8A87C]' : 'text-[#1A1A1A] hover:text-[#C8A87C]'
                 }`}
               aria-label={`Wishlist with ${wishlistCount} items`}
               title="Saved Wishlist Page"
@@ -311,14 +318,14 @@ export const Header = ({
               )}
             </button>
 
-            {/* Cart Button (Navigates to Cart Page) */}
+            {/* Cart Button (Desktop only) */}
             <button
               id="header-cart-btn"
               onClick={() => {
                 if (onNavigateToPage) onNavigateToPage('cart');
                 navigate('/cart');
               }}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xs transition-colors shadow-2xs group cursor-pointer shrink-0 ${isCurrentPath('/cart')
+              className={`items-center gap-2 px-3.5 py-2 rounded-xs transition-colors shadow-2xs group cursor-pointer shrink-0 hidden lg:flex ${isCurrentPath('/cart')
                 ? 'bg-[#C8A87C] text-[#1A1A1A]'
                 : 'bg-[#1A1A1A] text-white hover:bg-[#C8A87C] hover:text-[#1A1A1A]'
                 }`}
@@ -333,9 +340,6 @@ export const Header = ({
                   </span>
                 )}
               </div>
-              {/* <span className="inline-block text-xs font-semibold tracking-wider uppercase">
-                {cartCount > 0 ? `₹${cartTotal.toFixed(2)}` : 'Bag'}
-              </span> */}
             </button>
           </div>
         </div>
@@ -349,91 +353,185 @@ export const Header = ({
             className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-fade-in"
           />
 
-          <div className="relative w-4/5 max-w-sm bg-[#FAF8F5] h-full shadow-2xl z-10 flex flex-col justify-between p-6 overflow-y-auto">
-            <div>
-              <div className="flex items-center justify-between pb-5 border-b border-[#E8E4DC]">
-                <div className="flex items-center gap-2.5">
-                  <img
-                    src="/assets/images/Logo.png"
-                    alt="Murari's Glam & Glow"
-                    className="h-9 w-auto object-contain"
-                  />
-                  <div>
-                    <div className="font-serif text-base font-bold tracking-wider text-[#1D241C]">
-                      MURARI'S
-                    </div>
-                    <div className="text-[8px] uppercase tracking-[0.2em] text-[#C69E58] font-medium">
-                      GLAM & GLOW
-                    </div>
-                  </div>
-                </div>
-                <button
-                  id="close-mobile-nav-btn"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 text-neutral-600 hover:text-black cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+          <div className="relative w-4/5 max-w-sm bg-[#FAF8F5] h-full shadow-2xl z-10 flex flex-col justify-between overflow-y-auto">
+            {/* Top Brand & Close Bar */}
+            <div className="p-5 pb-4  flex items-center justify-between bg-white/80 backdrop-blur-sm sticky top-0 z-20">
+              <div className="flex items-center gap-2.5">
+                <img
+                  src="/assets/images/Logo2.png"
+                  alt="Murari's Glam & Glow"
+                  className="h-14 w-auto object-contain"
+                />
 
-              {/* Mobile Navigation List */}
-              <div className="py-6 space-y-4">
-                <p className="text-xs font-bold uppercase tracking-wider text-[#6B6864] mb-2">
-                  Shop By Category
-                </p>
-                {navCategories.map((cat) => {
-                  const isActive = isCategoryActive(cat);
-                  return (
-                    <button
-                      key={cat.slug}
-                      onClick={() => handleCategoryClick(cat)}
-                      className={`w-full flex items-center justify-between py-2 text-left text-base font-medium transition-colors cursor-pointer ${isActive ? 'text-[#506040] font-semibold' : 'text-[#1D241C]'
-                        }`}
-                    >
-                      <span>{cat.label}</span>
-                      <ArrowRight className="w-4 h-4 text-neutral-400" />
-                    </button>
-                  );
-                })}
               </div>
+              <button
+                id="close-mobile-nav-btn"
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-1.5 text-neutral-500 hover:text-neutral-900 rounded-full hover:bg-neutral-100 transition-colors cursor-pointer"
+                aria-label="Close menu"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            {/* Mobile Footer Auth / Settings */}
-            <div className="pt-6 border-t border-[#E8E3DE] space-y-4 text-sm">
+            <div className="p-3 flex-1 space-y-6">
+              {/* Account / User Card */}
               {currentUser ? (
-                <div className="space-y-3">
+                <div className="bg-white rounded-lg p-4 border border-[#E8E4DC] shadow-2xs space-y-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-xs font-bold font-mono">
-                      {currentUser.name.charAt(0)}
+                    <div className="w-10 h-10 rounded-full bg-[#1D241C] text-[#C69E58] border border-[#C69E58]/30 flex items-center justify-center text-sm font-bold font-mono shrink-0 shadow-xs">
+                      {currentUser.name.charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <p className="font-semibold text-[#1A1A1A]">{currentUser.name}</p>
-                      <p className="text-xs text-[#6B6864]">{currentUser.email}</p>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-semibold text-sm text-[#1D241C] truncate">{currentUser.name}</p>
+                      </div>
+                      <p className="text-[11px] text-[#6B6864] truncate">{currentUser.email || currentUser.phone || 'Member'}</p>
                     </div>
+                  </div>
+
+                  {/* Profile & Account Quick Links */}
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#E8E4DC]/80">
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate('/account');
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#1D241C] bg-[#FAF8F5] hover:bg-[#EFECE6] rounded-sm transition-colors text-left cursor-pointer"
+                    >
+                      <UserIcon className="w-3.5 h-3.5 text-[#C69E58]" />
+                      <span>My Profile</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate('/account/orders');
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-[#1D241C] bg-[#FAF8F5] hover:bg-[#EFECE6] rounded-sm transition-colors text-left cursor-pointer"
+                    >
+                      <ShoppingBag className="w-3.5 h-3.5 text-[#506040]" />
+                      <span>My Orders</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate('/contact');
+                      }}
+                      className="flex col-span-2 justify-center items-center gap-2 px-3 py-2 text-xs font-medium text-[#1D241C] bg-[#FAF8F5] hover:bg-[#EFECE6] rounded-sm transition-colors text-left cursor-pointer"
+                    >
+                      <HelpCircle className="w-3.5 h-3.5 text-[#506040]" />
+                      <span>Help & Support</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-lg p-4 border border-[#E8E4DC] shadow-2xs space-y-3">
+                  <div className="space-y-1">
+                    <p className="font-serif text-sm font-bold text-[#1D241C]">Welcome to Murari's</p>
+                    <p className="text-xs text-[#6B6864]">Sign in for an exclusive shopping experience.</p>
                   </div>
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      setShowLogoutModal(true);
+                      if (onNavigateToPage) onNavigateToPage('login');
+                      navigate('/login');
                     }}
-                    className="w-full py-2.5 text-center text-rose-600 bg-rose-50 rounded-xs font-semibold uppercase tracking-wider text-xs cursor-pointer"
+                    className="w-full py-2.5 px-4 bg-[#1D241C] text-[#FAF8F5] hover:bg-[#2A3428] rounded-sm font-semibold uppercase tracking-wider text-xs transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
                   >
-                    Sign Out
+                    <UserIcon className="w-4 h-4 text-[#C69E58]" />
+                    <span>Member Sign In</span>
                   </button>
                 </div>
-              ) : (
+              )}
+
+              {/* Wishlist & Bag Highlights in Drawer */}
+              <div className="space-y-1 bg-white rounded-lg p-2 border border-[#E8E4DC] shadow-2xs">
+                {/* Wishlist Nav Button */}
                 <button
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    if (onNavigateToPage) onNavigateToPage('login');
-                    navigate('/login');
+                    if (onNavigateToPage) onNavigateToPage('wishlist');
+                    navigate('/wishlist');
                   }}
-                  className="w-full py-2.5 text-center bg-[#1A1A1A] text-white rounded-xs font-semibold uppercase tracking-wider text-xs cursor-pointer"
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm text-sm font-medium transition-colors cursor-pointer ${isCurrentPath('/wishlist') ? 'bg-[#FAF8F5] text-[#C69E58] font-semibold' : 'text-[#1D241C] hover:bg-[#FAF8F5]'
+                    }`}
                 >
-                  Member Sign In
+                  <div className="flex items-center gap-3">
+                    <Heart className={`w-4 h-4 ${wishlistCount > 0 ? 'fill-[#C69E58] text-[#C69E58]' : 'text-[#6B6864]'}`} />
+                    <span>Saved Wishlist</span>
+                  </div>
+                  {wishlistCount > 0 ? (
+                    <span className="px-2 py-0.5 text-[11px] font-bold bg-[#FAF8F5] text-[#C69E58] border border-[#C69E58]/30 rounded-full">
+                      {wishlistCount} items
+                    </span>
+                  ) : (
+                    <ArrowRight className="w-4 h-4 text-neutral-300" />
+                  )}
                 </button>
-              )}
+
+                {/* Shopping Bag Nav Button */}
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    if (onNavigateToPage) onNavigateToPage('cart');
+                    navigate('/cart');
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm text-sm font-medium transition-colors cursor-pointer ${isCurrentPath('/cart') ? 'bg-[#FAF8F5] text-[#1D241C] font-semibold' : 'text-[#1D241C] hover:bg-[#FAF8F5]'
+                    }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <ShoppingBag className="w-4 h-4 text-[#6B6864]" />
+                    <span>Shopping Bag</span>
+                  </div>
+                  {cartCount > 0 ? (
+                    <span className="px-2 py-0.5 text-[11px] font-bold bg-[#1D241C] text-white rounded-full">
+                      {cartCount} items
+                    </span>
+                  ) : (
+                    <ArrowRight className="w-4 h-4 text-neutral-300" />
+                  )}
+                </button>
+              </div>
+
+              {/* Shop By Category */}
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#6B6864] px-1">
+                  Shop By Category
+                </p>
+                <div className="bg-white rounded-lg divide-y divide-[#E8E4DC]/60 border border-[#E8E4DC] shadow-2xs overflow-hidden">
+                  {navCategories.map((cat) => {
+                    const isActive = isCategoryActive(cat);
+                    return (
+                      <button
+                        key={cat.slug}
+                        onClick={() => handleCategoryClick(cat)}
+                        className={`w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium transition-colors cursor-pointer ${isActive ? 'bg-[#FAF8F5] text-[#506040] font-semibold' : 'text-[#1D241C] hover:bg-[#FAF8F5]'
+                          }`}
+                      >
+                        <span>{cat.label}</span>
+                        <ArrowRight className={`w-3.5 h-3.5 ${isActive ? 'text-[#506040]' : 'text-neutral-300'}`} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
+
+            {/* Footer with Sign Out */}
+            {currentUser && (
+              <div className="p-5 border-t border-[#E8E4DC] bg-white">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setShowLogoutModal(true);
+                  }}
+                  className="w-full py-2.5 text-center text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-sm font-semibold uppercase tracking-wider text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
