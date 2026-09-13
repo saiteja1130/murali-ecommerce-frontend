@@ -241,6 +241,20 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Auth Actions
+  const updateProfile = async (profileData) => {
+    try {
+      const response = await api.put('/api/users/profile', profileData);
+      if (response.data?.status) {
+        setCurrentUser(response.data.user);
+        return response.data;
+      }
+      throw new Error(response.data?.message || 'Failed to update profile');
+    } catch (error) {
+      console.error('Update profile error:', error.message);
+      throw error;
+    }
+  };
+
   const login = async (email, password) => {
     const response = await api.post('/api/auth/login', { email, password });
     if (response.data.status) {
@@ -290,9 +304,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('sumilux_addresses');
   };
 
-  const updateProfile = (updatedData) => {
-    setCurrentUser((prev) => ({ ...prev, ...updatedData }));
-  };
+
 
   // Address Actions with Backend Synchronization
   const addAddress = async (newAddr) => {
@@ -482,11 +494,11 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated: !!currentUser,
         login,
         signup,
+        updateProfile,
         requestOtp,
         loginWithOtp,
         verifyEmail,
         logout,
-        updateProfile,
         addresses: userAddresses,
         fetchAddresses,
         addAddress,

@@ -42,7 +42,7 @@ export const AccountPage = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { tab = 'orders', id: orderIdParam } = useParams();
-  const { cancelOrder, fetchOrders } = useAuth();
+  const { cancelOrder, fetchOrders, updateProfile } = useAuth();
 
   // Determine active tab from route or state
   const [activeTab, setActiveTab] = useState(tab);
@@ -66,10 +66,31 @@ export const AccountPage = ({
   });
 
   // Profile Edit State
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileName, setProfileName] = useState(currentUser?.name || '');
+  const [profileEmail, setProfileEmail] = useState(currentUser?.email || '');
   const [profilePhone, setProfilePhone] = useState(currentUser?.phone || '');
   const [profileMessage, setProfileMessage] = useState('');
+
+  const handleSaveProfile = async () => {
+    setIsSavingProfile(true);
+    setProfileMessage('');
+    try {
+      if (updateProfile) {
+        await updateProfile({
+          name: profileName,
+          email: profileEmail,
+          phone: profilePhone
+        });
+        setProfileMessage('Profile details saved successfully.');
+      }
+    } catch (err) {
+      setProfileMessage(err.message || 'Failed to update profile.');
+    } finally {
+      setIsSavingProfile(false);
+      setTimeout(() => setProfileMessage(''), 4000);
+    }
+  };
 
   // Confirmation Modals State
   const [logoutModal, setLogoutModal] = useState({ isOpen: false });
@@ -250,19 +271,6 @@ export const AccountPage = ({
               <span className="font-mono text-[11px] opacity-80">{orders.length}</span>
             </button>
 
-            <button
-              onClick={() => handleTabChange('payments')}
-              className={`w-full flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wider rounded-xs transition-all cursor-pointer ${activeTab === 'payments'
-                  ? 'bg-[#1A1A1A] text-white shadow-xs'
-                  : 'text-[#6B6B6B] hover:text-[#1A1A1A] hover:bg-[#F8F6F3]'
-                }`}
-            >
-              <div className="flex items-center gap-3">
-                <CreditCard className="w-4 h-4 text-[#C8A87C]" />
-                <span>Payment History</span>
-              </div>
-              <span className="font-mono text-[11px] opacity-80">{payments.length}</span>
-            </button>
 
             <button
               onClick={() => handleTabChange('addresses')}
@@ -426,16 +434,10 @@ export const AccountPage = ({
                             ))}
                           </div>
 
-                          {order.status === 'confirmed' && (
+                          {['pending', 'confirmed', 'processing'].includes(order.status?.toLowerCase()) && (
                             <div className="flex items-center gap-2">
                               <button
-                                onClick={async () => {
-                                  try {
-                                    await cancelOrder(order.id);
-                                  } catch (err) {
-                                    console.error('Cancel order error:', err);
-                                  }
-                                }}
+                                onClick={() => setCancelOrderModal({ isOpen: true, order: order, isLoading: false })}
                                 className="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-neutral-500 hover:text-red-700 border border-[#E8E3DE] hover:border-red-300 rounded-xs transition-colors cursor-pointer bg-white"
                               >
                                 <span>Cancel Order</span>
@@ -496,7 +498,7 @@ export const AccountPage = ({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {['pending', 'processing'].includes(activeOrder.status?.toLowerCase()) && (
+                    {['pending', 'confirmed', 'processing'].includes(activeOrder.status?.toLowerCase()) && (
                       <button
                         onClick={() => setCancelOrderModal({ isOpen: true, order: activeOrder, isLoading: false })}
                         className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-rose-200 hover:bg-rose-50 text-xs font-semibold text-rose-700 rounded-xs transition-colors cursor-pointer shadow-2xs"
@@ -666,7 +668,7 @@ export const AccountPage = ({
                       </div>
                       {Number(activeOrder.discount || 0) > 0 && (
                         <div className="flex justify-between py-1 text-[#506040]">
-                          <span>Discount Applied</span>
+                          <span>Discount Applied {activeOrder.promoCode ? `(${activeOrder.promoCode})` : ''}</span>
                           <span className="font-mono">-₹{Number(activeOrder.discount).toFixed(2)}</span>
                         </div>
                       )}
@@ -703,88 +705,7 @@ export const AccountPage = ({
               </div>
             )}
 
-            {/* ============================================================
-                TAB 3: PAYMENT HISTORY
-            ============================================================ */}
-            {activeTab === 'payments' && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between pb-3 border-b border-[#E8E3DE]">
-                  <div>
-                    <h2 className="font-serif text-xl font-bold text-[#1D241C]">Payment History</h2>
-                    <p className="text-xs text-[#687163] mt-0.5">
-                      Verified records of your UPI transfers, COD orders, and Razorpay transactions.
-                    </p>
-                  </div>
-                </div>
 
-                {payments.length === 0 ? (
-                  <div className="bg-white rounded-[4px] border border-[#E8E3DE] p-12 text-center text-[#687163] text-xs space-y-3">
-                    <CreditCard className="w-10 h-10 text-[#C8A87C] mx-auto opacity-50" />
-                    <h3 className="font-serif text-base font-bold text-[#1D241C]">No Payment Records Found</h3>
-                    <p>Once you complete a UPI or COD purchase, transaction receipts will appear here.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {payments.map((p) => (
-                      <div
-                        key={p.id || p.transactionId}
-                        className="bg-white rounded-[4px] border border-[#E8E3DE] p-5 shadow-2xs hover:shadow-xs transition-shadow flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs"
-                      >
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono font-bold text-sm text-[#1D241C]">
-                              {p.transactionId}
-                            </span>
-                            <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold tracking-wider border ${p.status === 'Settled' || p.paymentStatus === 'paid'
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                                  : p.status === 'Refunded' || p.paymentStatus === 'refunded'
-                                    ? 'bg-purple-50 text-purple-800 border-purple-200'
-                                    : p.status === 'Failed' || p.paymentStatus === 'failed'
-                                      ? 'bg-rose-50 text-rose-800 border-rose-200'
-                                      : 'bg-amber-50 text-amber-800 border-amber-200'
-                                }`}
-                            >
-                              {p.status || p.paymentStatus}
-                            </span>
-                          </div>
-                          <div className="text-[11px] text-[#687163] flex items-center gap-3">
-                            <span>Order #{p.orderNumber}</span>
-                            <span>•</span>
-                            <span>{p.method}</span>
-                            <span>•</span>
-                            <span>{p.date ? new Date(p.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}</span>
-                          </div>
-                          {p.razorpayPaymentId && (
-                            <div className="text-[10px] font-mono text-[#A68758]">
-                              Razorpay ID: {p.razorpayPaymentId}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-[#F2EFE9]">
-                          <div className="text-left sm:text-right">
-                            <div className="text-[10px] uppercase tracking-wider text-[#687163]">Amount Paid</div>
-                            <div className="font-mono font-bold text-base text-[#1D241C]">
-                              ₹{Number(p.amount || 0).toFixed(2)}
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => {
-                              setSelectedOrderId(p.orderId || p.orderNumber);
-                              setActiveTab('order-detail');
-                            }}
-                            className="px-3.5 py-1.5 bg-white border border-[#E8E3DE] hover:border-[#C8A87C] text-[#1D241C] text-xs font-semibold rounded-xs transition-colors cursor-pointer"
-                          >
-                            View Order
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* ============================================================
                 TAB 4: ADDRESS BOOK
@@ -907,6 +828,11 @@ export const AccountPage = ({
                 </div>
 
                 <div className="bg-white rounded-[4px] border border-[#E8E3DE] p-6 sm:p-8 shadow-2xs space-y-6">
+                  {profileMessage && (
+                    <div className={`p-3 rounded text-xs font-semibold ${profileMessage.includes('successfully') ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                      {profileMessage}
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="text-xs font-bold uppercase tracking-wider text-[#1D241C] block mb-1">
@@ -914,7 +840,8 @@ export const AccountPage = ({
                       </label>
                       <input
                         type="text"
-                        defaultValue={currentUser?.name || ''}
+                        value={profileName}
+                        onChange={(e) => setProfileName(e.target.value)}
                         placeholder="Your full name"
                         className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58]"
                       />
@@ -925,7 +852,8 @@ export const AccountPage = ({
                       </label>
                       <input
                         type="email"
-                        defaultValue={currentUser?.email || ''}
+                        value={profileEmail}
+                        onChange={(e) => setProfileEmail(e.target.value)}
                         placeholder="you@example.com"
                         className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58]"
                       />
@@ -936,7 +864,8 @@ export const AccountPage = ({
                       </label>
                       <input
                         type="tel"
-                        defaultValue={currentUser?.phone || ''}
+                        value={profilePhone}
+                        onChange={(e) => setProfilePhone(e.target.value)}
                         placeholder="10-digit mobile number"
                         className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E8E4DC] rounded-xl focus:outline-none focus:border-[#C69E58] font-mono"
                       />
@@ -945,10 +874,11 @@ export const AccountPage = ({
 
                   <div className="pt-4 border-t border-[#F2EFE9] flex justify-end">
                     <button
-                      onClick={() => alert('Profile details saved successfully.')}
-                      className="px-6 py-2.5 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-semibold uppercase tracking-wider rounded-xs transition-colors cursor-pointer"
+                      onClick={handleSaveProfile}
+                      disabled={isSavingProfile}
+                      className="px-6 py-2.5 bg-[#1A1A1A] hover:bg-[#C8A87C] text-white hover:text-[#1A1A1A] text-xs font-semibold uppercase tracking-wider rounded-xs transition-colors cursor-pointer disabled:opacity-50"
                     >
-                      Save Profile
+                      {isSavingProfile ? 'Saving...' : 'Save Profile'}
                     </button>
                   </div>
                 </div>

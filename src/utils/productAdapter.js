@@ -24,16 +24,11 @@ export const normalizeProduct = (item) => {
   const hoverImage = images[1] || item.hoverImage || primaryImage;
 
   // 2. Variant, Color & Size Matrix Extraction
-  let colors = [];
-  let sizes = [];
-  let totalStock = 0;
+  const colorMap = new Map();
+  const sizeSet = new Set();
 
   if (Array.isArray(item.variants) && item.variants.length > 0) {
-    const colorMap = new Map();
-    const sizeSet = new Set();
-
     item.variants.forEach((v) => {
-      totalStock += (v.stock || 0);
       if (v.color) {
         const name = v.color.trim();
         const hex = v.colorHex || '#1D241C';
@@ -41,18 +36,38 @@ export const normalizeProduct = (item) => {
           colorMap.set(name.toLowerCase(), { name, hex });
         }
       }
-      if (v.size) {
+      if (v.size && v.size.trim()) {
         sizeSet.add(v.size.trim());
       }
     });
-
-    colors = Array.from(colorMap.values());
-    sizes = Array.from(sizeSet);
-  } else {
-    colors = Array.isArray(item.colors) ? item.colors : [{ name: 'Standard', hex: '#1D241C' }];
-    sizes = Array.isArray(item.sizes) ? item.sizes : ['One Size'];
-    totalStock = item.totalStock !== undefined ? item.totalStock : (item.isStockAvailable !== false ? 25 : 0);
   }
+
+  // Also include product-level colors if any
+  if (Array.isArray(item.colors) && item.colors.length > 0) {
+    item.colors.forEach((c) => {
+      if (typeof c === 'string' && c.trim()) {
+        if (!colorMap.has(c.toLowerCase())) {
+          colorMap.set(c.toLowerCase(), { name: c.trim(), hex: '#1D241C' });
+        }
+      } else if (c && c.name) {
+        if (!colorMap.has(c.name.toLowerCase())) {
+          colorMap.set(c.name.toLowerCase(), { name: c.name.trim(), hex: c.hex || '#1D241C' });
+        }
+      }
+    });
+  }
+
+  // Also include product-level sizes if any
+  if (Array.isArray(item.sizes) && item.sizes.length > 0) {
+    item.sizes.forEach((s) => {
+      if (s && typeof s === 'string' && s.trim()) {
+        sizeSet.add(s.trim());
+      }
+    });
+  }
+
+  let colors = Array.from(colorMap.values());
+  let sizes = Array.from(sizeSet);
 
   if (colors.length === 0) {
     colors = [{ name: 'Standard', hex: '#1D241C' }];
@@ -125,8 +140,8 @@ export const normalizeProduct = (item) => {
     colors,
     sizes,
     variants: item.variants || [],
-    totalStock,
-    isStockAvailable: item.isStockAvailable !== false && (totalStock > 0 || (Array.isArray(item.variants) && item.variants.length === 0)),
+    totalStock: item.isStockAvailable !== false ? 99 : 0,
+    isStockAvailable: item.isStockAvailable !== false,
     rating: item.rating || 5.0,
     reviews: item.reviews || item.reviewCount || 12,
     description: item.description || '',

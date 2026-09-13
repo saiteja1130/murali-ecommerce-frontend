@@ -2,11 +2,20 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag, Star, Check, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
+import { useCart } from '../context/CartContext';
 
-export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlisted, onClickProduct }) => {
+export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlisted: propIsWishlisted, isInCart: propIsInCart, onClickProduct }) => {
     const navigate = useNavigate();
     const { token, isAuthenticated } = useAuth();
+    const { isWishlisted: checkIsWishlisted, toggleWishlist: contextToggleWishlist } = useWishlist();
+    const { isInCart: checkIsInCart, getCartItemQuantity } = useCart();
     const [isHovered, setIsHovered] = useState(false);
+
+    const productId = product?.id || product?._id;
+    const isWishlisted = propIsWishlisted !== undefined ? propIsWishlisted : (productId ? checkIsWishlisted(productId) : false);
+    const inCart = propIsInCart !== undefined ? propIsInCart : (productId ? checkIsInCart(productId) : false);
+    const cartQuantity = productId ? getCartItemQuantity(productId) : 0;
     
     // Defensive extraction of colors and sizes
     const colors = Array.isArray(product?.colors) && product.colors.length > 0
@@ -42,7 +51,7 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
             onAddToCart(product, sizes[0], selectedColor);
             if (!token || !isAuthenticated) return;
             setIsAddedRecently(true);
-            setTimeout(() => setIsAddedRecently(false), 1800);
+            setTimeout(() => setIsAddedRecently(false), 2000);
         }
     };
 
@@ -50,6 +59,8 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
         e.stopPropagation();
         if (onToggleWishlist) {
             onToggleWishlist(product);
+        } else if (contextToggleWishlist) {
+            contextToggleWishlist(product);
         }
     };
 
@@ -126,27 +137,37 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
 
           {/* Wishlist Button (Top-Right) */}
           <button
-            id={`wishlist-toggle-${product?.id}`}
+            id={`wishlist-toggle-${product?.id || product?._id}`}
             onClick={handleWishlistClick}
-            className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/90 hover:bg-white backdrop-blur-xs flex items-center justify-center transition-all duration-200 shadow-xs hover:scale-110 ${
+            className={`absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/90 hover:bg-white backdrop-blur-xs flex items-center justify-center transition-all duration-200 shadow-xs hover:scale-110 cursor-pointer ${
               isWishlisted ? 'text-[#C69E58]' : 'text-neutral-600 hover:text-[#1D241C]'
             }`}
             aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
-            <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-[#C69E58]' : ''}`} />
+            <Heart className={`w-4 h-4 transition-transform duration-200 ${isWishlisted ? 'fill-[#C69E58] text-[#C69E58] scale-110' : ''}`} />
           </button>
+
+          {/* In Bag Indicator Badge if in cart */}
+          {inCart && product?.isStockAvailable !== false && (
+            <div className="absolute bottom-3 left-3 z-10">
+              <span className="px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded-xs bg-[#506040] text-white shadow-xs flex items-center gap-1">
+                <Check className="w-3 h-3" />
+                <span>In Bag {cartQuantity > 1 ? `(${cartQuantity})` : ''}</span>
+              </span>
+            </div>
+          )}
 
           {/* View Details Button on Hover */}
           <div className={`absolute inset-x-3 bottom-14 z-10 transition-all duration-300 ${
             isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none'
           }`}>
             <button
-              id={`view-details-btn-${product?.id}`}
+              id={`view-details-btn-${product?.id || product?._id}`}
               onClick={(e) => {
                 e.stopPropagation();
                 handleCardClick();
               }}
-              className="w-full py-2.5 bg-white/95 hover:bg-white text-[#1D241C] text-xs font-semibold uppercase tracking-wider shadow-md backdrop-blur-xs flex items-center justify-center gap-2 rounded-xs transition-colors border border-[#E8E4DC]"
+              className="w-full py-2.5 bg-white/95 hover:bg-white text-[#1D241C] text-xs font-semibold uppercase tracking-wider shadow-md backdrop-blur-xs flex items-center justify-center gap-2 rounded-xs transition-colors border border-[#E8E4DC] cursor-pointer"
             >
               <span>View Details</span>
               <ArrowRight className="w-3.5 h-3.5 text-[#C69E58]" />
@@ -158,15 +179,17 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
             isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'
           }`}>
             <button
-              id={`quick-add-btn-${product?.id}`}
+              id={`quick-add-btn-${product?.id || product?._id}`}
               onClick={handleQuickAdd}
               disabled={isAddedRecently || product?.isStockAvailable === false}
-              className={`w-full py-3 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 ${
+              className={`w-full py-3 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 cursor-pointer ${
                 product?.isStockAvailable === false
                   ? 'bg-neutral-300 text-neutral-600 cursor-not-allowed'
                   : isAddedRecently
                     ? 'bg-[#506040] text-white'
-                    : 'bg-[#1D241C] hover:bg-[#C69E58] text-white hover:text-[#1D241C]'
+                    : inCart
+                      ? 'bg-[#506040] hover:bg-[#3D4B31] text-white'
+                      : 'bg-[#1D241C] hover:bg-[#C69E58] text-white hover:text-[#1D241C]'
               }`}
             >
               {product?.isStockAvailable === false ? (
@@ -175,6 +198,11 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
                 <>
                   <Check className="w-4 h-4" />
                   <span>Added to Bag</span>
+                </>
+              ) : inCart ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>In Bag {cartQuantity > 1 ? `(${cartQuantity})` : ''} • Add More</span>
                 </>
               ) : (
                 <>

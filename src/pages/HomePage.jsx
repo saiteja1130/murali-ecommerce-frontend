@@ -74,7 +74,7 @@ export const HomePage = ({
         />
       )}
 
-      <InstagramFeed />
+      {/* <InstagramFeed /> */}
     </div>
   );
 };

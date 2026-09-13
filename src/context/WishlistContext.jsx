@@ -62,13 +62,13 @@ export const WishlistProvider = ({ children }) => {
         return;
       }
 
-      const stringId = prodId.toString();
-      const isCurrentlySaved = wishlist.includes(stringId);
+      const stringId = (prodId?.id || prodId?._id || prodId).toString();
+      const isCurrentlySaved = wishlist.some((id) => (id?.toString?.() || id) === stringId);
 
       // 1. Optimistic UI update
       setWishlist((prev) => {
         if (isCurrentlySaved) {
-          return prev.filter((id) => id !== stringId);
+          return prev.filter((id) => (id?.toString?.() || id) !== stringId);
         } else {
           return [...prev, stringId];
         }
@@ -76,7 +76,7 @@ export const WishlistProvider = ({ children }) => {
 
       setWishlistProducts((prev) => {
         if (isCurrentlySaved) {
-          return prev.filter((p) => (p.id || p._id || '').toString() !== stringId);
+          return prev.filter((p) => ((p?.id || p?._id || p)?.toString?.() || '') !== stringId);
         } else {
           return [...prev, product];
         }
@@ -86,7 +86,8 @@ export const WishlistProvider = ({ children }) => {
       try {
         const response = await api.post('/api/wishlist/toggle', { productId: stringId });
         if (response.data?.success && response.data.wishlistIds) {
-          setWishlist(response.data.wishlistIds);
+          const stringIds = response.data.wishlistIds.map((id) => id.toString());
+          setWishlist(stringIds);
           if (response.data.data) {
             setWishlistProducts(response.data.data);
           }
@@ -101,19 +102,20 @@ export const WishlistProvider = ({ children }) => {
   const removeFromWishlist = useCallback(
     async (productId) => {
       if (!productId) return;
-      const stringId = productId.toString();
+      const stringId = (productId?.id || productId?._id || productId).toString();
 
       if (!token) return;
 
       // 1. Optimistic UI update
-      setWishlist((prev) => prev.filter((id) => id !== stringId));
-      setWishlistProducts((prev) => prev.filter((p) => (p.id || p._id || '').toString() !== stringId));
+      setWishlist((prev) => prev.filter((id) => (id?.toString?.() || id) !== stringId));
+      setWishlistProducts((prev) => prev.filter((p) => ((p?.id || p?._id || p)?.toString?.() || '') !== stringId));
 
       // 2. Delete from MongoDB backend
       try {
         const response = await api.delete(`/api/wishlist/${stringId}`);
         if (response.data?.success && response.data.wishlistIds) {
-          setWishlist(response.data.wishlistIds);
+          const stringIds = response.data.wishlistIds.map((id) => id.toString());
+          setWishlist(stringIds);
         }
       } catch (error) {
         console.warn('Backend wishlist removal failed:', error.message);
@@ -139,7 +141,8 @@ export const WishlistProvider = ({ children }) => {
   const isWishlisted = useCallback(
     (productId) => {
       if (!productId || !token) return false;
-      return wishlist.includes(productId.toString());
+      const stringId = (productId?.id || productId?._id || productId).toString();
+      return wishlist.some((id) => (id?.toString?.() || id) === stringId);
     },
     [wishlist, token]
   );

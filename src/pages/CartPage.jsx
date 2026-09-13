@@ -299,40 +299,8 @@ export const CartPage = ({
                   Order Summary
                 </h3>
 
-                {/* Promo Code Form */}
-                <form onSubmit={handleApplyPromo} className="space-y-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-[#1D241C] block">
-                    Promotional Code
-                  </label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Tag className="w-3.5 h-3.5 absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" />
-                      <input
-                        type="text"
-                        placeholder={storeSettings?.promoCode || 'SUMI15'}
-                        value={promoInput}
-                        onChange={(e) => setPromoInput(e.target.value)}
-                        className="w-full pl-8 pr-3 py-2 text-xs bg-[#FAF8F5] border border-[#E8E4DC] rounded-xs focus:outline-none focus:border-[#C69E58] uppercase font-mono"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={isApplyingPromo}
-                      className="px-4 py-2 bg-[#1D241C] hover:bg-[#C69E58] text-white hover:text-[#1D241C] text-xs font-bold uppercase rounded-xs transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                      {isApplyingPromo ? 'Applying...' : 'Apply'}
-                    </button>
-                  </div>
-
-                  {promoMessage && (
-                    <p className={`text-[11px] ${promoMessage.isError ? 'text-rose-600' : 'text-emerald-700 font-medium'}`}>
-                      {promoMessage.text}
-                    </p>
-                  )}
-                </form>
-
                 {/* Summary Lines */}
-                <div className="space-y-2.5 text-xs text-[#687163] pt-4 border-t border-[#E8E4DC]">
+                <div className="space-y-2.5 text-xs text-[#687163]">
                   <div className="flex justify-between">
                     <span>Items Subtotal</span>
                     <span className="font-semibold text-[#1D241C]">₹{subtotal.toFixed(2)}</span>

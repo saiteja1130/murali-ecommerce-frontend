@@ -122,9 +122,12 @@ export const StoreProvider = ({ children }) => {
   const cartContext = useCart();
   const wishlistContext = useWishlist();
 
-  // Wishlist products derived from catalog
+  // Wishlist products derived from catalog with robust string ID comparison
   const wishlistProducts = useMemo(
-    () => products.filter((p) => wishlistContext.wishlist.includes(p.id || p._id)),
+    () => products.filter((p) => {
+      const pId = (p.id || p._id || '').toString();
+      return wishlistContext.wishlist.some((id) => (id?.toString?.() || id) === pId);
+    }),
     [products, wishlistContext.wishlist]
   );
 
@@ -236,9 +239,12 @@ export const StoreProvider = ({ children }) => {
         removeCartItem: cartContext.removeCartItem,
         clearCart: cartContext.clearCart,
         applyPromoCode: cartContext.applyPromoCode,
+        isInCart: cartContext.isInCart,
+        getCartItemQuantity: cartContext.getCartItemQuantity,
         // Wishlist values (seamlessly bridged from WishlistContext)
         wishlist: wishlistContext.wishlist,
         wishlistProducts,
+        isWishlisted: wishlistContext.isWishlisted,
         toggleWishlist: toggleWishlistWithFeedback,
         removeFromWishlist: wishlistContext.removeFromWishlist,
         clearWishlist: wishlistContext.clearWishlist,

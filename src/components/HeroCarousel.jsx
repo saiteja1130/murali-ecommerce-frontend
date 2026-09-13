@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ArrowRight, Sparkles } from 'lucide-react';
-import { FALLBACK_HERO_SLIDES } from '../context/HeroContext';
 
 export const HeroCarousel = ({ slides = [], onSelectCategory }) => {
   const navigate = useNavigate();
-  const effectiveSlides = Array.isArray(slides) && slides.length > 0 ? slides : FALLBACK_HERO_SLIDES;
+  const effectiveSlides = Array.isArray(slides) && slides.length > 0 ? slides : [];
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -53,7 +52,7 @@ export const HeroCarousel = ({ slides = [], onSelectCategory }) => {
 
   const handleCtaClick = () => {
     const destination = activeSlide.ctaLink || (activeSlide.categorySlug ? `/products/${activeSlide.categorySlug}` : '/products');
-    
+
     if (destination.startsWith('/')) {
       navigate(destination);
       if (onSelectCategory && activeSlide.categorySlug) {

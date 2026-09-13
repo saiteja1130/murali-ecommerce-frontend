@@ -377,6 +377,36 @@ export const CheckoutPage = ({
               </div>
             </div>
 
+            {/* Financial Breakdown */}
+            <div className="border-t border-[#E8E3DE] pt-4 text-left space-y-2 text-xs">
+              <div className="flex justify-between text-[#6B6B6B]">
+                <span>Subtotal</span>
+                <span className="font-mono text-[#1A1A1A]">
+                  ₹{Number(confirmedOrder.subtotal !== undefined ? confirmedOrder.subtotal : (confirmedOrder.total || 0)).toFixed(2)}
+                </span>
+              </div>
+              {Number(confirmedOrder.discount || 0) > 0 && (
+                <div className="flex justify-between text-emerald-700 font-medium">
+                  <span>Discount {confirmedOrder.promoCode ? `(${confirmedOrder.promoCode})` : ''}</span>
+                  <span className="font-mono">-₹{Number(confirmedOrder.discount).toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-[#6B6B6B]">
+                <span>Shipping</span>
+                <span className="font-mono text-[#1A1A1A]">
+                  {Number(confirmedOrder.shippingCost || 0) === 0 ? (
+                    <span className="text-emerald-700 font-semibold uppercase">Free</span>
+                  ) : (
+                    `₹${Number(confirmedOrder.shippingCost).toFixed(2)}`
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between pt-3 border-t border-[#E8E3DE] font-bold text-sm text-[#1A1A1A]">
+                <span>Total Paid</span>
+                <span className="font-mono text-base">₹{Number(confirmedOrder.total || 0).toFixed(2)}</span>
+              </div>
+            </div>
+
             {/* CTA Buttons */}
             <div className="pt-6 flex flex-col sm:flex-row gap-3 justify-center">
               <button
@@ -649,7 +679,7 @@ export const CheckoutPage = ({
                         </span>
                       </div>
                       <div className="text-[11px] text-[#6B6B6B] mt-0.5">
-                        Google Pay, PhonePe, Paytm, BHIM, UPI QR, Debit/Credit Cards &amp; Net Banking via Razorpay
+                        Google Pay, PhonePe, Paytm, BHIM, UPI QR via Razorpay
                       </div>
                     </div>
                   </div>

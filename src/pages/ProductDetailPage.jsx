@@ -4,6 +4,8 @@ import { Star, Heart, ShoppingBag, Truck, ShieldCheck, RotateCcw, Ruler, Chevron
 import { ProductCard } from '../components/ProductCard';
 import { normalizeProduct } from '../utils/productAdapter';
 import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
+import { useCart } from '../context/CartContext';
 
 export const ProductDetailPage = ({
   product: initialProduct,
@@ -17,6 +19,8 @@ export const ProductDetailPage = ({
   const { id } = useParams();
   const navigate = useNavigate();
   const { token, isAuthenticated } = useAuth();
+  const { isWishlisted: checkIsWishlisted, toggleWishlist: contextToggleWishlist } = useWishlist();
+  const { isInCart: checkIsInCart, getCartItemQuantity } = useCart();
 
   // Find and normalize the active product safely
   const rawProduct = (id ? allProducts.find((p) => p.id === id || p._id === id || p.slug === id) : null) ||
@@ -43,7 +47,10 @@ export const ProductDetailPage = ({
     careInstructions: 'Hand wash or gentle machine wash in cold water'
   };
 
-  const isCurrentWishlisted = wishlistIds.includes(product.id);
+  const productId = product?.id || product?._id;
+  const isCurrentWishlisted = productId ? (checkIsWishlisted(productId) || (wishlistIds && wishlistIds.some(wId => (wId?.toString?.() || wId) === productId.toString()))) : false;
+  const inCart = productId ? checkIsInCart(productId) : false;
+  const cartQuantity = productId ? getCartItemQuantity(productId) : 0;
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
 
   const colors = Array.isArray(product.colors) && product.colors.length > 0
@@ -234,12 +241,15 @@ export const ProductDetailPage = ({
               {/* Action Buttons on Image */}
               <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
                 <button
-                  onClick={() => onToggleWishlist && onToggleWishlist(product)}
+                  onClick={() => {
+                    if (onToggleWishlist) onToggleWishlist(product);
+                    else if (contextToggleWishlist) contextToggleWishlist(product);
+                  }}
                   className={`w-10 h-10 rounded-full bg-white/90 hover:bg-white backdrop-blur-xs flex items-center justify-center transition-all shadow-md hover:scale-110 cursor-pointer ${isCurrentWishlisted ? 'text-[#C69E58]' : 'text-neutral-600 hover:text-black'
                     }`}
                   aria-label="Wishlist"
                 >
-                  <Heart className={`w-5 h-5 ${isCurrentWishlisted ? 'fill-[#C69E58]' : ''}`} />
+                  <Heart className={`w-5 h-5 transition-transform duration-200 ${isCurrentWishlisted ? 'fill-[#C69E58] text-[#C69E58] scale-110' : ''}`} />
                 </button>
 
                 <button
@@ -411,7 +421,9 @@ export const ProductDetailPage = ({
                         ? 'bg-neutral-300 text-neutral-500 cursor-not-allowed shadow-none'
                         : addedSuccess
                           ? 'bg-[#506040] text-white cursor-pointer'
-                          : 'bg-[#1D241C] hover:bg-[#C69E58] text-white hover:text-[#1D241C] cursor-pointer'
+                          : inCart
+                            ? 'bg-[#506040] hover:bg-[#3D4B31] text-white cursor-pointer'
+                            : 'bg-[#1D241C] hover:bg-[#C69E58] text-white hover:text-[#1D241C] cursor-pointer'
                       }`}
                   >
                     {product.isStockAvailable === false ? (
@@ -420,6 +432,11 @@ export const ProductDetailPage = ({
                       <>
                         <Check className="w-4 h-4" />
                         <span>Added to Cart</span>
+                      </>
+                    ) : inCart ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span>In Bag {cartQuantity > 0 ? `(${cartQuantity})` : ''} • Add More</span>
                       </>
                     ) : (
                       <>

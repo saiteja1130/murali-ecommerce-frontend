@@ -293,14 +293,19 @@ export const CartProvider = ({ children }) => {
       }
       return { success: false, message: res.data?.message || 'Invalid promotional code.' };
     } catch (error) {
-      // Fallback check against cached storeSettings
+      // If the backend returned a specific error (e.g. coupon already used or invalid code)
+      if (error.response?.data?.message) {
+        return { success: false, message: error.response.data.message };
+      }
+
+      // Fallback check against cached storeSettings ONLY if network failed completely
       const input = code.trim().toUpperCase();
       if (storeSettings.isPromoActive && storeSettings.promoCode && input === storeSettings.promoCode) {
         setPromoCode(storeSettings.promoCode);
         setDiscountRate(storeSettings.discountPercent / 100);
         return { success: true, message: `Promo code ${storeSettings.promoCode} applied! (${storeSettings.discountPercent}% OFF)` };
       }
-      return { success: false, message: error.response?.data?.message || 'Invalid or expired promotional code.' };
+      return { success: false, message: 'Invalid or expired promotional code.' };
     }
   }, [storeSettings]);
 
@@ -344,6 +349,31 @@ export const CartProvider = ({ children }) => {
     [cartSubtotal, discountAmount, shippingCost]
   );
 
+  const isInCart = useCallback(
+    (productId) => {
+      if (!productId || !token) return false;
+      const stringId = (productId?.id || productId?._id || productId).toString();
+      return cart.some((item) => {
+        const itemProdId = ((item.product?.id || item.product?._id || item.id)?.toString?.() || '');
+        return itemProdId === stringId;
+      });
+    },
+    [cart, token]
+  );
+
+  const getCartItemQuantity = useCallback(
+    (productId) => {
+      if (!productId || !token) return 0;
+      const stringId = (productId?.id || productId?._id || productId).toString();
+      const found = cart.find((item) => {
+        const itemProdId = ((item.product?.id || item.product?._id || item.id)?.toString?.() || '');
+        return itemProdId === stringId;
+      });
+      return found ? found.quantity : 0;
+    },
+    [cart, token]
+  );
+
   return (
     <CartContext.Provider
       value={{
@@ -369,6 +399,8 @@ export const CartProvider = ({ children }) => {
         applyPromoCode,
         removePromoCode,
         refreshCart: fetchBackendCart,
+        isInCart,
+        getCartItemQuantity,
       }}
     >
       {children}
