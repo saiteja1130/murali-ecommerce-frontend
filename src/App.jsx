@@ -75,8 +75,6 @@ const AppContent = () => {
     discountRate,
     cartSubtotal,
     cartItemCount,
-    discountAmount,
-    shippingCost,
     cartTotal,
     addToCart,
     updateCartQuantity,
@@ -85,20 +83,14 @@ const AppContent = () => {
     toggleWishlist,
     removeFromWishlist,
     clearWishlist,
-    moveWishlistToCart,
     applyPromoCode,
-    isCartOpen,
     openCart,
-    closeCart,
-    isWishlistOpen,
-    openWishlist,
-    closeWishlist,
-    isSearchOpen,
-    openSearch,
     closeSearch,
     toasts,
     showToast,
-    dismissToast
+    openSearch,
+    dismissToast,
+     isSearchOpen
   } = useStore();
 
   // Scroll to top automatically when route changes
@@ -143,7 +135,7 @@ const AppContent = () => {
     showToast({
       type: 'success',
       title: 'Welcome Back',
-      message: `Signed in as ${userData.name || 'Patron'}`
+      message: `Signed in as ${userData.name || 'User'}`
     });
   };
 
@@ -152,7 +144,7 @@ const AppContent = () => {
     showToast({
       type: 'success',
       title: 'Account Created',
-      message: `Welcome to SUMILUX, ${userData.firstName || 'Patron'}!`
+      message: `Welcome to SUMILUX, ${userData.firstName || 'User'}!`
     });
   };
 

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import api from './api';
 import { useAuth } from './AuthContext';
-import { normalizeProduct, resolveImageUrl } from '../utils/productAdapter';
+import { normalizeProduct } from '../utils/productAdapter';
 
 const CartContext = createContext(undefined);
 
@@ -9,12 +9,6 @@ const mapServerCartItems = (rawItems) => {
   return (rawItems || []).map((item) => {
     const rawProd = item.product || {};
     const normProduct = normalizeProduct(rawProd) || rawProd;
-    if (normProduct) {
-      normProduct.image = resolveImageUrl(normProduct.image || rawProd.image || rawProd.images?.[0]);
-      if (Array.isArray(normProduct.images)) {
-        normProduct.images = normProduct.images.map(resolveImageUrl);
-      }
-    }
     return {
       id: item.id || item.cartItemId,
       cartItemId: item.cartItemId || item.id,
@@ -87,11 +81,11 @@ export const CartProvider = ({ children }) => {
 
   // Fetch cart when token changes
   useEffect(() => {
+    localStorage.removeItem('sumilux_cart');
     if (token && isAuthenticated) {
       fetchBackendCart();
     } else {
       setCart([]);
-      localStorage.removeItem('sumilux_cart');
     }
   }, [token, isAuthenticated, fetchBackendCart]);
 
@@ -141,27 +135,44 @@ export const CartProvider = ({ children }) => {
       if (!selectedColor || typeof selectedColor !== 'object') {
         selectedColor = { name: 'Standard', hex: '#1D241C' };
       }
-      const colorName = selectedColor.name || selectedColor.label || 'Standard';
-      const colorHex = selectedColor.hex || '#1D241C';
-      const finalColor = { name: colorName, hex: colorHex };
+      if (typeof arg2 === 'object' && arg2 !== null && !Array.isArray(arg2)) {
+        quantity = arg2.quantity || 1;
+        selectedSize = arg2.size || arg2.selectedSize || 'Standard';
+        selectedColor = arg2.color || arg2.selectedColor || { name: 'Standard', hex: '#1D241C' };
+      } else {
+        if (typeof arg2 === 'number') quantity = arg2;
+        if (typeof arg3 === 'string') selectedSize = arg3;
+        if (typeof arg4 === 'object' && arg4 !== null) selectedColor = arg4;
+      }
 
-      const previousCart = [...cartRef.current];
-      const prodId = (product.id || product._id || '').toString();
-      const cartItemId = `${prodId}-${selectedSize}-${colorName}`;
+      const finalColor = typeof selectedColor === 'string'
+        ? { name: selectedColor, hex: '#1D241C' }
+        : (selectedColor || { name: 'Standard', hex: '#1D241C' });
 
-      const existingIndex = previousCart.findIndex((i) => i.cartItemId === cartItemId || i.id === cartItemId);
+      const prodId = product.id || product._id;
+      const currentCart = [...cartRef.current];
+
+      // Optimistic local state update
+      const existingItemIndex = currentCart.findIndex(
+        (item) =>
+          (item.product?.id === prodId || item.product?._id === prodId) &&
+          item.selectedSize === selectedSize &&
+          (item.selectedColor?.name === finalColor.name || item.selectedColor === finalColor.name)
+      );
+
       let updatedCart;
-
-      if (existingIndex > -1) {
-        updatedCart = previousCart.map((item, idx) =>
-          idx === existingIndex ? { ...item, quantity: Number(item.quantity || 1) + Number(quantity) } : item
+      if (existingItemIndex > -1) {
+        updatedCart = currentCart.map((item, idx) =>
+          idx === existingItemIndex
+            ? { ...item, quantity: item.quantity + (Number(quantity) || 1) }
+            : item
         );
       } else {
         updatedCart = [
-          ...previousCart,
+          ...currentCart,
           {
-            id: cartItemId,
-            cartItemId,
+            id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            cartItemId: `temp-${Date.now()}`,
             product,
             quantity: Number(quantity) || 1,
             selectedSize,
@@ -170,11 +181,9 @@ export const CartProvider = ({ children }) => {
         ];
       }
 
-      // Always save to state and localStorage immediately
       setCart(updatedCart);
-      localStorage.setItem('sumilux_cart', JSON.stringify(updatedCart));
 
-      // If logged in, sync with backend in background without destructive rollback
+      // Sync with backend
       if (token) {
         try {
           const response = await api.post('/api/cart/add', {
@@ -187,14 +196,13 @@ export const CartProvider = ({ children }) => {
           if (response.data?.status && response.data?.data) {
             const serverItems = mapServerCartItems(response.data.data.items);
             setCart(serverItems);
-            localStorage.setItem('sumilux_cart', JSON.stringify(serverItems));
           }
         } catch (err) {
           console.warn('Background cart sync warning (keeping local cart):', err.message);
         }
       }
     },
-    [token]
+    [token, isAuthenticated, requireAuth]
   );
 
   // Update Item Quantity
@@ -209,7 +217,6 @@ export const CartProvider = ({ children }) => {
       );
 
       setCart(updatedCart);
-      localStorage.setItem('sumilux_cart', JSON.stringify(updatedCart));
 
       if (token) {
         try {
@@ -221,7 +228,6 @@ export const CartProvider = ({ children }) => {
           if (response.data?.status && response.data?.data) {
             const serverItems = mapServerCartItems(response.data.data.items);
             setCart(serverItems);
-            localStorage.setItem('sumilux_cart', JSON.stringify(serverItems));
           }
         } catch (err) {
           console.warn('Failed to update cart quantity on server:', err.message);
@@ -240,7 +246,6 @@ export const CartProvider = ({ children }) => {
       );
 
       setCart(updatedCart);
-      localStorage.setItem('sumilux_cart', JSON.stringify(updatedCart));
 
       if (token) {
         try {
@@ -249,7 +254,6 @@ export const CartProvider = ({ children }) => {
           if (response.data?.status && response.data?.data) {
             const serverItems = mapServerCartItems(response.data.data.items);
             setCart(serverItems);
-            localStorage.setItem('sumilux_cart', JSON.stringify(serverItems));
           }
         } catch (err) {
           console.warn('Failed to remove cart item from server:', err.message);
@@ -263,9 +267,6 @@ export const CartProvider = ({ children }) => {
   const clearCart = useCallback(async () => {
     const previousCart = [...cartRef.current];
     setCart([]);
-    if (!token) {
-      localStorage.removeItem('sumilux_cart');
-    }
 
     if (token) {
       try {

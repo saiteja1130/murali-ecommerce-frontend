@@ -116,7 +116,7 @@ export const AuthModal = () => {
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-mono tracking-widest bg-[#FAF8F5] text-[#C69E58] font-bold border border-[#E8E4DC]">
               <Sparkles className="w-3 h-3 text-[#C69E58]" />
-              <span>Glam & Glow Patron Access</span>
+              <span>Glam & Glow User Access</span>
             </div>
             <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#1D241C] pt-1">
               {authModalConfig.title || (mode === 'login' ? 'Sign In to Your Account' : 'Create an Account')}

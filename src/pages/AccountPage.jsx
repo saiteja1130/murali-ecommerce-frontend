@@ -23,7 +23,6 @@ import {
   RotateCcw,
   Headphones
 } from 'lucide-react';
-import { resolveImageUrl } from '../utils/productAdapter';
 import api from '../context/api';
 import { useAuth } from '../context/AuthContext';
 import { ConfirmModal } from '../components/ConfirmModal';
@@ -408,7 +407,7 @@ export const AccountPage = ({
                             {(order.items || []).map((item, idx) => (
                               <div key={idx} className="flex items-center gap-2 shrink-0">
                                 <img
-                                  src={resolveImageUrl(item.image || item.product?.image || (Array.isArray(item.product?.images) && item.product.images[0]) || '')}
+                                  src={item.image || item.product?.image || (Array.isArray(item.product?.images) && item.product.images[0]) || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900'}
                                   alt={item.name || 'Garment Piece'}
                                   onError={(e) => {
                                     e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
@@ -580,7 +579,7 @@ export const AccountPage = ({
                       <div key={idx} className="py-4 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-4 min-w-0">
                           <img
-                            src={resolveImageUrl(item.image || item.product?.image || (Array.isArray(item.product?.images) && item.product.images[0]) || '')}
+                            src={item.image || item.product?.image || (Array.isArray(item.product?.images) && item.product.images[0]) || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900'}
                             alt={item.name || item.product?.name || 'Garment Piece'}
                             onError={(e) => {
                               e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';

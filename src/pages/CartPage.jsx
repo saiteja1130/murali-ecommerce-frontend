@@ -4,7 +4,6 @@ import { ShoppingBag, Trash2, ArrowRight, Sparkles, ShieldCheck, Tag, ArrowLeft,
 import { ProductCard } from '../components/ProductCard';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { useCart } from '../context/CartContext';
-import { resolveImageUrl } from '../utils/productAdapter';
 
 export const CartPage = ({
   items = [],
@@ -180,7 +179,7 @@ export const CartPage = ({
                     {/* Item Image & Details */}
                     <div className="flex gap-4 items-start sm:items-center">
                       <img
-                        src={resolveImageUrl(item.product?.image || item.product?.images?.[0])}
+                        src={item.product?.image || item.product?.images?.[0] || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900'}
                         alt={item.product?.name || 'Product'}
                         onError={(e) => {
                           e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';

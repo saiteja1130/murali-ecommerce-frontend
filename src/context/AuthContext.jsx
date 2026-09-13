@@ -62,18 +62,13 @@ export const AuthProvider = ({ children }) => {
     [token, currentUser]
   );
 
-  // User Saved Addresses State
-  const [userAddresses, setUserAddresses] = useState(() => {
-    const saved = localStorage.getItem('sumilux_addresses');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        return [];
-      }
-    }
-    return [];
-  });
+  // User Saved Addresses State from Backend API
+  const [userAddresses, setUserAddresses] = useState([]);
+
+  useEffect(() => {
+    // Purge non-auth data keys so only auth tokens and user details remain
+    localStorage.removeItem('sumilux_addresses');
+  }, []);
 
   // User Order History State from Backend API
   const [userOrders, setUserOrders] = useState([]);
@@ -231,9 +226,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  useEffect(() => {
-    localStorage.setItem('sumilux_addresses', JSON.stringify(userAddresses));
-  }, [userAddresses]);
 
   // Global Auth Expiration Listener
   useEffect(() => {

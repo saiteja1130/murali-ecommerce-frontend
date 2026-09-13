@@ -3,26 +3,25 @@
  * Bridges MongoDB database models with Storefront UI contracts
  */
 
+const DEFAULT_FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+
 export const resolveImageUrl = (img) => {
-  if (!img) return 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
-  if (img.startsWith('http://') || img.startsWith('https://')) return img;
-  if (img.startsWith('/uploads')) return `http://localhost:5000${img}`;
-  return img;
+  return img || DEFAULT_FALLBACK_IMAGE;
 };
 
 export const normalizeProduct = (item) => {
   if (!item) return null;
 
-  // 1. Image Resolution (Handles images[], galleryImages[], image, hoverImage, local /uploads)
+  // 1. Image Resolution
   const rawImages = Array.isArray(item.images) && item.images.length > 0
     ? item.images
     : (Array.isArray(item.galleryImages) && item.galleryImages.length > 0
       ? item.galleryImages
-      : [item.image || item.hoverImage || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900']);
+      : [item.image || item.hoverImage || DEFAULT_FALLBACK_IMAGE]);
 
-  const images = rawImages.map(resolveImageUrl);
-  const primaryImage = images[0] || resolveImageUrl(item.image);
-  const hoverImage = images[1] || resolveImageUrl(item.hoverImage) || primaryImage;
+  const images = rawImages.map((img) => img || DEFAULT_FALLBACK_IMAGE);
+  const primaryImage = images[0] || item.image || DEFAULT_FALLBACK_IMAGE;
+  const hoverImage = images[1] || item.hoverImage || primaryImage;
 
   // 2. Variant, Color & Size Matrix Extraction
   let colors = [];
@@ -148,7 +147,7 @@ export const normalizeCategory = (cat) => {
     mainCategory: cat.mainCategory?.name || (typeof cat.mainCategory === 'string' ? cat.mainCategory : ''),
     mainCategorySlug: cat.mainCategory?.slug || (typeof cat.mainCategory === 'string' ? cat.mainCategory.toLowerCase() : ''),
     mainCategoryId: cat.mainCategory?._id || cat.mainCategory?.id || cat.mainCategory || '',
-    image: resolveImageUrl(cat.image),
+    image: cat.image || DEFAULT_FALLBACK_IMAGE,
     description: cat.description || '',
     subtitle: cat.subtitle || cat.description || 'Featured Collection',
     itemCount: typeof cat.itemCount === 'number' ? cat.itemCount : 0,
@@ -163,7 +162,7 @@ export const normalizeMainCategory = (mCat) => {
     id: mCat._id || mCat.id || `mcat-${Math.random().toString(36).slice(2, 7)}`,
     name: mCat.name || 'Department',
     slug: mCat.slug || mCat.name?.toLowerCase().replace(/ /g, '-') || 'department',
-    image: resolveImageUrl(mCat.image),
+    image: mCat.image || DEFAULT_FALLBACK_IMAGE,
     description: mCat.description || '',
     subcategoryCount: mCat.subcategoryCount || 0,
     isActive: mCat.isActive !== false,

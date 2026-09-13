@@ -74,6 +74,9 @@ export const StoreProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    // Purge legacy non-auth data keys so only auth tokens/user details remain in localStorage
+    localStorage.removeItem('sumilux_products');
+    localStorage.removeItem('sumilux_orders');
     fetchMainCategories();
     fetchCategories();
     fetchProducts();

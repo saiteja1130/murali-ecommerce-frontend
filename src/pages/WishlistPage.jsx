@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag, Trash2, Share2, Check } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import { ConfirmModal } from '../components/ConfirmModal';
-import { resolveImageUrl } from '../utils/productAdapter';
 export const WishlistPage = ({ wishlistProducts, onRemoveFromWishlist, onClearWishlist, onAddToCart, allProducts, onToggleWishlist, wishlistIds }) => {
   const navigate = useNavigate();
   const [selectedSizes, setSelectedSizes] = useState({});
@@ -78,7 +77,7 @@ export const WishlistPage = ({ wishlistProducts, onRemoveFromWishlist, onClearWi
             {/* Thumbnail Stage */}
             <div className="relative aspect-[3/4] bg-[#F4EFEA] overflow-hidden">
               <img
-                src={resolveImageUrl(product.image || product.images?.[0])}
+                src={product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900'}
                 alt={product.name}
                 onError={(e) => {
                   e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';

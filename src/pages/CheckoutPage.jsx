@@ -19,7 +19,6 @@ import {
   QrCode
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { resolveImageUrl } from '../utils/productAdapter';
 import api from '../context/api';
 
 export const CheckoutPage = ({
@@ -351,7 +350,7 @@ export const CheckoutPage = ({
                     <div key={idx} className="p-4 flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3 min-w-0">
                         <img
-                          src={resolveImageUrl(itemImg)}
+                          src={itemImg || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900'}
                           alt={itemName}
                           onError={(e) => {
                             e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
@@ -720,7 +719,7 @@ export const CheckoutPage = ({
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="relative shrink-0">
                         <img
-                          src={resolveImageUrl(item.product?.image || item.product?.images?.[0] || item.image)}
+                          src={item.product?.image || item.product?.images?.[0] || item.image || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900'}
                           alt={item.product?.name || item.name || 'Product'}
                           onError={(e) => {
                             e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';

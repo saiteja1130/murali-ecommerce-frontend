@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, ShoppingBag, Star, Check, ArrowRight } from 'lucide-react';
-import { resolveImageUrl } from '../utils/productAdapter';
 import { useAuth } from '../context/AuthContext';
 
 export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlisted, onClickProduct }) => {
@@ -26,8 +25,8 @@ export const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlist
         ? Math.round(((originalPrice - price) / originalPrice) * 100)
         : null;
 
-    const primaryImage = resolveImageUrl(product?.image || product?.images?.[0]);
-    const hoverImage = resolveImageUrl(product?.hoverImage || product?.images?.[1] || primaryImage);
+    const primaryImage = product?.image || product?.images?.[0] || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+    const hoverImage = product?.hoverImage || product?.images?.[1] || primaryImage;
 
     const handleCardClick = () => {
         if (onClickProduct) {
