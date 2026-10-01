@@ -178,14 +178,29 @@ export const CartPage = ({
                   >
                     {/* Item Image & Details */}
                     <div className="flex gap-4 items-start sm:items-center">
-                      <img
-                        src={item.product?.image || item.product?.images?.[0] || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900'}
-                        alt={item.product?.name || 'Product'}
-                        onError={(e) => {
-                          e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
-                        }}
-                        className="w-20 h-26 object-cover rounded-xs bg-[#FAF8F5] border border-[#E8E4DC] flex-shrink-0"
-                      />
+                      {(() => {
+                        const colorName = (item.selectedColor?.name || (typeof item.selectedColor === 'string' ? item.selectedColor : '')).trim().toLowerCase();
+                        let matchedColorImage = '';
+                        if (colorName && Array.isArray(item.product?.colorImages) && item.product.colorImages.length > 0) {
+                          const match = item.product.colorImages.find(
+                            (ci) => ci.color && ci.color.trim().toLowerCase() === colorName
+                          );
+                          if (match && Array.isArray(match.images) && match.images.length > 0) {
+                            matchedColorImage = match.images[0];
+                          }
+                        }
+                        const itemDisplayImg = matchedColorImage || item.image || item.product?.image || item.product?.images?.[0] || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+                        return (
+                          <img
+                            src={itemDisplayImg}
+                            alt={item.product?.name || 'Product'}
+                            onError={(e) => {
+                              e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+                            }}
+                            className="w-20 h-26 object-cover rounded-xs bg-[#FAF8F5] border border-[#E8E4DC] flex-shrink-0"
+                          />
+                        );
+                      })()}
                       <div className="space-y-1">
                         <span className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#C69E58]">
                           {item.product.category || 'Luxury Haute'}

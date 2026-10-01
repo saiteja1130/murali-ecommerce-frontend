@@ -86,6 +86,29 @@ export const CheckoutPage = ({
     }
   }, [currentUser]);
 
+  // Handle mobile redirect return from Razorpay callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get('payment_status');
+    const reason = params.get('reason');
+
+    if (paymentStatus === 'success') {
+      if (onClearCart) onClearCart();
+      // Provide a minimal fallback confirmedOrder to render the success screen
+      setConfirmedOrder({
+        orderNumber: 'Recent Order',
+        email: currentUser?.email || email,
+        total: ctxCartSubtotal || 0,
+        paymentMethod: 'upi',
+        trackingNumber: 'Processing',
+      });
+      window.history.replaceState(null, '', window.location.pathname);
+    } else if (paymentStatus === 'failed') {
+      setErrorMessage(`Payment failed: ${reason || 'Transaction could not be processed'}. Please try again.`);
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, [onClearCart, currentUser, email, ctxCartSubtotal]);
+
   // Calculations
   const hasOOS = items.some((item) => item.product?.isStockAvailable === false);
   const subtotal = ctxCartSubtotal !== undefined
@@ -143,15 +166,29 @@ export const CheckoutPage = ({
     setIsProcessing(true);
 
     const orderPayload = {
-      items: items.map((item) => ({
-        id: item.product?._id || item.product?.id || item.id,
-        quantity: item.quantity,
-        selectedSize: item.selectedSize || 'Standard',
-        selectedColor: item.selectedColor || { name: 'Standard', hex: '#1D241C' },
-        price: item.product?.price,
-        name: item.product?.name,
-        image: item.product?.image || item.product?.images?.[0],
-      })),
+      items: items.map((item) => {
+        const colorName = (item.selectedColor?.name || (typeof item.selectedColor === 'string' ? item.selectedColor : '')).trim().toLowerCase();
+        let matchedColorImage = '';
+        if (colorName && Array.isArray(item.product?.colorImages) && item.product.colorImages.length > 0) {
+          const match = item.product.colorImages.find(
+            (ci) => ci.color && ci.color.trim().toLowerCase() === colorName
+          );
+          if (match && Array.isArray(match.images) && match.images.length > 0) {
+            matchedColorImage = match.images[0];
+          }
+        }
+        const finalItemImage = matchedColorImage || item.image || item.product?.image || item.product?.images?.[0] || '';
+
+        return {
+          id: item.product?._id || item.product?.id || item.id,
+          quantity: item.quantity,
+          selectedSize: item.selectedSize || 'Standard',
+          selectedColor: item.selectedColor || { name: 'Standard', hex: '#1D241C' },
+          price: item.product?.price,
+          name: item.product?.name,
+          image: finalItemImage,
+        };
+      }),
       shippingAddress: {
         fullName: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim() || currentUser?.name || 'Customer',
         phone: phone || currentUser?.phone || '',
@@ -177,7 +214,6 @@ export const CheckoutPage = ({
 
       const { razorpayOrderId, amount, key_id, currency, orderNumber, orderId } = orderRes.data.data;
 
-      // Check if Razorpay script is loaded
       if (typeof window.Razorpay !== 'function') {
         // Fallback or script load retry
         const script = document.createElement('script');
@@ -187,6 +223,10 @@ export const CheckoutPage = ({
         await new Promise((resolve) => { script.onload = resolve; });
       }
 
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      // NOTE: Update this domain when deploying to production
+      const backendUrl = import.meta.env.VITE_API_URL || 'https://api.murarisglamandglow.com';
+
       const rzpOptions = {
         key: key_id,
         amount: amount,
@@ -195,6 +235,8 @@ export const CheckoutPage = ({
         description: `Order #${orderNumber}`,
         image: '/assets/images/Logo.png',
         order_id: razorpayOrderId,
+        callback_url: isMobile ? `${backendUrl}/api/orders/razorpay-callback` : undefined,
+        redirect: isMobile ? true : undefined,
         prefill: {
           name: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim() || currentUser?.name || '',
           email: email || currentUser?.email || '',
@@ -339,10 +381,20 @@ export const CheckoutPage = ({
               </h3>
               <div className="divide-y divide-[#F2EFE9] border border-[#E8E3DE] rounded-[4px] overflow-hidden bg-white">
                 {(confirmedOrder.items || []).map((item, idx) => {
-                  const itemImg = item.image || item.product?.image || (Array.isArray(item.product?.images) && item.product.images[0]) || '';
+                  const itemColor = typeof item.selectedColor === 'object' ? item.selectedColor?.name : (item.selectedColor || item.color || 'Standard');
+                  const colorName = (itemColor || '').trim().toLowerCase();
+                  let matchedColorImg = '';
+                  if (colorName && Array.isArray(item.product?.colorImages) && item.product.colorImages.length > 0) {
+                    const match = item.product.colorImages.find(
+                      (ci) => ci.color && ci.color.trim().toLowerCase() === colorName
+                    );
+                    if (match && Array.isArray(match.images) && match.images.length > 0) {
+                      matchedColorImg = match.images[0];
+                    }
+                  }
+                  const itemImg = matchedColorImg || item.image || item.product?.image || (Array.isArray(item.product?.images) && item.product.images[0]) || '';
                   const itemName = item.name || item.product?.name || 'Garment Piece';
                   const itemSize = item.selectedSize || item.size || 'Standard';
-                  const itemColor = typeof item.selectedColor === 'object' ? item.selectedColor?.name : (item.selectedColor || item.color || 'Standard');
                   const itemPrice = Number(item.price !== undefined ? item.price : (item.product?.price || 0));
                   const itemQty = Number(item.quantity || 1);
 
@@ -444,14 +496,29 @@ export const CheckoutPage = ({
           <div key={item.id} className="flex gap-3 items-center justify-between text-xs">
             <div className="flex items-center gap-3 min-w-0">
               <div className="relative shrink-0">
-                <img
-                  src={item.product?.image || item.product?.images?.[0] || item.image || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900'}
-                  alt={item.product?.name || item.name || 'Product'}
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
-                  }}
-                  className="w-14 h-16 object-cover rounded-xs border border-[#E8E3DE] bg-[#FAF8F5]"
-                />
+                {(() => {
+                  const colorName = (item.selectedColor?.name || (typeof item.selectedColor === 'string' ? item.selectedColor : '')).trim().toLowerCase();
+                  let matchedColorImage = '';
+                  if (colorName && Array.isArray(item.product?.colorImages) && item.product.colorImages.length > 0) {
+                    const match = item.product.colorImages.find(
+                      (ci) => ci.color && ci.color.trim().toLowerCase() === colorName
+                    );
+                    if (match && Array.isArray(match.images) && match.images.length > 0) {
+                      matchedColorImage = match.images[0];
+                    }
+                  }
+                  const displayImg = matchedColorImage || item.image || item.product?.image || item.product?.images?.[0] || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+                  return (
+                    <img
+                      src={displayImg}
+                      alt={item.product?.name || item.name || 'Product'}
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+                      }}
+                      className="w-14 h-16 object-cover rounded-xs border border-[#E8E3DE] bg-[#FAF8F5]"
+                    />
+                  );
+                })()}
                 <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#1A1A1A] text-white rounded-full text-[9px] font-bold flex items-center justify-center font-mono">
                   {item.quantity}
                 </span>

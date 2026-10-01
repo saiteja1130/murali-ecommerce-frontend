@@ -6,26 +6,50 @@ import { ConfirmModal } from '../components/ConfirmModal';
 export const WishlistPage = ({ wishlistProducts, onRemoveFromWishlist, onClearWishlist, onAddToCart, allProducts, onToggleWishlist, wishlistIds }) => {
   const navigate = useNavigate();
   const [selectedSizes, setSelectedSizes] = useState({});
+  const [selectedColors, setSelectedColors] = useState({});
   const [isCopiedShare, setIsCopiedShare] = useState(false);
   const [addedItems, setAddedItems] = useState({});
   const [removeWishlistModal, setRemoveWishlistModal] = useState({ isOpen: false, product: null });
+
   const handleSizeSelect = (productId, size) => {
     setSelectedSizes((prev) => ({ ...prev, [productId]: size }));
   };
+
+  const handleColorSelect = (productId, color) => {
+    setSelectedColors((prev) => ({ ...prev, [productId]: color }));
+  };
+
+  const getWishlistProductImage = (product) => {
+    const activeColor = selectedColors[product.id] || product.selectedColor || product.colors?.[0];
+    const colorName = (activeColor?.name || (typeof activeColor === 'string' ? activeColor : '')).trim().toLowerCase();
+    if (colorName && Array.isArray(product.colorImages) && product.colorImages.length > 0) {
+      const match = product.colorImages.find(
+        (ci) => (ci.color || '').trim().toLowerCase() === colorName
+      );
+      if (match && Array.isArray(match.images) && match.images.length > 0) {
+        return match.images[0];
+      }
+    }
+    return product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+  };
+
   const handleMoveSingleToCart = (product) => {
-    const chosenSize = selectedSizes[product.id] || product.sizes[0] || 'M';
-    const chosenColor = product.colors[0] || { name: 'Standard', hex: '#1A1A1A' };
-    onAddToCart(product, chosenSize, chosenColor);
+    const chosenSize = selectedSizes[product.id] || product.sizes?.[0] || 'M';
+    const chosenColor = selectedColors[product.id] || product.selectedColor || product.colors?.[0] || { name: 'Standard', hex: '#1A1A1A' };
+    const chosenImage = getWishlistProductImage(product);
+    onAddToCart({ ...product, image: chosenImage }, chosenSize, chosenColor);
     setAddedItems((prev) => ({ ...prev, [product.id]: true }));
     setTimeout(() => {
       onRemoveFromWishlist(product.id);
     }, 800);
   };
+
   const handleMoveAllToCart = () => {
     wishlistProducts.forEach((product) => {
-      const chosenSize = selectedSizes[product.id] || product.sizes[0] || 'M';
-      const chosenColor = product.colors[0] || { name: 'Standard', hex: '#1A1A1A' };
-      onAddToCart(product, chosenSize, chosenColor);
+      const chosenSize = selectedSizes[product.id] || product.sizes?.[0] || 'M';
+      const chosenColor = selectedColors[product.id] || product.selectedColor || product.colors?.[0] || { name: 'Standard', hex: '#1A1A1A' };
+      const chosenImage = getWishlistProductImage(product);
+      onAddToCart({ ...product, image: chosenImage }, chosenSize, chosenColor);
     });
     onClearWishlist();
   };
@@ -77,7 +101,7 @@ export const WishlistPage = ({ wishlistProducts, onRemoveFromWishlist, onClearWi
             {/* Thumbnail Stage */}
             <div className="relative aspect-[3/4] bg-[#F4EFEA] overflow-hidden">
               <img
-                src={product.image || product.images?.[0] || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900'}
+                src={getWishlistProductImage(product)}
                 alt={product.name}
                 onError={(e) => {
                   e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
@@ -124,6 +148,36 @@ export const WishlistPage = ({ wishlistProducts, onRemoveFromWishlist, onClearWi
                   </span>)}
                 </div>
               </div>
+
+              {/* Color Selector in Wishlist */}
+              {product.colors && product.colors.length > 0 && (
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-[#6B6B6B] font-semibold block mb-1">
+                    Select Color: <span className="text-[#1A1A1A] font-bold">{(selectedColors[product.id]?.name || product.selectedColor?.name || product.colors[0]?.name || 'Standard')}</span>
+                  </span>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    {product.colors.map((c, cIdx) => {
+                      const cName = typeof c === 'object' ? c.name : c;
+                      const cHex = typeof c === 'object' ? c.hex : '#1D241C';
+                      const currentChosen = selectedColors[product.id] || product.selectedColor || product.colors[0];
+                      const currentChosenName = typeof currentChosen === 'object' ? currentChosen.name : currentChosen;
+                      const isSelected = currentChosenName === cName;
+                      return (
+                        <button
+                          key={cIdx}
+                          type="button"
+                          onClick={() => handleColorSelect(product.id, c)}
+                          title={cName}
+                          className={`w-5 h-5 rounded-full border transition-all cursor-pointer ${
+                            isSelected ? 'ring-2 ring-offset-1 ring-[#1A1A1A] scale-110' : 'border-neutral-300 opacity-80 hover:opacity-100'
+                          }`}
+                          style={{ backgroundColor: cHex }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Size Selector in Wishlist */}
               {product.sizes && product.sizes.length > 0 && (<div>

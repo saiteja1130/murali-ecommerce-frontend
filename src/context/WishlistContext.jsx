@@ -44,6 +44,17 @@ export const WishlistProvider = ({ children }) => {
     };
   }, [token, currentUser?.id, currentUser?._id]);
 
+  // Global Auth Expiration Listener
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      setWishlist([]);
+      setWishlistProducts([]);
+      localStorage.removeItem('sumilux_wishlist');
+    };
+    window.addEventListener('auth-expired', handleAuthExpired);
+    return () => window.removeEventListener('auth-expired', handleAuthExpired);
+  }, []);
+
   const toggleWishlist = useCallback(
     async (product) => {
       if (!product) return;

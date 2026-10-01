@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Star, Heart, ShoppingBag, Truck, ShieldCheck, RotateCcw, Ruler, ChevronDown, ChevronUp, Share2, Check, ArrowRight, Plus, Minus, MessageSquare } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
@@ -107,9 +107,28 @@ export const ProductDetailPage = ({
     setOpenAccordions((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const images = Array.isArray(product.galleryImages) && product.galleryImages.length > 0
-    ? product.galleryImages
-    : [product.image, product.hoverImage].filter(Boolean);
+  // Color-aware gallery: show images for selectedColor if colorImages exist,
+  // otherwise fall back to the flat galleryImages array.
+  const images = useMemo(() => {
+    if (selectedColor && product.colorImages && product.colorImages.length > 0) {
+      const colorKey = (selectedColor.name || selectedColor).toLowerCase();
+      const match = product.colorImages.find(
+        (ci) => (ci.color || '').toLowerCase() === colorKey
+      );
+      if (match && match.images && match.images.length > 0) {
+        return match.images;
+      }
+    }
+    // Fallback to flat gallery
+    return Array.isArray(product.galleryImages) && product.galleryImages.length > 0
+      ? product.galleryImages
+      : [product.image, product.hoverImage].filter(Boolean);
+  }, [selectedColor, product.colorImages, product.galleryImages, product.image, product.hoverImage]);
+
+  // Reset gallery to first slide whenever the selected color changes
+  useEffect(() => {
+    setSelectedImageIdx(0);
+  }, [selectedColor]);
 
   const price = typeof product.price === 'number' ? product.price : Number(product.price) || 0;
   const originalPrice = product.originalPrice ? Number(product.originalPrice) : null;
@@ -123,16 +142,19 @@ export const ProductDetailPage = ({
     .slice(0, 4);
 
   const handleAddToCartClick = () => {
+    const activeColorImage = (images && images[0]) || product.image;
+    const productWithActiveImage = { ...product, image: activeColorImage };
+
     if (!token || !isAuthenticated) {
       if (onAddToCart) {
-        onAddToCart(product, selectedSize, selectedColor, quantity);
+        onAddToCart(productWithActiveImage, selectedSize, selectedColor, quantity);
       }
       return;
     }
 
     setIsAdding(true);
     if (onAddToCart) {
-      onAddToCart(product, selectedSize, selectedColor, quantity);
+      onAddToCart(productWithActiveImage, selectedSize, selectedColor, quantity);
     }
     setTimeout(() => {
       setIsAdding(false);
@@ -142,15 +164,18 @@ export const ProductDetailPage = ({
   };
 
   const handleBuyNow = () => {
+    const activeColorImage = (images && images[0]) || product.image;
+    const productWithActiveImage = { ...product, image: activeColorImage };
+
     if (!token || !isAuthenticated) {
-      if (onAddToCart) onAddToCart(product, selectedSize, selectedColor, quantity);
+      if (onAddToCart) onAddToCart(productWithActiveImage, selectedSize, selectedColor, quantity);
       return;
     }
 
     if (onDirectCheckout) {
-      onDirectCheckout(product, selectedSize, selectedColor, quantity);
+      onDirectCheckout(productWithActiveImage, selectedSize, selectedColor, quantity);
     } else {
-      if (onAddToCart) onAddToCart(product, selectedSize, selectedColor, quantity);
+      if (onAddToCart) onAddToCart(productWithActiveImage, selectedSize, selectedColor, quantity);
       navigate('/checkout');
     }
   };
@@ -242,8 +267,10 @@ export const ProductDetailPage = ({
               <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
                 <button
                   onClick={() => {
-                    if (onToggleWishlist) onToggleWishlist(product);
-                    else if (contextToggleWishlist) contextToggleWishlist(product);
+                    const activeColorImage = (images && images[0]) || product.image;
+                    const productWithActiveImage = { ...product, image: activeColorImage, selectedColor };
+                    if (onToggleWishlist) onToggleWishlist(productWithActiveImage);
+                    else if (contextToggleWishlist) contextToggleWishlist(productWithActiveImage);
                   }}
                   className={`w-10 h-10 rounded-full bg-white/90 hover:bg-white backdrop-blur-xs flex items-center justify-center transition-all shadow-md hover:scale-110 cursor-pointer ${isCurrentWishlisted ? 'text-[#C69E58]' : 'text-neutral-600 hover:text-black'
                     }`}

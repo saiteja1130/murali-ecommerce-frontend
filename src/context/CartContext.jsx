@@ -9,10 +9,23 @@ const mapServerCartItems = (rawItems) => {
   return (rawItems || []).map((item) => {
     const rawProd = item.product || {};
     const normProduct = normalizeProduct(rawProd) || rawProd;
+    const colorName = (item.selectedColor?.name || (typeof item.selectedColor === 'string' ? item.selectedColor : '')).trim().toLowerCase();
+    let matchedColorImage = '';
+    if (colorName && Array.isArray(normProduct.colorImages) && normProduct.colorImages.length > 0) {
+      const match = normProduct.colorImages.find(
+        (ci) => ci.color && ci.color.trim().toLowerCase() === colorName
+      );
+      if (match && Array.isArray(match.images) && match.images.length > 0) {
+        matchedColorImage = match.images[0];
+      }
+    }
+    const finalImage = matchedColorImage || item.image || normProduct.image || normProduct.images?.[0];
+
     return {
       id: item.id || item.cartItemId,
       cartItemId: item.cartItemId || item.id,
-      product: normProduct,
+      product: { ...normProduct, image: finalImage },
+      image: finalImage,
       quantity: Number(item.quantity) || 1,
       selectedSize: item.selectedSize || 'Standard',
       selectedColor: item.selectedColor || { name: 'Standard', hex: '#1D241C' },
@@ -89,6 +102,18 @@ export const CartProvider = ({ children }) => {
     }
   }, [token, isAuthenticated, fetchBackendCart]);
 
+  // Global Auth Expiration Listener
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      setCart([]);
+      setPromoCode('');
+      setDiscountRate(0);
+      localStorage.removeItem('sumilux_cart');
+    };
+    window.addEventListener('auth-expired', handleAuthExpired);
+    return () => window.removeEventListener('auth-expired', handleAuthExpired);
+  }, []);
+
   // Add Item to Cart
   const addToCart = useCallback(
     async (product, arg2, arg3, arg4) => {
@@ -149,6 +174,20 @@ export const CartProvider = ({ children }) => {
         ? { name: selectedColor, hex: '#1D241C' }
         : (selectedColor || { name: 'Standard', hex: '#1D241C' });
 
+      // Resolve color image for optimistic cart display
+      const colorName = (finalColor.name || '').trim().toLowerCase();
+      let matchedColorImage = '';
+      if (colorName && Array.isArray(product.colorImages) && product.colorImages.length > 0) {
+        const match = product.colorImages.find(
+          (ci) => ci.color && ci.color.trim().toLowerCase() === colorName
+        );
+        if (match && Array.isArray(match.images) && match.images.length > 0) {
+          matchedColorImage = match.images[0];
+        }
+      }
+      const itemImage = matchedColorImage || product.image || (Array.isArray(product.images) && product.images[0]) || '';
+      const productWithColorImage = { ...product, image: itemImage };
+
       const prodId = product.id || product._id;
       const currentCart = [...cartRef.current];
 
@@ -164,7 +203,7 @@ export const CartProvider = ({ children }) => {
       if (existingItemIndex > -1) {
         updatedCart = currentCart.map((item, idx) =>
           idx === existingItemIndex
-            ? { ...item, quantity: item.quantity + (Number(quantity) || 1) }
+            ? { ...item, quantity: item.quantity + (Number(quantity) || 1), image: item.image || itemImage }
             : item
         );
       } else {
@@ -173,7 +212,8 @@ export const CartProvider = ({ children }) => {
           {
             id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             cartItemId: `temp-${Date.now()}`,
-            product,
+            product: productWithColorImage,
+            image: itemImage,
             quantity: Number(quantity) || 1,
             selectedSize,
             selectedColor: finalColor,

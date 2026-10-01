@@ -209,24 +209,8 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token, fetchAddresses, fetchOrders, fetchPayments]);
 
-  // Local Storage Synchronization
-  useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('sumilux_user', JSON.stringify(currentUser));
-    } else {
-      localStorage.removeItem('sumilux_user');
-    }
-  }, [currentUser]);
-
-  useEffect(() => {
-    if (token) {
-      localStorage.setItem('sumilux_token', token);
-    } else {
-      localStorage.removeItem('sumilux_token');
-    }
-  }, [token]);
-
-
+  // Local Storage Synchronization (Removed reactive sync to prevent race conditions)
+  // Writes are now handled synchronously during login/logout actions.
   // Global Auth Expiration Listener
   useEffect(() => {
     const handleAuthExpired = () => {
@@ -258,6 +242,10 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const response = await api.post('/api/auth/login', { email, password });
     if (response.data.status) {
+      // Write synchronously to localStorage before React state updates
+      localStorage.setItem('sumilux_user', JSON.stringify(response.data.user));
+      localStorage.setItem('sumilux_token', response.data.token);
+      
       setCurrentUser(response.data.user);
       setToken(response.data.token);
       return response.data;
@@ -273,6 +261,9 @@ export const AuthProvider = ({ children }) => {
   const loginWithOtp = async (email, otpCode) => {
     const response = await api.post('/api/auth/login-otp', { email, otpCode });
     if (response.data.status) {
+      localStorage.setItem('sumilux_user', JSON.stringify(response.data.user));
+      localStorage.setItem('sumilux_token', response.data.token);
+      
       setCurrentUser(response.data.user);
       setToken(response.data.token);
       return response.data;
@@ -288,6 +279,9 @@ export const AuthProvider = ({ children }) => {
   const verifyEmail = async (email, otpCode) => {
     const response = await api.post('/api/auth/verify-email', { email, otpCode });
     if (response.data.status) {
+      localStorage.setItem('sumilux_user', JSON.stringify(response.data.user));
+      localStorage.setItem('sumilux_token', response.data.token);
+      
       setCurrentUser(response.data.user);
       setToken(response.data.token);
       return response.data;
@@ -296,12 +290,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    setCurrentUser(null);
-    setToken(null);
-    setUserAddresses([]);
+    // Clear storage synchronously
     localStorage.removeItem('sumilux_user');
     localStorage.removeItem('sumilux_token');
     localStorage.removeItem('sumilux_addresses');
+    
+    // Broadcast global logout event to other contexts (Cart, Wishlist, etc.)
+    window.dispatchEvent(new Event('auth-expired'));
+    
+    setCurrentUser(null);
+    setToken(null);
+    setUserAddresses([]);
   };
 
 

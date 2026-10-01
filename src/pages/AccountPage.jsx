@@ -428,14 +428,27 @@ export const AccountPage = ({
                           <div className="space-y-3 flex-1 min-w-0">
                             {(order.items || []).slice(0, 2).map((item, idx) => (
                               <div key={idx} className="flex items-center gap-3">
-                                <img
-                                  src={item.image || item.product?.image || (Array.isArray(item.product?.images) && item.product.images[0]) || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900'}
-                                  alt={item.name || 'Garment Piece'}
-                                  onError={(e) => {
-                                    e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
-                                  }}
-                                  className="w-12 h-14 object-cover rounded-xs border border-[#E8E3DE] bg-[#F8F6F3] shrink-0"
-                                />
+                                {(() => {
+                                  const itemColorName = (typeof item.selectedColor === 'object' ? item.selectedColor?.name : (item.selectedColor || item.color || '')).trim().toLowerCase();
+                                  let matchedColorImg = '';
+                                  if (itemColorName && Array.isArray(item.product?.colorImages) && item.product.colorImages.length > 0) {
+                                    const match = item.product.colorImages.find((ci) => ci.color && ci.color.trim().toLowerCase() === itemColorName);
+                                    if (match && Array.isArray(match.images) && match.images.length > 0) {
+                                      matchedColorImg = match.images[0];
+                                    }
+                                  }
+                                  const displayImg = item.image || matchedColorImg || item.product?.image || (Array.isArray(item.product?.images) && item.product.images[0]) || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+                                  return (
+                                    <img
+                                      src={displayImg}
+                                      alt={item.name || 'Garment Piece'}
+                                      onError={(e) => {
+                                        e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+                                      }}
+                                      className="w-12 h-14 object-cover rounded-xs border border-[#E8E3DE] bg-[#F8F6F3] shrink-0"
+                                    />
+                                  );
+                                })()}
                                 <div className="text-xs min-w-0 flex-1">
                                   <p className="font-semibold text-[#1A1A1A] truncate">
                                     {item.name || 'Garment Piece'}
@@ -600,14 +613,27 @@ export const AccountPage = ({
                     {activeOrder.items?.map((item, idx) => (
                       <div key={idx} className="py-4 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-4 min-w-0">
-                          <img
-                            src={item.image || item.product?.image || (Array.isArray(item.product?.images) && item.product.images[0]) || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900'}
-                            alt={item.name || item.product?.name || 'Garment Piece'}
-                            onError={(e) => {
-                              e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
-                            }}
-                            className="w-16 h-20 object-cover rounded-xs border border-[#E8E4DC] bg-[#F8F6F3]"
-                          />
+                          {(() => {
+                            const itemColorName = (typeof item.selectedColor === 'object' ? item.selectedColor?.name : (item.selectedColor || item.color || '')).trim().toLowerCase();
+                            let matchedColorImg = '';
+                            if (itemColorName && Array.isArray(item.product?.colorImages) && item.product.colorImages.length > 0) {
+                              const match = item.product.colorImages.find((ci) => ci.color && ci.color.trim().toLowerCase() === itemColorName);
+                              if (match && Array.isArray(match.images) && match.images.length > 0) {
+                                matchedColorImg = match.images[0];
+                              }
+                            }
+                            const displayImg = item.image || matchedColorImg || item.product?.image || (Array.isArray(item.product?.images) && item.product.images[0]) || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+                            return (
+                              <img
+                                src={displayImg}
+                                alt={item.name || item.product?.name || 'Garment Piece'}
+                                onError={(e) => {
+                                  e.currentTarget.src = 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=900';
+                                }}
+                                className="w-16 h-20 object-cover rounded-xs border border-[#E8E4DC] bg-[#F8F6F3]"
+                              />
+                            );
+                          })()}
                           <div className="space-y-1">
                             <h4 className="font-serif font-bold text-sm text-[#1A1A1A]">
                               {item.name || item.product?.name || 'Garment Piece'}
