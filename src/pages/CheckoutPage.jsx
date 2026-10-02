@@ -91,12 +91,13 @@ export const CheckoutPage = ({
     const params = new URLSearchParams(window.location.search);
     const paymentStatus = params.get('payment_status');
     const reason = params.get('reason');
+    const orderNumberFromUrl = params.get('order_number');
 
     if (paymentStatus === 'success') {
       if (onClearCart) onClearCart();
-      // Provide a minimal fallback confirmedOrder to render the success screen
+      // Render confirmed order screen with exact order reference
       setConfirmedOrder({
-        orderNumber: 'Recent Order',
+        orderNumber: orderNumberFromUrl || 'Confirmed',
         email: currentUser?.email || email,
         total: ctxCartSubtotal || 0,
         paymentMethod: 'upi',
