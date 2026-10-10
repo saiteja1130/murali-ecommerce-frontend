@@ -125,7 +125,9 @@ export const CheckoutPage = ({
   const discountAmount = ctxDiscountAmount !== undefined ? ctxDiscountAmount : (subtotal * activeDiscountRate);
 
   // Dynamic standard shipping fee from backend settings
-  const shippingCost = subtotal >= freeShippingThreshold || items.length === 0 ? 0 : (shippingFee || 30.0);
+  const freeThreshold = freeShippingThreshold !== undefined ? freeShippingThreshold : 5000;
+  const standardFee = shippingFee !== undefined ? shippingFee : 30;
+  const shippingCost = ctxShippingCost !== undefined ? ctxShippingCost : (subtotal >= freeThreshold || items.length === 0 ? 0 : standardFee);
   const total = subtotal > 0 ? subtotal - discountAmount + shippingCost : 0;
 
   const activePromoCode = propPromoCode || ctxPromoCode;

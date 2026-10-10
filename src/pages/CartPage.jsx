@@ -59,7 +59,9 @@ export const CartPage = ({
   const progressPercent = Math.min(100, Math.round((subtotal / threshold) * 100));
   const amountNeeded = Math.max(0, threshold - subtotal);
   const discountAmount = ctxDiscountAmount !== undefined ? ctxDiscountAmount : (subtotal * activeDiscountRate);
-  const calculatedShipping = (freeShippingThreshold && subtotal >= freeShippingThreshold) || items.length === 0 ? 0 : (shippingCost !== undefined ? shippingCost : shippingFee);
+  const freeThreshold = freeShippingThreshold !== undefined ? freeShippingThreshold : 5000;
+  const standardFee = shippingFee !== undefined ? shippingFee : 30;
+  const calculatedShipping = (subtotal >= freeThreshold || items.length === 0) ? 0 : standardFee;
   const total = subtotal > 0 ? subtotal - discountAmount + calculatedShipping : 0;
 
   const handleApplyPromo = async (e) => {
