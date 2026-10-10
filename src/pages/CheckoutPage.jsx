@@ -16,7 +16,8 @@ import {
   MapPin,
   Check,
   Smartphone,
-  QrCode
+  QrCode,
+  Banknote
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import api from '../context/api';
@@ -62,6 +63,7 @@ export const CheckoutPage = ({
   });
 
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(true);
+  const [paymentMethodTab, setPaymentMethodTab] = useState('upi');
 
   // Promo Code State
   const [promoInput, setPromoInput] = useState('');
@@ -207,7 +209,21 @@ export const CheckoutPage = ({
     };
 
     try {
-      // RAZORPAY UPI & SECURE ONLINE PAYMENT GATEWAY
+      // 1. CASH ON DELIVERY FLOW
+      if (paymentMethodTab === 'cod') {
+        const response = await api.post('/api/orders/cod', orderPayload);
+        if (response.data?.status && response.data?.data) {
+          if (onClearCart) onClearCart();
+          setConfirmedOrder(response.data.data);
+          setIsProcessing(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        } else {
+          throw new Error(response.data?.message || 'Failed to place COD order');
+        }
+      }
+
+      // 2. RAZORPAY UPI & SECURE ONLINE PAYMENT GATEWAY
       const orderRes = await api.post('/api/orders/create-razorpay-order', orderPayload);
       if (!orderRes.data?.status || !orderRes.data?.data) {
         throw new Error(orderRes.data?.message || 'Failed to initiate Razorpay order');
@@ -846,13 +862,22 @@ export const CheckoutPage = ({
 
               {/* Instant UPI & Online Payment Card */}
               <div className="space-y-3 text-xs">
-                <div
-                  className="p-4 rounded-xl border border-[#506040] bg-[#FAF8F5] ring-2 ring-[#506040]/20 flex items-center justify-between gap-4"
+                {/* Pay via UPI (Primary) */}
+                <label
+                  onClick={() => setPaymentMethodTab('upi')}
+                  className={`p-4 rounded-xl border flex items-center justify-between gap-4 cursor-pointer transition-all ${paymentMethodTab === 'upi'
+                    ? 'border-[#506040] bg-[#FAF8F5] ring-2 ring-[#506040]/20'
+                    : 'border-[#E8E4DC] hover:border-[#C69E58] bg-white'
+                    }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-[#506040] text-white flex items-center justify-center text-xs shrink-0">
-                      <Check className="w-3 h-3 stroke-[3]" />
-                    </div>
+                    <input
+                      type="radio"
+                      name="payment_choice"
+                      checked={paymentMethodTab === 'upi'}
+                      onChange={() => setPaymentMethodTab('upi')}
+                      className="text-[#506040] focus:ring-[#506040]"
+                    />
                     <div>
                       <div className="font-bold text-[#1A1A1A] flex items-center gap-2">
                         <span>Instant UPI &amp; Online Payment</span>
@@ -869,7 +894,64 @@ export const CheckoutPage = ({
                     <Smartphone className="w-4 h-4 text-[#C8A87C]" />
                     <span>UPI / CARDS / QR</span>
                   </div>
-                </div>
+                </label>
+
+                {/* Cash on Delivery */}
+                {(() => {
+                  const isCodDisabled = storeSettings?.isCodEnabled === false;
+                  const isCodExceeded = Boolean(storeSettings?.maxCodAmount && total > storeSettings.maxCodAmount);
+                  const isCodBlocked = isCodDisabled || isCodExceeded;
+                  const blockedReason = isCodDisabled
+                    ? 'Cash on Delivery is currently disabled by store administration'
+                    : `COD available for orders up to ₹${Number(storeSettings?.maxCodAmount || 0).toLocaleString('en-IN')}`;
+
+                  return (
+                    <label
+                      onClick={() => {
+                        if (!isCodBlocked) setPaymentMethodTab('cod');
+                      }}
+                      className={`p-4 rounded-xl border flex items-center justify-between gap-4 transition-all ${
+                        isCodBlocked
+                          ? 'border-[#E8E4DC] bg-neutral-50/70 opacity-60 cursor-not-allowed'
+                          : paymentMethodTab === 'cod'
+                          ? 'border-[#506040] bg-[#FAF8F5] ring-2 ring-[#506040]/20 cursor-pointer'
+                          : 'border-[#E8E4DC] hover:border-[#C69E58] bg-white cursor-pointer'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="payment_choice"
+                          disabled={isCodBlocked}
+                          checked={paymentMethodTab === 'cod' && !isCodBlocked}
+                          onChange={() => {
+                            if (!isCodBlocked) setPaymentMethodTab('cod');
+                          }}
+                          className="text-[#506040] focus:ring-[#506040] disabled:opacity-40"
+                        />
+                        <div>
+                          <div className="font-bold text-[#1A1A1A] flex items-center gap-2">
+                            <span>Cash on Delivery (COD)</span>
+                            {isCodBlocked && (
+                              <span className="text-[9px] font-mono uppercase bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded font-bold">
+                                Unavailable
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-[#6B6B6B] mt-0.5">
+                            {isCodBlocked
+                              ? blockedReason
+                              : "Pay in cash or scan delivery partner's QR upon doorstep delivery"}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="hidden sm:flex items-center gap-1.5 text-neutral-400 font-mono text-[10px]">
+                        <Banknote className="w-4 h-4 text-[#C8A87C]" />
+                        <span>PAY ON DELIVERY</span>
+                      </div>
+                    </label>
+                  );
+                })()}
               </div>
 
               {/* Error Banner if payment fails */}
@@ -892,12 +974,17 @@ export const CheckoutPage = ({
                   }`}
               >
                 {isProcessing ? (
-                  <span>Securing Order &amp; Connecting Gateway...</span>
+                  <span>{paymentMethodTab === 'cod' ? 'Confirming Cash on Delivery Order...' : 'Securing Order & Connecting UPI Gateway...'}</span>
                 ) : hasOOS ? (
                   <span>Unavailable Items in Cart</span>
+                ) : paymentMethodTab === 'cod' ? (
+                  <>
+                    <span>Confirm COD Order • ₹{total.toFixed(2)}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
                 ) : (
                   <>
-                    <span>Proceed to Online Payment • ₹{total.toFixed(2)}</span>
+                    <span>Proceed to UPI Payment • ₹{total.toFixed(2)}</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
