@@ -49,8 +49,6 @@ export const ProductDetailPage = ({
 
   const productId = product?.id || product?._id;
   const isCurrentWishlisted = productId ? (checkIsWishlisted(productId) || (wishlistIds && wishlistIds.some(wId => (wId?.toString?.() || wId) === productId.toString()))) : false;
-  const inCart = productId ? checkIsInCart(productId) : false;
-  const cartQuantity = productId ? getCartItemQuantity(productId) : 0;
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
 
   const colors = Array.isArray(product.colors) && product.colors.length > 0
@@ -67,6 +65,29 @@ export const ProductDetailPage = ({
   const [addedSuccess, setAddedSuccess] = useState(false);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [isCopiedLink, setIsCopiedLink] = useState(false);
+
+  // Match specific variant from product.variants based on selected color and size
+  const activeVariant = useMemo(() => {
+    if (!Array.isArray(product.variants) || product.variants.length === 0) return null;
+    const colorName = (selectedColor?.name || selectedColor || '').trim().toLowerCase();
+    const sizeName = (selectedSize || '').trim().toLowerCase();
+
+    return product.variants.find((v) => {
+      const vColor = (v.color || '').trim().toLowerCase();
+      const vSize = (v.size || '').trim().toLowerCase();
+      const colorMatches = !vColor || !colorName || colorName === 'standard' || vColor === colorName;
+      const sizeMatches = !vSize || !sizeName || sizeName === 'standard' || sizeName === 'one size' || vSize === sizeName;
+      return colorMatches && sizeMatches;
+    }) || product.variants[0] || null;
+  }, [product.variants, selectedColor, selectedSize]);
+
+  const basePrice = typeof product.price === 'number' ? product.price : Number(product.price) || 0;
+  const price = (activeVariant && typeof activeVariant.price === 'number' && activeVariant.price > 0)
+    ? activeVariant.price
+    : basePrice;
+
+  const inCart = productId ? checkIsInCart(productId, selectedSize, selectedColor, activeVariant?._id) : false;
+  const cartQuantity = productId ? getCartItemQuantity(productId, selectedSize, selectedColor, activeVariant?._id) : 0;
 
   // Details & Fabric Care in simple, natural English
   const detailsList = Array.isArray(product.details) && product.details.length > 0
@@ -130,7 +151,6 @@ export const ProductDetailPage = ({
     setSelectedImageIdx(0);
   }, [selectedColor]);
 
-  const price = typeof product.price === 'number' ? product.price : Number(product.price) || 0;
   const originalPrice = product.originalPrice ? Number(product.originalPrice) : null;
   const discountPercent = originalPrice && originalPrice > price
     ? Math.round(((originalPrice - price) / originalPrice) * 100)
@@ -143,18 +163,24 @@ export const ProductDetailPage = ({
 
   const handleAddToCartClick = () => {
     const activeColorImage = (images && images[0]) || product.image;
-    const productWithActiveImage = { ...product, image: activeColorImage };
+    const productWithActiveImage = {
+      ...product,
+      image: activeColorImage,
+      price,
+      variantId: activeVariant?._id || activeVariant?.id || '',
+      sku: activeVariant?.sku || product.sku || '',
+    };
 
     if (!token || !isAuthenticated) {
       if (onAddToCart) {
-        onAddToCart(productWithActiveImage, selectedSize, selectedColor, quantity);
+        onAddToCart(productWithActiveImage, selectedSize, selectedColor, quantity, activeVariant);
       }
       return;
     }
 
     setIsAdding(true);
     if (onAddToCart) {
-      onAddToCart(productWithActiveImage, selectedSize, selectedColor, quantity);
+      onAddToCart(productWithActiveImage, selectedSize, selectedColor, quantity, activeVariant);
     }
     setTimeout(() => {
       setIsAdding(false);
@@ -165,17 +191,23 @@ export const ProductDetailPage = ({
 
   const handleBuyNow = () => {
     const activeColorImage = (images && images[0]) || product.image;
-    const productWithActiveImage = { ...product, image: activeColorImage };
+    const productWithActiveImage = {
+      ...product,
+      image: activeColorImage,
+      price,
+      variantId: activeVariant?._id || activeVariant?.id || '',
+      sku: activeVariant?.sku || product.sku || '',
+    };
 
     if (!token || !isAuthenticated) {
-      if (onAddToCart) onAddToCart(productWithActiveImage, selectedSize, selectedColor, quantity);
+      if (onAddToCart) onAddToCart(productWithActiveImage, selectedSize, selectedColor, quantity, activeVariant);
       return;
     }
 
     if (onDirectCheckout) {
-      onDirectCheckout(productWithActiveImage, selectedSize, selectedColor, quantity);
+      onDirectCheckout(productWithActiveImage, selectedSize, selectedColor, quantity, activeVariant);
     } else {
-      if (onAddToCart) onAddToCart(productWithActiveImage, selectedSize, selectedColor, quantity);
+      if (onAddToCart) onAddToCart(productWithActiveImage, selectedSize, selectedColor, quantity, activeVariant);
       navigate('/checkout');
     }
   };
@@ -309,10 +341,17 @@ export const ProductDetailPage = ({
                 </button>
               </div>
 
-              {/* Title */}
-              <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-[#1D241C] leading-tight">
-                {product.name}
-              </h1>
+              {/* Title & SKU */}
+              <div>
+                <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-[#1D241C] leading-tight">
+                  {product.name}
+                </h1>
+                {(activeVariant?.sku || product.sku) && (
+                  <p className="text-[11px] font-mono text-[#687163] mt-1 tracking-wider uppercase">
+                    SKU: {activeVariant?.sku || product.sku}
+                  </p>
+                )}
+              </div>
 
               {/* Price block */}
               <div className="flex items-baseline gap-3">

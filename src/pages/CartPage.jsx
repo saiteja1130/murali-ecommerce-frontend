@@ -210,7 +210,15 @@ export const CartPage = ({
                         <h3 className="font-serif text-base font-bold text-[#1D241C] leading-snug">
                           {item.product.name}
                         </h3>
-                        <div className="flex items-center gap-3 text-xs text-[#687163] pt-0.5">
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-[#687163] pt-0.5">
+                          {item.sku && (
+                            <>
+                              <span className="font-mono text-[11px] bg-[#FAF8F5] border border-[#E8E4DC] text-[#1D241C] px-1.5 py-0.5 rounded-xs font-semibold">
+                                SKU: {item.sku}
+                              </span>
+                              <span>•</span>
+                            </>
+                          )}
                           <span>Size: <strong className="text-[#1D241C]">{item.selectedSize}</strong></span>
                           <span>•</span>
                           <span className="flex items-center gap-1.5">

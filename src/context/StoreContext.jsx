@@ -133,12 +133,12 @@ export const StoreProvider = ({ children }) => {
 
   // Unified bridge for add to cart with toast
   const addToCartWithFeedback = useCallback(
-    async (product, selectedSize, selectedColor, quantity) => {
+    async (product, selectedSize, selectedColor, quantity, variant) => {
       if (!product) return;
 
       // If not authenticated, let cartContext handle login redirection without triggering toast
       if (!token || !isAuthenticated) {
-        await cartContext.addToCart(product, selectedSize, selectedColor, quantity);
+        await cartContext.addToCart(product, selectedSize, selectedColor, quantity, variant);
         return;
       }
 
@@ -151,16 +151,17 @@ export const StoreProvider = ({ children }) => {
         return;
       }
 
-      const res = await cartContext.addToCart(product, selectedSize, selectedColor, quantity);
+      const res = await cartContext.addToCart(product, selectedSize, selectedColor, quantity, variant);
       if (res === false) return;
 
       const size = selectedSize || product.sizes?.[0] || 'Standard';
       const color = selectedColor || product.colors?.[0] || { name: 'Standard', hex: '#1D241C' };
+      const skuLabel = variant?.sku ? ` • ${variant.sku}` : '';
 
       showToast({
         type: 'cart',
         title: 'Added to Bag',
-        message: `${quantity}× ${product.name} (${size} / ${color.name || color})`,
+        message: `${quantity || 1}× ${product.name} (${size} / ${color.name || color}${skuLabel})`,
         image: product.image || product.images?.[0],
       });
     },

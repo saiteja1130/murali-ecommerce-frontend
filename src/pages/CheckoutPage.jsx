@@ -189,7 +189,10 @@ export const CheckoutPage = ({
           quantity: item.quantity,
           selectedSize: item.selectedSize || 'Standard',
           selectedColor: item.selectedColor || { name: 'Standard', hex: '#1D241C' },
-          price: item.product?.price,
+          variantId: item.variantId || item.selectedVariantId || item.variant?._id || '',
+          sku: item.sku || item.variant?.sku || '',
+          product: item.product?._id || item.product?.id || item.id,
+          price: Number(item.price !== undefined ? item.price : (item.product?.price || 0)),
           name: item.product?.name,
           image: finalItemImage,
         };
